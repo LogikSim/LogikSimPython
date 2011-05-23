@@ -48,10 +48,10 @@ of the first one. This scenario would require the following simulation cycle:
 3: object2.calculate_state(t1)
 4: object2.apply_state(t1)
 
-Remarkably such an simulation cycle is impossible to achieve when there are
-have circular dependencies, where object1 depends on object2 and object2 
-depends on object1. In such a situation a transmission delay for (some) 
-signals between object1 and object2 is necessary.
+Remarkably such an simulation cycle is impossible to achieve with circular 
+dependencies, where object1 depends on object2 and object2 depends on object1. 
+In such a situation a transmission delay for (some) signals between 
+object1 and object2 is necessary.
 
 Consequences
 ======================
@@ -118,10 +118,10 @@ Cycle Optimizations
 ======================
 
 Since signal interconnect trees are only connected trough Computing ICs, 
-which as shown above have to have a transmission delay the state of one Signal 
+which as shown above have to have a transmission delay, the state of one Signal 
 at time t1 is only dependent on the state of the output states of computing
-ICs at time t1. Especially the state doesn't depend on any other Signal at 
-time t1 or any previous point in time. 
+ICs at time t1. Especially the state of one Signal doesn't depend on any other 
+Signal at time t1 or any previous point in time. 
 
 This result can be used to simplify the compute / apply circle for Signals.
 
@@ -158,7 +158,81 @@ have a look at the time discretisation.
 Time Discretisation
 ======================
 
+Our simulation contains only logical signals which are discrete in time
+and value. Looking at a specific input the value can only change at specific
+times and we only have to invoke the logic behind it at these times. The same
+applies for the output. Thus it is sufficient to limit computations to two 
+events:
 
+* When the input changes state -> Invoke Computation IC
+
+* When a delay has expired, defined by the component itself on the last call
+    (e.g. necessary for clocks)
+
+We will then increase the simulation time to the point in time when the next
+delay expires and invoke only those Simulation Object which have pending
+events at that time.
+
+Final simulation cycle
+======================
+
+At the beginning of the simulation all Input Connectors are flagged as
+having changed, at a later point in time the list changed_inputs will
+only contain those, who want to change their value at that time.
+
+    sim_time = 0
+    
+    changed_inputs = get_input_changes(sim_time)
+
+These inputs will now add change their internal value and then add their
+parent Computation IC to the changed_ics list.
+
+    changed_ics = set()
+    
+    for input in changed_inputs:
+        input.apply_state(sim_time)
+        changed_ics.add(input.parent)
+
+Now the ics with expired delays are added
+
+    changed_ics.update( get_ics_with_expired_delays(sim_time) )
+    changed_signals.clear()
+
+    for ic in changed_ics:
+        delta = ic.calculate_and_apply(sim_time)
+        if delta is not None:
+            set_future_ic_event(sim_time + delta, ic)
+
+Whenever an ic is setting an output in the calculate_and_apply method the 
+output checks if he is connected to a signal and in such a case adds the 
+Signal to the changed_signals set. The ic can decide if he wants to be
+called in the future by returning a delta value.
+
+Then the signal states are updated
+
+    for signal in changed_signals:
+        signal.update_state()
+        
+        for input in signal.connected_inputs():
+            delta = input.set_value(signal.value, sim_time)
+            set_future_input_event(sim_time + delta, input)
+
+After a signal has been updated all connected inputs are invoked
+and the return value is used to generate future input events. This returned
+delta indicates when the Input wants to pass a new internal value to its
+owning Computing IC.
+
+Additional Notes
+======================
+
+Component defined future events are deleted when the IC is called at
+an earlier time by different e.g. input event. It is also impossible
+to have multiple pending component event.
+
+The logic behind the set_future_input_event / get_input_changes and
+set_future_ic_event / get_ics_with_expired_delays will be on two
+priority queues and a separate dictionary to prevent multiple entries
+for the same input / ic.
 
 """
 
