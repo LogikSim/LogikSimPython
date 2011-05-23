@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """
 Created on May 22, 2011
 
@@ -48,8 +50,8 @@ of the first one. This scenario would require the following simulation cycle:
 
 Remarkably such an simulation cycle is impossible to achieve when there are
 have circular dependencies, where object1 depends on object2 and object2 
-depends on object1. In such a situation a transmission delay for (some) signals
-between object1 and object2 is necessary.
+depends on object1. In such a situation a transmission delay for (some) 
+signals between object1 and object2 is necessary.
 
 Consequences
 ======================
@@ -116,7 +118,7 @@ Cycle Optimizations
 ======================
 
 Since signal interconnect trees are only connected trough Computing ICs, 
-which as shown above have to have a transmission delay the state of one Signal
+which as shown above have to have a transmission delay the state of one Signal 
 at time t1 is only dependent on the state of the output states of computing
 ICs at time t1. Especially the state doesn't depend on any other Signal at 
 time t1 or any previous point in time. 
@@ -126,7 +128,7 @@ This result can be used to simplify the compute / apply circle for Signals.
     for signal in signals:
         signal.calculate_and_apply(t1)
 
-A similar statement can be derived for Computing ICs: A computing IC at time t1
+A similar statement can be derived for Computing ICs: A computing IC at time t1 
 only depends on the state of Signals at time t2 < t1.
 
 Thus the final simulation loop can be reduced to:
@@ -137,7 +139,23 @@ Thus the final simulation loop can be reduced to:
     for signal in signals:
         signal.calculate_and_apply(t1)
 
-Time Discretization
+Input Connectors Integration
+======================
+
+There are still some options on how to model the input connectors. 
+
+* integrate the logic into the computing_ic.calculate_and_apply method
+
+* having own Simulation Objects whose calculate_and_apply method is
+    called in the calculate_and_apply of the owning computing_ic
+
+* as separate Simulation Objects with their own calculate_and_apply
+    apply loop preceding the calculate_and_apply of the computing_ics
+
+Before deciding which solution might be the best it is advisable to first 
+have a look at the time discretisation.
+
+Time Discretisation
 ======================
 
 

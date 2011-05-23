@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 '''
 http://blog.rburchell.com/2010/02/pyside-tutorial-custom-widget-painting.html
 '''
