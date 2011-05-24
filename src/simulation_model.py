@@ -395,8 +395,16 @@ class SimulationObject(object):
         """
         raise NotImplementedError
 
+class ComputationICModel(SimulationObject):
+    def __init__(self):
+        pass
 
-class InputConnectorModel(SimulationObject):
+
+class ConnectorModel(SimulationObject):
+    pass
+
+
+class InputConnectorModel(ConnectorModel):
     int_value = LogicValue('0')
     ext_value = LogicValue('0')
     
@@ -411,43 +419,12 @@ class InputConnectorModel(SimulationObject):
         self.ext_value = value
         #self._int_value_last = value
         #self._ext_value_last = value
-    
-    def on_calculate_next_state(self, sim_time):
-        self
-    
-    def on_apply_next_state(self, sim_time):
-        pass
-
-
-class OutputConnectorModel(SimulationObject):
-    pass
-    
-
-
-class UnidirectionalSignal(SimulationObject, LogicValue):
-    """
-    unidirectional signal to connect an input and an output with a
-    user defined delay
-    
-    Used e.g. in connectors
-    """
-    _int_state = LogicValue('0')
-    
-    def __init__(self, delay, default='0'):
-        SimulationObject.__init__(self)
-        LogicValue.__init__(self, default)
+        
+        
         
         self.delay = delay
         self._int_state = default
-        self._slots = weakref.WeakSet()
         self._last_change = 0
-    
-    def connect(self, logic_value):
-        assert isinstance(logic_value, LogicValue)
-        self._slots.add(logic_value)
-    
-    def disconnect(self, logic_value):
-        self._slots.remove(logic_value)
     
     def on_calculate_next_state(self, sim_time):
         self._int_state = self
@@ -457,4 +434,26 @@ class UnidirectionalSignal(SimulationObject, LogicValue):
         if sim_time - self._last_change >= self.delay:
             for lv in self._slots:
                 lv.copy_from(self)
+
+
+class OutputConnectorModel(ConnectorModel):
+    value = LogicValue('0')
+
+
+class SignalModel(SimulationObject):
+    def __init__(self):
+        self._slots = weakref.WeakSet()
+    
+    def connect(self, connector):
+        """
+        connector - input or output connector
+        """
+        #assert isinstance(logic_value, LogicValue)
+        #self._slots.add(logic_value)
+    
+    def disconnect(self, connector):
+        """
+        connector - input or output connector
+        """
+        self._slots.remove(connector)
 

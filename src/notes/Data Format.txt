@@ -1,0 +1,144 @@
+
+File Format: zipped json
+
+zip format:
+	xml_data = open(filename, 'rb').read().decode('zip')
+	open(filename, 'wb').write(xml_data.encode('zip'))
+
+json lib: json (New in Python 2.6)
+
+json encoding: utf-8
+
+
+
+# Top Level
+
+{
+	version: [ int, int, int ] # file version tuple
+	
+	'object': Schematic, SchematicIC or ComputationIC
+}
+	
+	# Schematic
+	{
+		'type': 'Schematic'
+		
+		'instances': [ Instance ]
+		'signals': [ Signal ]
+		
+		#TODO: comments
+		#TODO: probes?
+	}
+	
+		# Instance
+		{
+			'type': 'Instance'
+			
+			'name': unicode # name of Base-IC
+			'id': unicode # id of Base-IC
+		}
+	
+		# Signal
+		{
+			'type': 'Signal'
+			
+			'interconnects': [ Interconnect ]
+			'connections': [ SignalConnection ]
+			
+			#TODO: interconnect dots
+		}
+		
+			# Interconnect
+			{
+				'type': 'Interconnect'
+				
+				'pos': [ [float, float], [float, float] ] # x1, y1, x2, y2
+			}
+			
+			# SignalConnection
+			{
+				'type': 'SignalConnection'
+				
+				'instance': integer (index of Instance in Schematic.instances)
+				'connector': integer (index of Connector in instance.connectors)
+			}
+
+
+
+	# Base-IC: Derived by ComputationIC and SchematicIC
+	{
+		'id': uuid.uuid4().hex
+		'author': unicode
+		'date': 
+				format = '%Y-%m-%dT%H:%M:%SZ'
+				time.strftime(format, time.gmtime())
+				t = datetime.datetime.strptime(string, format) - \
+						datetime.timedelta(seconds=time.altzone 
+						if time.daylight else time.timezone)
+		'description': unicode
+		
+		'symbol': Symbol
+		'connectors': [ Connector ] # -> see below
+	}
+	
+			# Base-Connector: Derived by InputConnector, OutputConnector
+			# 		and TransparentConnector
+			{
+				'label': unicode
+				
+				'startpos': [ float, float ] # x, y
+				'anchorpos': [ float, float ] # x, y
+				'labelpos': [ float, float ] # x, y
+			}
+				
+	
+		# ComputationIC
+		{
+			'type': 'ComputationIC'
+			
+			# properties of Base-IC
+			
+			'connectors': [ InputConnector, OutputConnector ]
+			'code': unicode
+			'signature': RSA Signature (optional, for trusted libraries)
+		}
+
+			# InputConnector
+			{
+				'type': 'InputConnector'
+				
+				# properties of Base-Connector
+				
+				'delay': float
+			}
+			
+			# OutputConnector
+			{
+				'type': 'OutputConnector'
+				
+				# properties of Base-Connector
+			}
+	
+		# SchematicIC
+		{
+			'type': 'SchematicIC'
+			
+			# properties of Base-IC
+			
+			'connectors': [ TransparentConnector ]
+			'schematic': Schematic
+		}
+			
+			# TransparentConnector
+			{
+				'type': 'TransparentConnector'
+				
+				# properties of Base-Connector
+			}
+
+		# Symbol
+		{
+			'type': Symbol
+			
+			'primitive': [ Rect, Circle, ... ]
+		}
