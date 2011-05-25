@@ -237,6 +237,9 @@ for the same input / ic.
 """
 
 import weakref
+import uuid
+import time
+import datetime
 
 
 class LogicValue(object):
@@ -366,81 +369,75 @@ class LogicValue(object):
         self.__set__(None, value)
 
 
-class SimulationObject(object):
+class JsonMeta(type):
     """
-    defines an abstract method interface for all simulation parts
+    Meta Class which helps to load arbitrary JsonObjects from json data
     """
-    def on_calculate_next_state(self, sim_time):
-        """
-        calculate the next state based on all current inputs
-        
-        This function is called whenever an input has changed state or
-        after a user defined delta_time
-        
-        sim_time (float) - current point in time in seconds of the simulation
-        @return (float or None) - you can optionally return a delta_time, 
-                which will guaranty that on_calculate_next_state is called
-                again after delta_time (in seconds).
-        """
-        raise NotImplementedError
+    _json_classes = {}
     
-    def on_apply_next_state(self, sim_time):
+    def __new__(cls, name, bases, attrs):
+        inst = type.__new__(cls, name, bases, attrs)
+        cls._json_classes[name] = inst
+        return inst
+    
+    @classmethod
+    def load_object(cls, data):
         """
-        Apply the calculated state to the outputs
-        
-        sim_time (float) - current point in time in seconds of the simulation
-        
-        is called after calculate_next_state was invoked for every item
-        in the simulation.
+        creates object from json data
         """
-        raise NotImplementedError
+        return cls._json_classes[data['type']](data)
+    
+    @classmethod
+    def unregister_json_class(cls, json_class):
+        del cls._json_classes[json_class.__name__]
 
-class ComputationICModel(SimulationObject):
-    def __init__(self):
+
+def json_virtual(cls):
+    """
+    Class Descriptor that makes the class not loadable from json data, 
+    only subclasses
+    """
+    assert issubclass(type(cls), JsonMeta)
+    type(cls).unregister_json_class(cls)
+    return cls
+
+
+@json_virtual
+class JsonObject(object):
+    __metaclass__ = JsonMeta
+    """
+    Has to be baseclass of every object that wants to be loadable
+    
+    All subclasses have to support the following constructor signature:
+    
+        SubCls(json_data={'type':'SubCls', ...})
+    
+    The type is already asserted by JsonObject, all other attributes
+    have to be extracted an validated by the sub classes.
+    
+        super(SubCls, self).__init__(json_data=json_data)
+    
+    This will enable loading from json data
+    """
+    def __init__(self, json_data=None):
+        if json_data is not None:
+            if not json_data['type'] == type(self).__name__:
+                raise TypeError("Unsupported json_data['type']")
+    
+    def save(self, obj):
         pass
 
 
-class ConnectorModel(SimulationObject):
+class Schematic(JsonObject):
     pass
 
 
-class InputConnectorModel(ConnectorModel):
-    int_value = LogicValue('0')
-    ext_value = LogicValue('0')
-    
-    _int_value_last = LogicValue('0')
-    _ext_value_last = LogicValue('0')
-    
-    def __init__(self, delay, value):
-        SimulationObject.__init__()
-        
-        self.delay = delay
-        self.int_value = value
-        self.ext_value = value
-        #self._int_value_last = value
-        #self._ext_value_last = value
-        
-        
-        
-        self.delay = delay
-        self._int_state = default
-        self._last_change = 0
-    
-    def on_calculate_next_state(self, sim_time):
-        self._int_state = self
-        self._last_change = sim_time
-    
-    def on_apply_next_state(self, sim_time):
-        if sim_time - self._last_change >= self.delay:
-            for lv in self._slots:
-                lv.copy_from(self)
+@json_virtual
+class Instance(JsonObject):
+    pass
 
 
-class OutputConnectorModel(ConnectorModel):
-    value = LogicValue('0')
-
-
-class SignalModel(SimulationObject):
+class Signal(JsonObject):
     def __init__(self):
         self._slots = weakref.WeakSet()
     
@@ -456,4 +453,129 @@ class SignalModel(SimulationObject):
         connector - input or output connector
         """
         self._slots.remove(connector)
+
+
+class Interconnect(JsonObject):
+    pass
+
+
+class SignalConnection(JsonObject):
+    pass
+
+
+@json_virtual
+class BaseIC(JsonObject):
+    _date_format = '%Y-%m-%dT%H:%M:%SZ'
+    
+    def __init__(self, symbol=None, json_obj=None):
+        self.id = None
+        self.author = None
+        self.date = None
+        self.description = None
+        self.symbol = None
+        self.connectors = None
+        
+        if json_obj is not None:
+            assert symbol is None
+            self.load(json_obj)
+        else:
+            assert issubclass(symbol, Symbol)
+            self.id = uuid.uuid4().hex
+            self.author = ''
+            self.date = time.strftime(format, time.gmtime())
+            self.description = ''
+            self.symbol = symbol
+            self.connectors = []
+    
+    def load(self, json):
+        """
+        initialize this object with data given by a json
+        """
+
+
+@json_virtual
+class BaseConnector(JsonObject):
+    pass
+
+
+class ComputationIC(BaseIC):
+    def __init__(self):
+        pass
+
+
+class InputConnector(BaseConnector):
+    int_value = LogicValue('0')
+    ext_value = LogicValue('0')
+    
+    _int_value_last = LogicValue('0')
+    _ext_value_last = LogicValue('0')
+    
+    def __init__(self, delay, value):
+        None.__init__()
+        
+        self.delay = delay
+        self.int_value = value
+        self.ext_value = value
+        #self._int_value_last = value
+        #self._ext_value_last = value
+        
+        self._last_change = 0
+    
+    def on_calculate_next_state(self, sim_time):
+        self._int_state = self
+        self._last_change = sim_time
+    
+    def on_apply_next_state(self, sim_time):
+        if sim_time - self._last_change >= self.delay:
+            for lv in self._slots:
+                lv.copy_from(self)
+
+
+class OutputConnector(BaseConnector):
+    value = LogicValue('0')
+
+
+class SchematicIC(BaseIC):
+    pass
+
+
+class TransparentConnector(BaseConnector):
+    pass
+
+
+class Symbol(JsonObject):
+    pass
+
+
+  
+
+"""
+defines an abstract method interface for all simulation parts
+"""
+"""
+calculate the next state based on all current inputs
+
+This function is called whenever an input has changed state or
+after a user defined delta_time
+
+sim_time (float) - current point in time in seconds of the simulation
+@return (float or None) - you can optionally return a delta_time, 
+        which will guaranty that on_calculate_next_state is called
+        again after delta_time (in seconds).
+"""
+"""
+Apply the calculated state to the outputs
+
+sim_time (float) - current point in time in seconds of the simulation
+
+is called after calculate_next_state was invoked for every item
+in the simulation.
+"""
+
+
+
+for name, value in JsonMeta._json_classes.iteritems():
+    print name, value
+
+
 
