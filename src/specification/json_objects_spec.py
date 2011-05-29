@@ -49,18 +49,9 @@ class JsonObjectSpec(unittest.TestCase):
     def test_setUp(self):
         self.assertEqual(JsonMeta._json_classes, {})
     
-    def test_load_type_assertion_direct(self):
+    def test_load_unknown_type(self):
         class Test(JsonObject):
             pass
-        # direct call
-        obj = Test(json_data={'type': 'Test'})
-        self.assertEqual(type(obj), Test)
-        self.assertRaises(Exception, Test, json_data={'type': 'fail'})
-    
-    def test_load_type_assertion_meta(self):
-        class Test(JsonObject):
-            pass
-        # meta loading
         obj = JsonMeta.load_object({'type': 'Test'})
         self.assertEqual(type(obj), Test)
         self.assertRaises(Exception, JsonMeta.load_object, {'type': 'fail'})
@@ -83,6 +74,16 @@ class JsonObjectSpec(unittest.TestCase):
         self.assertEqual(type(obj), Test)
         self.assertEqual(obj.value, 'res')
     
-    def test_save(self):
-        raise NotImplementedError
+    def test_validate_object(self):
+        class Test(JsonObject):
+            pass
+        JsonMeta.validate_data({'type': 'Test'})
+        self.assertRaises(Exception, JsonMeta.validate_data, {'type': 'fail'})
+        self.assertRaises(Exception, JsonMeta.validate_data, [])
+        self.assertRaises(Exception, JsonMeta.validate_data, 1)
+        self.assertRaises(Exception, JsonMeta.validate_data, 'Test')
+        
+    
+    #def test_save(self):
+    #    raise NotImplementedError
 

@@ -240,6 +240,7 @@ import weakref
 import uuid
 import time
 import datetime
+from numbers import Integral
 
 
 class LogicValue(object):
@@ -369,6 +370,9 @@ class LogicValue(object):
         self.__set__(None, value)
 
 
+
+
+
 class JsonMeta(type):
     """
     Meta Class which helps to load arbitrary JsonObjects from json data
@@ -381,15 +385,99 @@ class JsonMeta(type):
         return inst
     
     @classmethod
+    def validate_data(cls, data):
+        """
+        Validates json data.
+        
+        IMPORTANT: Never try to load non-validated json data
+        """
+        cls._json_classes[data['type']].validate_data(data)
+    
+    @classmethod
     def load_object(cls, data):
         """
-        creates object from json data
+        Creates object from json data.
+        
+        IMPORTANT: Never try to load non-validated json data
         """
         return cls._json_classes[data['type']](data)
     
     @classmethod
     def unregister_json_class(cls, json_class):
         del cls._json_classes[json_class.__name__]
+    
+    @classmethod
+    def validate_data_from_spec(cls, spec, data):
+        """
+        Validates data based on a given type specification.
+        
+        spec - json data structure with types instead of data
+        data - json data structure to validate
+        
+        raises Exceptions when validation failed.
+        
+        Checks if all keys are present in data and if the specified type matches.
+        Use the following translation to specify json types:
+        
+        JSON          Python
+        ----------------------------
+        object        non virtual JsonObject
+        array         see below
+        string        basestring
+        int           numbers.Integral
+        real          float
+        true, false   bool
+        null          --not-supported--
+        
+        You can specify arrays in two different ways:
+        
+        - as a list of types: Then data can be a list of arbitrary length where
+                each item of the list has to be of any type specified
+        
+        - as a tuple of types: Then data is expected to have exactly that structure
+                The length and all sub types have to match exactly
+        
+        """
+        # is spec a type?
+        if issubclass(type(spec), type):
+            if issubclass(spec, JsonObject):
+                if spec.__name__ in cls._json_classes:
+                    spec.validate_data(data)
+                else:
+                    raise TypeError("Cannot validate virtual JsonObject '%s'."
+                            % spec)
+            else:
+                assert spec in (basestring, Integral, float, bool), spec
+                if not isinstance(data, spec):
+                    raise TypeError("Data has wrong type, expected "
+                            "'%s' but got '%s'." % (spec, type(data)))
+        else:
+            assert isinstance(spec, (dict, list, tuple)), type(spec)
+            if isinstance(spec, dict):
+                for key in spec:
+                    cls.validate_data_from_spec(spec[key], data[key])
+            elif isinstance(spec, list):
+                assert len(spec) > 0
+                for item in data:
+                    valid = False
+                    for sub_type in spec:
+                        try:
+                            cls.validate_data_from_spec(sub_type, item)
+                        except Exception:
+                            pass
+                        else:
+                            valid = True
+                            break
+                    if not valid:
+                        raise TypeError("Item has wrong type, expected "
+                                "'%s' but got '%s'." % (spec, type(item)))
+            elif isinstance(spec, tuple):
+                assert len(spec) > 0
+                if len(spec) != len(data):
+                    raise ValueError("Invalid data length, expected '%s' but got "
+                            "'%s'." % (len(spec), len(data)))
+                for sub_spec, item in zip(spec, data):
+                    cls.validate_data_from_spec(sub_spec, item)
 
 
 def json_virtual(cls):
@@ -408,21 +496,36 @@ class JsonObject(object):
     """
     Has to be baseclass of every object that wants to be loadable
     
+    json_data is already validated.
+    
     All subclasses have to support the following constructor signature:
-    
         SubCls(json_data={'type':'SubCls', ...})
-    
-    The type is already asserted by JsonObject, all other attributes
-    have to be extracted an validated by the sub classes.
-    
+    If the constructor is called with not None json_data, the object
+    should be constructed from that data. But before anything is extracted
+    the constructor of the base class should be called.
         super(SubCls, self).__init__(json_data=json_data)
-    
     This will enable loading from json data
     """
     def __init__(self, json_data=None):
-        if json_data is not None:
-            if not json_data['type'] == type(self).__name__:
-                raise TypeError("Unsupported json_data['type']")
+        pass
+    
+    @classmethod
+    def validate_data(cls, data):
+        """
+        This method is called before creating any objects and is used
+        to decide if the json data is valid or not.
+        
+        This method has to be implemented by any subclass and should
+        raise an Exception if the json data is invalid.
+        
+        When overwriting this method you should first call:
+            super(SubCls, cls).validate_data(data)
+        Then you can use validate_data_from_spec to validate additional data
+            cls.validate_data_from_spec(spec, data)
+        """
+        if data['type'] != cls.__name__:
+            raise TypeError("Invalid data['type'] expected '%s', got '%s'." % 
+                    (cls.__name__, data['type']))
     
     def save(self, obj):
         pass
@@ -467,30 +570,26 @@ class SignalConnection(JsonObject):
 class BaseIC(JsonObject):
     _date_format = '%Y-%m-%dT%H:%M:%SZ'
     
-    def __init__(self, symbol=None, json_obj=None):
-        self.id = None
-        self.author = None
-        self.date = None
-        self.description = None
-        self.symbol = None
-        self.connectors = None
+    def __init__(self, symbol=None, json_data=None):
+        super(BaseIC, self).__init__(json_data=json_data)
         
-        if json_obj is not None:
+        if json_data is not None:
             assert symbol is None
-            self.load(json_obj)
         else:
             assert issubclass(symbol, Symbol)
-            self.id = uuid.uuid4().hex
-            self.author = ''
-            self.date = time.strftime(format, time.gmtime())
-            self.description = ''
-            self.symbol = symbol
-            self.connectors = []
+        
+        self.id = json_data.get('id') or uuid.uuid4().hex
+        self.author = json_data.get('author', '')
+        self.date = json_data.get('data') or time.strftime(self._date_format, 
+                time.gmtime())
+        self.description = json_data.get('description', '')
+        #TODO: symbol
+        self.connectors = json_data.get('connectors', [])
     
-    def load(self, json):
-        """
-        initialize this object with data given by a json
-        """
+    @classmethod
+    def validate_data(cls, data):
+        super(BaseIC, cls).validate_data(data)
+        #TODO: cls.validate_data_from_spec(spec, data)
 
 
 @json_virtual
