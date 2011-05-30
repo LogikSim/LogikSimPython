@@ -82,8 +82,11 @@ class JsonObjectSpec(unittest.TestCase):
         self.assertRaises(Exception, JsonMeta.validate_data, [])
         self.assertRaises(Exception, JsonMeta.validate_data, 1)
         self.assertRaises(Exception, JsonMeta.validate_data, 'Test')
-        
     
-    #def test_save(self):
-    #    raise NotImplementedError
+    def test_save(self):
+        class Test(JsonObject):
+            pass
+        obj = Test()
+        self.assertDictEqual(obj.save(), {'type': 'Test'})
+        JsonMeta.validate_data(obj.save())
 

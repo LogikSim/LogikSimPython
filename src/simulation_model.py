@@ -432,10 +432,10 @@ class JsonMeta(type):
         You can specify arrays in two different ways:
         
         - as a list of types: Then data can be a list of arbitrary length where
-                each item of the list has to be of any type specified
+                each item of the list has to be of any type specified.
         
-        - as a tuple of types: Then data is expected to have exactly that structure
-                The length and all sub types have to match exactly
+        - as a tuple of types: Then data is expected to have exactly that 
+                structure. The length and all sub types have to match exactly.
         
         """
         # is spec a type?
@@ -494,9 +494,7 @@ def json_virtual(cls):
 class JsonObject(object):
     __metaclass__ = JsonMeta
     """
-    Has to be baseclass of every object that wants to be loadable
-    
-    json_data is already validated.
+    Has to be baseclass of every object that wants to be loadable as an object
     
     All subclasses have to support the following constructor signature:
         SubCls(json_data={'type':'SubCls', ...})
@@ -507,6 +505,11 @@ class JsonObject(object):
     This will enable loading from json data
     """
     def __init__(self, json_data=None):
+        """
+        see JsonObject.__doc__ for more info
+        
+        json_data is already validated.
+        """
         pass
     
     @classmethod
@@ -527,22 +530,45 @@ class JsonObject(object):
             raise TypeError("Invalid data['type'] expected '%s', got '%s'." % 
                     (cls.__name__, data['type']))
     
-    def save(self, obj):
-        pass
+    def save(self):
+        """
+        Returns json data of this object as dict.
+        """
+        return {'type': type(self).__name__}
 
 
 class Schematic(JsonObject):
-    pass
+    @classmethod
+    def validate_data(cls, data):
+        super(Schematic, cls).validate_data(data)
+        cls.validate_data_from_spec({
+                'instances': [Instance], 
+                'signals': [Signal], 
+                }, data)
 
 
 @json_virtual
 class Instance(JsonObject):
-    pass
+    @classmethod
+    def validate_data(cls, data):
+        super(Instance, cls).validate_data(data)
+        cls.validate_data_from_spec({
+                'name': basestring, 
+                'id': basestring, 
+                }, data)
 
 
 class Signal(JsonObject):
     def __init__(self):
         self._slots = weakref.WeakSet()
+    
+    @classmethod
+    def validate_data(cls, data):
+        super(Signal, cls).validate_data(data)
+        cls.validate_data_from_spec({
+                'interconnects': [Interconnect], 
+                'connections': [SignalConnection], 
+                }, data)
     
     def connect(self, connector):
         """
@@ -559,11 +585,22 @@ class Signal(JsonObject):
 
 
 class Interconnect(JsonObject):
-    pass
+    @classmethod
+    def validate_data(cls, data):
+        super(Interconnect, cls).validate_data(data)
+        cls.validate_data_from_spec({
+                'pos': ((float, float), (float, float)),  
+                }, data)
 
 
 class SignalConnection(JsonObject):
-    pass
+    @classmethod
+    def validate_data(cls, data):
+        super(SignalConnection, cls).validate_data(data)
+        cls.validate_data_from_spec({
+                'instance': Integral, 
+                'connector': Integral, 
+                }, data)
 
 
 @json_virtual
@@ -589,17 +626,37 @@ class BaseIC(JsonObject):
     @classmethod
     def validate_data(cls, data):
         super(BaseIC, cls).validate_data(data)
-        #TODO: cls.validate_data_from_spec(spec, data)
+        cls.validate_data_from_spec({
+                'id': basestring, #TODO: check hex form
+                'author': basestring, 
+                'date': basestring, #TODO: check format '%Y-%m-%dT%H:%M:%SZ'
+                'description': basestring, 
+                'symbol': Symbol, 
+                }, data)
 
 
 @json_virtual
 class BaseConnector(JsonObject):
-    pass
+    @classmethod
+    def validate_data(cls, data):
+        super(BaseConnector, cls).validate_data(data)
+        cls.validate_data_from_spec({
+                'label': basestring, 
+                'startpos': (float, float), 
+                'anchorpos': (float, float), 
+                'labelpos': (float, float), 
+                }, data)
 
 
 class ComputationIC(BaseIC):
-    def __init__(self):
-        pass
+    #TODO: authentication: SHA-Hash or RSA-Signature
+    @classmethod
+    def validate_data(cls, data):
+        super(ComputationIC, cls).validate_data(data)
+        cls.validate_data_from_spec({
+                'connectors': [InputConnector, OutputConnector ], 
+                'code': basestring, 
+                }, data)
 
 
 class InputConnector(BaseConnector):
@@ -620,6 +677,13 @@ class InputConnector(BaseConnector):
         
         self._last_change = 0
     
+    @classmethod
+    def validate_data(cls, data):
+        super(InputConnector, cls).validate_data(data)
+        cls.validate_data_from_spec({
+                'delay': float, 
+                }, data)
+    
     def on_calculate_next_state(self, sim_time):
         self._int_state = self
         self._last_change = sim_time
@@ -635,7 +699,13 @@ class OutputConnector(BaseConnector):
 
 
 class SchematicIC(BaseIC):
-    pass
+    @classmethod
+    def validate_data(cls, data):
+        super(SchematicIC, cls).validate_data(data)
+        cls.validate_data_from_spec({
+                'connectors': [TransparentConnector], 
+                'schematic': Schematic, 
+                }, data)
 
 
 class TransparentConnector(BaseConnector):
@@ -643,7 +713,12 @@ class TransparentConnector(BaseConnector):
 
 
 class Symbol(JsonObject):
-    pass
+    @classmethod
+    def validate_data(cls, data):
+        super(Symbol, cls).validate_data(data)
+        cls.validate_data_from_spec({
+                'primitive': [], #TODO: Rect, Circle, ...
+                }, data)
 
 
   
@@ -670,11 +745,4 @@ sim_time (float) - current point in time in seconds of the simulation
 is called after calculate_next_state was invoked for every item
 in the simulation.
 """
-
-
-
-for name, value in JsonMeta._json_classes.iteritems():
-    print name, value
-
-
 

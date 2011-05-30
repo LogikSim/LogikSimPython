@@ -78,7 +78,7 @@ json encoding: utf-8
 		'description': unicode
 		
 		'symbol': Symbol
-		'connectors': [ Connector ] # -> see below
+		'connectors': # type see below
 	}
 	
 			# Base-Connector: Derived by InputConnector, OutputConnector
