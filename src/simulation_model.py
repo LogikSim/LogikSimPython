@@ -370,9 +370,6 @@ class LogicValue(object):
         self.__set__(None, value)
 
 
-
-
-
 class JsonMeta(type):
     """
     Meta Class which helps to load arbitrary JsonObjects from json data

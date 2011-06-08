@@ -8,10 +8,8 @@ Created on May 2, 2011
 
 from PySide import QtGui, QtCore
 
-import simulation_model
 
-
-class LogicItem(QtGui.QGraphicsItem, simulation_model.SimulationObject):
+class LogicItem(QtGui.QGraphicsItem):
     def __init__(self, *args, **kargs):
         QtGui.QGraphicsItem.__init__(self, *args, **kargs)
         #self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
