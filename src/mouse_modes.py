@@ -6,13 +6,31 @@ Created on Jun 11, 2011
 @author: Christian
 '''
 
-import new
-
 from PySide import QtCore
 
 from base_graphics_framework import BasicGridView
 import logic_item
 
+
+class mouse_mode_filtered(object):
+    def __init__(self, func):
+        self.func = func
+
+def _generate_filter(inst, func, name):
+    def filter(self, *args, **kargs):
+        mode = self._mouse_mode
+        if mode is inst or (mode is not None and 
+                issubclass(mode, inst)):
+            return func(self, *args, **kargs)
+        else:
+            try:
+                super_attr = getattr(super(inst, self), name)
+            except AttributeError:
+                pass
+            else:
+                return super_attr(*args, **kargs)
+    filter.func_name = 'filter_' + name
+    return filter
 
 def generate_mouse_mode_base(base_class):
     """
@@ -22,34 +40,18 @@ def generate_mouse_mode_base(base_class):
     See generate_mouse_mode_base.BaseMouseMode.__doc__ for more information.
     """
     class MouseModeMeta(type(base_class)):
-        def __new__(cls, name, bases, attrs):
-            inst = super(MouseModeMeta, cls).__new__(cls, name, bases, attrs)
-            # modify attribute resolution except for classes that derive
-            # from base_class. This will be our BaseMouseMode and the one
-            # that want to use specific mouse modes.
-            print inst, base_class not in bases
-            if base_class not in bases:
-                def __getattribute__(self, attrname):
-                    attr = super(inst, self).__getattribute__(attrname)
-                    if not name.startswith('_') and isinstance(attr, 
-                            new.instancemethod) and super(inst, self).\
-                            __getattribute__('_mouse_mode') is not inst:
-                        print name, attrname, 'dummy'
-                        def dummy(*args, **kargs):
-                            try:
-                                super_func = getattr(super(inst, self), 
-                                        attrname)
-                            except AttributeError:
-                                return
-                            else:
-                                return super_func(*args, **kargs)
-                        return dummy
-                    else:
-                        print name, attrname, 'attr'
-                        return attr
-                inst.__getattribute__ = __getattribute__
-            else:
-                inst.__getattribute__ = base_class.__getattribute__
+        def __new__(cls, clsname, bases, attrs):
+            inst = super(MouseModeMeta, cls).__new__(cls, clsname, bases, attrs)
+            
+            for name, attr in attrs.iteritems():
+                if isinstance(attr, mouse_mode_filtered):
+                    func = attr.func
+                elif name in ['enter', 'leave']:
+                    func = attr
+                else:
+                    continue
+                setattr(inst, name, _generate_filter(inst, func, name))
+            
             return inst
     
     class BaseMouseMode(base_class):
@@ -74,13 +76,26 @@ def generate_mouse_mode_base(base_class):
             self._mouse_mode = None
         
         def set_mouse_mode(self, mode):
-            pass
+            if mode is not self._mouse_mode:
+                if self._mouse_mode is not None:
+                    self._mouse_mode.leave(self)
+                self._mouse_mode = mode
+                if mode is not None:
+                    mode.enter(self)
         
         def enter(self):
-            """ called when the mouse mode is  activated """
+            """
+            called when the mouse mode is  activated
+            
+            This method gets automatically mouse_mode_filtered.
+            """
         
         def leave(self):
-            """ called when the mouse mode is deactivated """
+            """
+            called when the mouse mode is deactivated
+            
+            This method gets automatically mouse_mode_filtered.
+            """
     
     return BaseMouseMode
 

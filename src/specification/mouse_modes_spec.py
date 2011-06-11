@@ -8,7 +8,7 @@ Created on Jun 11, 2011
 
 import unittest
 
-from mouse_modes import generate_mouse_mode_base
+from mouse_modes import generate_mouse_mode_base, mouse_mode_filtered
 
 class TestSubclassing(unittest.TestCase):
     def test_enter_leave(self):
@@ -47,16 +47,16 @@ class TestSubclassing(unittest.TestCase):
     def test_member_resolution(self):
         calls = []
         class Base(object):
-            def __getattribute__(self, attrname):
-                
             def foo(self):
                 calls.append('Base.foo')
         BaseMouseMode = generate_mouse_mode_base(Base)
         class A(BaseMouseMode):
+            @mouse_mode_filtered
             def foo(self):
                 super(A, self).foo()
                 calls.append('A.foo')
         class B(BaseMouseMode):
+            @mouse_mode_filtered
             def foo(self):
                 super(B, self).foo()
                 calls.append('B.foo')
@@ -80,6 +80,41 @@ class TestSubclassing(unittest.TestCase):
         u.foo()
         self.assertEqual(calls, ['Base.foo', 'A.foo', 'User.foo', ])
     
+    def test_return_value(self):
+        class Base(object):
+            def foo(self):
+                return 1
+        BaseMouseMode = generate_mouse_mode_base(Base)
+        class A(BaseMouseMode):
+            @mouse_mode_filtered
+            def foo(self):
+                return super(A, self).foo() + 2
+        class User(A, Base):
+            def foo(self):
+                return super(User, self).foo() + 4
+        # None
+        u = User()
+        self.assertEqual(u.foo(), 5)
+        # A
+        u.set_mouse_mode(A)
+        self.assertEqual(u.foo(), 7)
+    
+    def test_filtered_return_value(self):
+        class Base(object): pass
+        BaseMouseMode = generate_mouse_mode_base(Base)
+        class A(BaseMouseMode):
+            @mouse_mode_filtered
+            def foo(self):
+                return 1
+        class User(A, Base): pass
+        # None
+        u = User()
+        self.assertEqual(u.foo(), None)
+        # A
+        u.set_mouse_mode(A)
+        self.assertEqual(u.foo(), 1)
+        
+    
     def test_base_class_with_metaclass(self):
         class BaseMeta(type): pass
         class Base(object):
@@ -93,19 +128,19 @@ class TestSubclassing(unittest.TestCase):
         self.assertIsInstance(u, Base)
         self.assertIsInstance(User, BaseMeta)
     
-    def test_underlined_methods(self):
+    def test_unfiltered_methods(self):
         calls = []
         class Base(object): pass
         BaseMouseMode = generate_mouse_mode_base(Base)
         class A(BaseMouseMode):
-            def _foo(self):
-                calls.append('A._foo')
+            def foo(self):
+                calls.append('A.foo')
         class User(A, Base): pass
         
         u = User()
         u.set_mouse_mode(None)
-        u._foo()
-        self.assertListEqual(calls, ['A._foo'])
+        u.foo()
+        self.assertListEqual(calls, ['A.foo'])
     
     def test_attributes(self):
         class Base(object): pass
@@ -134,4 +169,48 @@ class TestSubclassing(unittest.TestCase):
         u = User()
         u.set_mouse_mode(None)
         self.assertEqual(u.foo(), 1)
-
+    
+    def test_mouse_mode_sub_classing(self):
+        calls = []
+        class Base(object): pass
+        BaseMouseMode = generate_mouse_mode_base(Base)
+        class A(BaseMouseMode):
+            @mouse_mode_filtered
+            def foo(self):
+                calls.append('A.foo')
+        class AA(A):
+            @mouse_mode_filtered
+            def foo(self):
+                super(AA, self).foo()
+                calls.append('AA.foo')
+        class User(AA, Base): pass
+        # None
+        u = User()
+        u.foo()
+        self.assertListEqual(calls, [])
+        # AA
+        u.set_mouse_mode(AA)
+        u.foo()
+        self.assertListEqual(calls, ['A.foo', 'AA.foo'])
+        # A
+        del calls[:]
+        u.set_mouse_mode(A)
+        u.foo()
+        self.assertListEqual(calls, ['A.foo'])
+    
+    def test_filter_multiple_methods(self):
+        class Base(object): pass
+        BaseMouseMode = generate_mouse_mode_base(Base)
+        class A(BaseMouseMode):
+            @mouse_mode_filtered
+            def foo(self):
+                return 'foo'
+            @mouse_mode_filtered
+            def bar(self):
+                return 'bar'
+        class User(A, Base): pass
+        # A
+        u = User()
+        u.set_mouse_mode(A)
+        self.assertEqual(u.foo(), 'foo')
+        self.assertEqual(u.bar(), 'bar')
