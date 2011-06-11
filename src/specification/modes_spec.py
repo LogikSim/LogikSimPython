@@ -50,6 +50,39 @@ class TestSubclassing(unittest.TestCase):
         u.setMode(None)
         self.assertEqual(calls, ['A.enter', 'A.leave', 'B.enter', 'B.leave'])
     
+    def test_enter_leave_special_name(self):
+        calls = []
+        class Base(object):
+            pass
+        BaseMode, _ = generate_mode_base(Base, 'fOo')
+        class A(BaseMode):
+            def foo_enter(self):
+                super(A, self).foo_enter()
+                calls.append('A.enter')
+            def foo_leave(self):
+                super(A, self).foo_leave()
+                calls.append('A.leave')
+        class B(BaseMode):
+            def foo_enter(self):
+                super(B, self).foo_enter()
+                calls.append('B.enter')
+            def foo_leave(self):
+                super(B, self).foo_leave()
+                calls.append('B.leave')
+        class User(A, B, Base):
+            pass
+        
+        u = User()
+        self.assertEqual(calls, [])
+        u.setFooMode(A)
+        self.assertEqual(calls, ['A.enter'])
+        u.setFooMode(A)
+        self.assertEqual(calls, ['A.enter'])
+        u.setFooMode(B)
+        self.assertEqual(calls, ['A.enter', 'A.leave', 'B.enter'])
+        u.setFooMode(None)
+        self.assertEqual(calls, ['A.enter', 'A.leave', 'B.enter', 'B.leave'])
+    
     def test_member_resolution(self):
         calls = []
         class Base(object):
@@ -262,13 +295,11 @@ class TestSubclassing(unittest.TestCase):
         BaseGreekMode, greek_mode_filtered = generate_mode_base(
                 BaseLangMode, 'greek')
         class Alpha(BaseGreekMode):
-            @lang_mode_filtered
             @greek_mode_filtered
             def foo(self):
                 super(Alpha, self).foo()
                 calls.append('Alpha.foo')
         class Beta(BaseGreekMode):
-            @lang_mode_filtered
             @greek_mode_filtered
             def foo(self):
                 super(Beta, self).foo()
@@ -278,6 +309,12 @@ class TestSubclassing(unittest.TestCase):
             def foo(self):
                 super(Greek, self).foo()
                 calls.append('Greek.foo')
+            def lang_enter(self):
+                super(Greek, self).lang_enter()
+                self.setGreekMode(Alpha)
+            def lang_leave(self):
+                super(Greek, self).lang_leave()
+                self.setGreekMode(None)
         class Latin(BaseLangMode):
             @lang_mode_filtered
             def foo(self):
@@ -296,31 +333,21 @@ class TestSubclassing(unittest.TestCase):
         u.setLangMode(Latin)
         u.foo()
         self.assertListEqual(calls, ['Base.foo', 'Latin.foo', 'User.foo'])
-        # Latin, Alpha
-        del calls[:]
-        u.setGreekMode(Alpha)
-        u.foo()
-        self.assertListEqual(calls, ['Base.foo', 'Latin.foo', 'User.foo'])
         # Greek, Alpha
         del calls[:]
         u.setLangMode(Greek)
         u.foo()
         self.assertListEqual(calls, ['Base.foo', 'Alpha.foo', 'Greek.foo', 
                 'User.foo'])
-        
-#    def test_wrapped_sub_modes(self):
-#        class Base(object): pass
-#        BaseSubMode, submode_filtered = generate_mode_base(Base, 'submode')
-#        class SubAlpha(BaseSubMode): pass
-#        class SubBeta(BaseSubMode): pass
-#        BaseLangMode, wrapper_filtered = generate_mode_base(Base, 'lang')
-#        class Greek(SubAlpha, SubBeta, BaseLangMode): pass
-#        class User(Greek, Base): pass
-#        # None, None
-#        u = User()
-
-
-
-
-
+        # Greek, Beta
+        del calls[:]
+        u.setGreekMode(Beta)
+        u.foo()
+        self.assertListEqual(calls, ['Base.foo', 'Beta.foo', 'Greek.foo', 
+                'User.foo'])
+        # Latin, None
+        del calls[:]
+        u.setLangMode(Latin)
+        u.foo()
+        self.assertListEqual(calls, ['Base.foo', 'Latin.foo', 'User.foo'])
 
