@@ -377,7 +377,7 @@ class JsonMeta(type):
     _json_classes = {}
     
     def __new__(cls, name, bases, attrs):
-        inst = type.__new__(cls, name, bases, attrs)
+        inst = super(JsonMeta, cls).__new__(cls, name, bases, attrs)
         cls._json_classes[name] = inst
         return inst
     

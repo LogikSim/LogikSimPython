@@ -4,6 +4,8 @@
 Created on Jun 11, 2011
 
 @author: Christian
+
+See specification for usage examples.
 '''
 
 
