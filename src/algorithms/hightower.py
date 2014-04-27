@@ -64,6 +64,7 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
     Return:
         Minimum path as list of tuples.
     """
+    
     # define types
     a, b = True, False
     horizontal, vertical, orientation_both = True, False, object()
@@ -74,6 +75,7 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
     no_escape_flag = {a: False, b: False}
     lines = {a: {horizontal: [], vertical: []}, 
              b: {horizontal: [], vertical: []}}
+    intersect_flag = False
     
     def get_same_line(point, orientation):
         """ 
@@ -88,120 +90,129 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
                 next = update(point)
                 if is_point_free(next) != point_free:
                     break
-                if is_point_out_bounds(point):
+                if is_point_out_bounds(next):
                     break
                 point = next
             return point
         if orientation is horizontal:
-            return (find_bound(point, lambda left: (left[0] - 1, left[0])),
-                    find_bound(point, lambda left: (left[0] + 1, left[0])))
+            return (find_bound(point, lambda left: (left[0] - 1, left[1])),
+                    find_bound(point, lambda left: (left[0] + 1, left[1])))
         else:
-            return (find_bound(point, lambda left: (left[0], left[0] - 1)),
-                    find_bound(point, lambda left: (left[0], left[0] + 1)))
+            return (find_bound(point, lambda left: (left[0], left[1] - 1)),
+                    find_bound(point, lambda left: (left[0], left[1] + 1)))
+    
+    
+    def escape_algorithm(pivot):
+        """ Main escape algorithm """
+        intersect_flag = False
+        object_point = L_e[pivot][-1]
         
-    while not no_escape_flag[a] or not no_escape_flag[b]:
-        if not no_escape_flag[a]:
-            object = a
-            object_point = L_e[object][-1]
-            target = not object
-            #
-            # escape algorithm
-            #
-            if orientation_flag[object] is horizontal:
-                # construct horizontal line escape
-                new_line = get_same_line(object_point, 
-                                         orientation_flag[object])
-                lines[object][orientation_flag[object]].append(new_line)
-                # does line intersect with any entry in target list
-                for line in lines[target][not orientation_flag[object]]:
-                    if do_lines_intersect(line, new_line):
-                        return #TODO: return list
-                
-                #
-                # find escape point (process I)
-                #
-                
-                #TODO: refactoring possible, do not need to calculate
-                #    escape lines twice --> cache decorator
-                hor_escape_line = get_same_line(object_point, horizontal)
-                ver_escape_line = get_same_line(object_point, vertical)
-                
-                # find extremities of horizontal cover
-                f1, f3 = get_same_line((ver_escape_line[0], 
-                                        ver_escape_line[0] - 1), horizontal)
-                f2, f4 = get_same_line((ver_escape_line[1], 
-                                        ver_escape_line[1] + 1), horizontal)
-                f_list = sorted([f1, f2, f3, f4], 
-                                key=lambda f: distance(f, object_point))
-                
-                found = True
-                for f in f_list:
-                    if f == f1 or f == f2:
-                        e = (f[0] - 1, object_point[1])
-                        # test weather it is an escape point
-                        if is_point_on_line(e, hor_escape_line):
-                            print("escape_point_found", e)
-                            break
-                    else:
-                        e = (f[0] + 1, object_point[1])
-                        # test weather it is an escape point
-                        if is_point_on_line(e, hor_escape_line):
-                            print("escape_point_found", e)
-                            break
-                else:
-                    found = False
-                if found:
-                    orientation_flag[object] = vertical
-                    L_e[object].append(e)
-                
-                if not found:
-                    # find extremities of vertical cover
-                    # TODO: refactor: abstract similar code for vertical cover
-                    f1, f3 = get_same_line((hor_escape_line[0] - 1, 
-                                            hor_escape_line[0]), vertical)
-                    f2, f4 = get_same_line((hor_escape_line[1] + 1, 
-                                            hor_escape_line[1]), vertical)
-                    f_list = sorted([f1, f2, f3, f4], 
-                                    key=lambda f: distance(f, object_point))
-                    
-                    found = True
-                    for f in f_list:
-                        if f == f1 or f == f2:
-                            e = (object_point[0], f[1] - 1)
-                            # test weather it is an escape point
-                            if is_point_on_line(e, ver_escape_line):
-                                print("escape_point_found", e)
-                                break
-                        else:
-                            e = (object_point[0], f[1] + 1)
-                            # test weather it is an escape point
-                            if is_point_on_line(e, ver_escape_line):
-                                print("escape_point_found", e)
-                                break
-                    else:
-                        found = False
-                    if found:
-                        orientation_flag[object] = horizontal
-                        L_e[object].append(e)
-                # find escape point (process II)
-            else:
-                # construct vertical line escape
-            
-            #end escape algorithm
+        def construct_escape_line(orientation):
+            """ Construct new escape line """
+            intersect_flag = False
+            new_line = get_same_line(object_point, orientation)
+            lines[pivot][orientation].append(new_line)
+            # does line intersect with any entry in target list
+            for line in lines[not pivot][not orientation]:
+                if do_lines_intersect(line, new_line):
+                    intersect_flag = True
+                    break
+            return new_line, intersect_flag
         
+        # construct or get all escape lines
+        if orientation_flag[pivot] in [horizontal, orientation_both]:
+            hor_escape_line, intersect_flag = construct_escape_line(horizontal)
+        else:
+            hor_escape_line, intersect_flag = lines[pivot][horizontal][-1]
+        if orientation_flag[pivot] in [horizontal, orientation_both]:
+            ver_escape_line, intersect_flag = construct_escape_line(vertical)
+        else:
+            ver_escape_line = lines[pivot][vertical][-1]
         
         if intersect_flag:
-            return
+            return intersect_flag
         
-        if not no_escape_flag[b]:
-            object = b
-            object_point = L_e[object][-1]
-            target = not object
-            #
-            # escape algorithm
-            #
+        #
+        # find escape point (process I)
+        #
+        
+        # find extremities of horizontal cover
+        f1, f3 = get_same_line((ver_escape_line[0][0], 
+                                ver_escape_line[0][1] - 1), horizontal)
+        f2, f4 = get_same_line((ver_escape_line[1][0], 
+                                ver_escape_line[1][1] + 1), horizontal)
+        f_list = sorted([f1, f2, f3, f4], 
+                        key=lambda f: distance(f, object_point))
+        
+        found = True
+        for f in f_list:
+            if f == f1 or f == f2:
+                e = (f[0] - 1, object_point[1])
+                # test weather it is an escape point
+                if is_point_on_line(e, hor_escape_line):
+                    print("escape_point_found", e)
+                    break
+            else:
+                e = (f[0] + 1, object_point[1])
+                # test weather it is an escape point
+                if is_point_on_line(e, hor_escape_line):
+                    print("escape_point_found", e)
+                    break
+        else:
+            found = False
+        if found:
+            orientation_flag[pivot] = vertical
+            L_e[pivot].append(e)
+        
+        if not found:
+            # find extremities of vertical cover
+            # TODO: refactor: abstract similar code for vertical cover
+            f1, f3 = get_same_line((hor_escape_line[0][0] - 1, 
+                                    hor_escape_line[0][1]), vertical)
+            f2, f4 = get_same_line((hor_escape_line[1][0] + 1, 
+                                    hor_escape_line[1][1]), vertical)
+            f_list = sorted([f1, f2, f3, f4], 
+                            key=lambda f: distance(f, object_point))
+            
+            found = True
+            for f in f_list:
+                if f == f1 or f == f2:
+                    e = (object_point[0], f[1] - 1)
+                    # test weather it is an escape point
+                    if is_point_on_line(e, ver_escape_line):
+                        print("escape_point_found", e)
+                        break
+                else:
+                    e = (object_point[0], f[1] + 1)
+                    # test weather it is an escape point
+                    if is_point_on_line(e, ver_escape_line):
+                        print("escape_point_found", e)
+                        break
+            else:
+                found = False
+            if found:
+                orientation_flag[pivot] = horizontal
+                L_e[pivot].append(e)
+        # find escape point (process II)
+        
+        # TODO
+        
+        return intersect_flag
+    
+    #
+    # main loop
+    #
+    pivot = a
+    while not no_escape_flag[a] or not no_escape_flag[b]:
+        if not no_escape_flag[pivot]:
+            intersect_flag = escape_algorithm(pivot)
+        
+        if intersect_flag:
+            print(lines)
+            print(L_e)
+            return True
+        
+        pivot = not pivot
     
     return False
     
-    start_lines = []
-    end_lines = []
