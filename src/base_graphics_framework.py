@@ -132,7 +132,15 @@ class BasicGridScene(QtGui.QGraphicsScene):
         event.accept()
 
 
-class BasicGridView(QtGui.QGraphicsView):
+class BasicView(QtGui.QGraphicsView):
+    def resizeEvent(self, event):
+        super(BasicView, self).resizeEvent(event)
+        # workaround to immediately apply changes after maximize / restore
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.viewport().update()
+
+
+class BasicGridView(BasicView):
     def __init__(self, *args, **kargs):
         super(BasicGridView, self).__init__(*args, **kargs)
         
@@ -156,12 +164,6 @@ class BasicGridView(QtGui.QGraphicsView):
     def getScale(self):
         return QtGui.QStyleOptionGraphicsItem.levelOfDetailFromTransform(
                 self.viewportTransform())
-    
-    def resizeEvent(self, event):
-        super(BasicGridView, self).resizeEvent(event)
-        # workaround to immediately apply changes after maximize / restore
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self.viewport().update()
     
     def wheelEvent(self, event):
         super(BasicGridView, self).wheelEvent(event)
@@ -323,8 +325,8 @@ class InsertLineSubModeBase(LineSubModeBase):
         self._line_anchor_indicator = None
         # shape used for mouse collision tests while searching for 
         # line anchors (must be float!)
-        self._mouse_collision_line_radius = 18.
-        self._mouse_collision_connector_radius = 25.
+        self._mouse_collision_line_radius = 5.
+        self._mouse_collision_connector_radius = 10.
         # used to store anchor in mouseMoveEvent
         self._mouse_move_anchor = None
     
@@ -451,22 +453,6 @@ class InsertLineSubModeBase(LineSubModeBase):
         self.scene().addItem(self._inserted_line_hor)
         self.scene().addItem(self._inserted_line_ver)
     
-    def _do_abort_insert_lines(self):
-        if self._inserted_line_hor is not None:
-            self.scene().removeItem(self._inserted_line_hor)
-            self._inserted_line_hor = None
-        if self._inserted_line_ver is not None:
-            self.scene().removeItem(self._inserted_line_ver)
-            self._inserted_line_ver = None
-    
-    def _do_end_insert_lines(self):
-        if self._inserted_line_hor.line().length() == 0:
-            self.scene().removeItem(self._inserted_line_hor)
-        if self._inserted_line_ver.line().length() == 0:
-            self.scene().removeItem(self._inserted_line_ver)
-        self._inserted_line_hor = None
-        self._inserted_line_ver = None
-    
     @mouse_mode_filtered
     def mouseMoveEvent(self, event):
         super(LineSubModeBase, self).mouseMoveEvent(event)
@@ -491,6 +477,14 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     """ while new lines are inserted """
     def __init__(self, *args, **kargs):
         super(InsertingLineSubMode, self).__init__(*args, **kargs)
+    
+    def _do_end_insert_lines(self):
+        if self._inserted_line_hor.line().length() == 0:
+            self.scene().removeItem(self._inserted_line_hor)
+        if self._inserted_line_ver.line().length() == 0:
+            self.scene().removeItem(self._inserted_line_ver)
+        self._inserted_line_hor = None
+        self._inserted_line_ver = None
     
     @line_submode_filtered
     def mousePressEvent(self, event):
@@ -525,7 +519,12 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     def linesub_leave(self):
         super(InsertingLineSubMode, self).linesub_leave()
         # cleanup InsertingLine
-        self._do_abort_insert_lines()
+        if self._inserted_line_hor is not None:
+            self.scene().removeItem(self._inserted_line_hor)
+            self._inserted_line_hor = None
+        if self._inserted_line_ver is not None:
+            self.scene().removeItem(self._inserted_line_ver)
+            self._inserted_line_ver = None
 
 
 class InsertLineMode(ReadyToInsertLineSubMode, InsertingLineSubMode):

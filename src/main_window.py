@@ -8,7 +8,9 @@ Created on Apr 26, 2011
 
 from PySide import QtGui
 
+import item_list_widget
 import schematic_widget
+import symbol_widget
 
 class MainWindow(QtGui.QWidget):
     def __init__(self, *args, **kargs):
@@ -17,9 +19,15 @@ class MainWindow(QtGui.QWidget):
         self._main_layout = QtGui.QBoxLayout(QtGui.QBoxLayout.LeftToRight, self)
         self._main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._main_layout)
+        # item list view
+ #       self._list = item_list_widget.ItemListView(self)
+ #       self._main_layout.addWidget(self._list, 7)
         # schematic view
         self._view = schematic_widget.SchematicView(self)
-        self._main_layout.addWidget(self._view, 1)
+        self._main_layout.addWidget(self._view, 2)
+        # symbol view
+        self._symbol = symbol_widget.SymbolView(self)
+        self._main_layout.addWidget(self._symbol, 2)
         # set frame size
         #self.resize(400, 400)
     

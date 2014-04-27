@@ -27,7 +27,7 @@ class SchematicView(
             base_graphics_framework.BasicGridView):
     def __init__(self, *args, **kargs):
         super(SchematicView, self).__init__(*args, **kargs)
-        self.setScene(SchematicScene())
+        self.setScene(SchematicScene(self))
         self.setMouseMode(base_graphics_framework.SelectItemsMode)
     
     @timeit
@@ -58,7 +58,6 @@ def main():
     app = QtGui.QApplication(sys.argv)
     view = SchematicView()
     view.show()
-    scene = view.scene() # prevents crash on exit
     app.exec_()
  
 if __name__ == '__main__':

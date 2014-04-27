@@ -12,6 +12,7 @@ from PySide import QtGui, QtCore
 
 import main_window
 import logic_item
+import symbols
 
 def add_items(scene):
     def add_simple_item(pos):
@@ -40,6 +41,8 @@ def add_items(scene):
     
 
 def main():
+    symbols.load_all_symbols()
+    
     app = QtGui.QApplication(sys.argv)
     frame = main_window.MainWindow()
     frame.show()

@@ -242,6 +242,8 @@ import time
 import datetime
 from numbers import Integral
 
+from PySide import QtGui
+
 
 class LogicValue(object):
     """ inspired by four-valued logic common to most HDLs """
@@ -380,6 +382,10 @@ class JsonMeta(type):
         inst = super(JsonMeta, cls).__new__(cls, name, bases, attrs)
         cls._json_classes[name] = inst
         return inst
+    
+    @classmethod
+    def get_all_json_classes(cls):
+        return cls._json_classes.values()
     
     @classmethod
     def validate_data(cls, data):
@@ -714,11 +720,18 @@ class Symbol(JsonObject):
     def validate_data(cls, data):
         super(Symbol, cls).validate_data(data)
         cls.validate_data_from_spec({
-                'primitive': [], #TODO: Rect, Circle, ...
+                'primitive': [Primitive], 
                 }, data)
 
 
-  
+class Primitive(QtGui.QGraphicsItem, JsonObject):
+    __metaclass__ = type('PrimitiveMeta', (type(QtGui.QGraphicsItem), 
+            type(JsonObject)), {})
+    
+    @classmethod
+    def validate_data(cls, data):
+        super(Primitive, cls).validate_data(data)
+
 
 """
 defines an abstract method interface for all simulation parts
