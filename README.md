@@ -24,16 +24,17 @@ We have always been fascinated by the huge levels of abstraction that
 makes it possible to build processors from simple two input logic 
 functions like the AND. With LogikSim we want to share this fascination. 
 With LogikSim it is possible to learn one abstraction layer after the 
-other. The starting point are simple digital element. But you will 
+other. The starting point are simple digital element. You will 
 quickly transition to more complex functions like adders. The next 
 step will be to introduce feedbacks and build circuits that can store 
-information. This will enable you to build flip-flops and opening the 
+information. This will enable you to build flip-flops, opening the 
 door to sequential logic. By introducing clocks you can build state 
-machines, memories and already start to think about writing programs 
-for these machines. Your final task will be to abstract from the 
-logic layer and by introducing an instruction set architecture. 
-This will set the stage for processors and memory sub-systems 
-that will finally make you grasp how today processors operate.
+machines and more complex memories. Your final task will be to abstract 
+from the logic layer. First you will think about how to build programmable
+state machines that operate on programs stored in memories.
+This will lead the path to a formalized instruction set and memory 
+sub-systems. This final step will bridge the gap to software programming
+and make you grasp how today processors operate.
 
 ---
 
