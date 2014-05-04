@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 '''
-Created on Apr 27, 2014
-
-@author: Christian
+Copyright 2014 The LogikSim Authors. All rights reserved.
+Use of this source code is governed by the GNU GPL license that can 
+be found in the LICENSE.txt file.
 '''
 
 def do_lines_intersect(line_a, line_b):
