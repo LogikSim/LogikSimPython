@@ -11,6 +11,11 @@ import unittest
 from algorithms.hightower import hightower_line_search
 
 class HightowerSpec(unittest.TestCase):
+    
+    def test_same_points(self):
+        #TODO
+        pass
+    
     def test_horizontal(self):
         point_a = (10, 5)
         point_b = (15, 5)

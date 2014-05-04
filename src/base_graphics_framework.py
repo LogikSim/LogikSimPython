@@ -235,7 +235,7 @@ class BasicGridView(BasicView):
             self._mouse_mid_last_pos = None
             self.unsetCursor()
     
-    @timeit
+#    @timeit
     def paintEvent(self, *args, **kargs):
         super(BasicGridView, self).paintEvent(*args, **kargs)
 
@@ -503,6 +503,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             self.setLinesubMode(ReadyToInsertLineSubMode)
     
     @line_submode_filtered
+    @timeit
     def mouseMoveEvent(self, event):
         super(InsertingLineSubMode, self).mouseMoveEvent(event)
         
@@ -515,6 +516,27 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         vline = QtCore.QLineF(end.x(), start.y(), end.x(), end.y())
         self._inserted_line_hor.setLine(hline)
         self._inserted_line_ver.setLine(vline)
+        
+        #
+        # new graph based search
+        #
+        # start, end
+        grid = 100
+        bound_rect = self.scene().itemsBoundingRect()
+        def to_node(scene_point):
+            top_left = QtCore.QPoint(bound_rect.left(), bound_rect.top())
+            offset = (scene_point - top_left) / grid
+            return (offset.x(), offset.y())
+        node_start, node_end = to_node(start), to_node(end)
+        print(node_start, node_end)
+        
+        def hightower_line_search(start, end, height, width, probe):
+            start_lines = []
+            end_lines = []
+        
+        
+        
+        
     
     def linesub_leave(self):
         super(InsertingLineSubMode, self).linesub_leave()

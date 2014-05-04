@@ -30,7 +30,7 @@ class SchematicView(
         self.setScene(SchematicScene(self))
         self.setMouseMode(base_graphics_framework.SelectItemsMode)
     
-    @timeit
+#    @timeit
     def mouseMoveEvent(self, event):
         super(SchematicView, self).mouseMoveEvent(event)
     
