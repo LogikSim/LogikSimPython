@@ -1,18 +1,24 @@
 LogikSim
 ========
 
+### Our Vision ###
+
 Our vision is to build the earth's best software to understand digital 
 circuits; A logic simulator that makes it easy and fun to explore and 
 design digital circuits starting from simple AND gates, up to complex 
 computing systems as we see them today.
 
-The target audience of LogikSim are newcomers to the field of digital 
-electronics of any age. We specifically target educational programs. 
-For which we provide a free solution to gain practical experience in 
-upper high school or university level courses. With our software 
-students can design logic circuits by themselves and learn key lessons 
+### Who uses LogikSim ###
+
+Our target audience are newcomers to the field of digital electronics 
+of any age. We specifically target educational programs. For which 
+we provide a free solution to gain practical experience in upper 
+high school or university level courses. With our software students 
+can design logic circuits by themselves and learn key lessons 
 from firsthand experience. We are sure this will both increase the 
 depth and quality of courses covering digital circuits. 
+
+### Why we build LogikSim ###
 
 We have always been fascinated by the huge levels of abstraction that 
 makes it possible to build processors from simple two input logic 
@@ -29,5 +35,7 @@ logic layer and by introducing an instruction set architecture.
 This will set the stage for processors and memory sub-systems 
 that will finally make you grasp how today processors operate.
 
-The project is currently under heavy development, see src for 
+---
+
+The project is currently in an early stage of development, see [src](src) for 
 more information on how you can help us.
