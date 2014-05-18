@@ -19,9 +19,38 @@ def do_lines_intersect(line_a, line_b):
     else:
         h_line = line_b
         v_line = line_a
-    return (h_line[0][1] <= v_line[0][1] and h_line[1][1] >= v_line[0][1] and
-            v_line[0][0] <= h_line[0][0] and v_line[1][0] >= h_line[0][0])
+    return (h_line[0][0] <= v_line[0][0] and h_line[1][0] >= v_line[0][0] and
+            v_line[0][1] <= h_line[0][1] and v_line[1][1] >= h_line[0][1])
 
+
+def get_intersect_point(line_a, line_b):
+    """ Get intersection point of two intersecting lines. 
+    
+    It is assumed that one line is horizontal and the other is vertical.
+    It is further assumed that the lines have the form ((x1, y1), (x2, y2)),
+    while x1 <= x2 and y1 <= y2.
+    """
+    if line_a[0][1] == line_a[1][1] and line_b[0][0] == line_b[1][0]:
+        h_line = line_a
+        v_line = line_b
+    else:
+        h_line = line_b
+        v_line = line_a
+    return (v_line[0][0], h_line[0][1])
+
+
+def get_normalize_line(line):
+    """ Returns normalized line, as used throughout this module
+    
+    For a given line ((xa, ya), (xb, yb)) returns normalized line
+    ((x1, y1), (x2, y2)), while x1 <= x2 and y1 <= y2.
+    It is assumed that one line is horizontal and the other is vertical.
+    """
+    if line[0][0] > line[1][0] or line[0][1] > line[1][1]:
+        return (line[1], line[0])
+    else:
+        return line
+    
 
 def is_point_on_line(point, line):
     """ Test weather point is one line.
@@ -42,6 +71,9 @@ def distance(point_a, point_b):
 def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
     """ Finds path with minimum bends from point A to B on a 2D grid.
     
+    The algorithm is fast, but not guaranteed to find a path, 
+    even if it exists.
+    
     Reference:
         David W. Hightower. 1969. A solution to line-routing problems on the 
         continuous plane. In Proceedings of the 6th annual Design Automation 
@@ -58,8 +90,6 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
                 (x, y) -> boolean
                 It is assumed that there is a ring of free slots just within
                 the bounding box
-        #TODO: refactoring: think about bounded problem, where is_point_free
-                has to be False for sufficiant large or small points
     
     Return:
         Minimum path as list of tuples.
@@ -68,6 +98,7 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
     # define types
     a, b = True, False
     horizontal, vertical, orientation_both = True, False, object()
+    x, y = 0, 1
     
     #point = {a: point_a, b: point_b}
     L_e = {a: [point_a], b: [point_b]} # escape points
@@ -76,11 +107,12 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
     lines = {a: {horizontal: [], vertical: []}, 
              b: {horizontal: [], vertical: []}}
     intersect_flag = False
+    intersection_point = []
     
     def get_same_line(point, orientation):
         """ 
-        Construct line for given point and orientation with same fee 
-        status as point.
+        Construct line for given point and orientation with same 
+        is_point_free status as the given point.
         
         Can be used to find escape lines or obstacle lines.
         """
@@ -116,19 +148,24 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
             for line in lines[not pivot][not orientation]:
                 if do_lines_intersect(line, new_line):
                     intersect_flag = True
+                    intersection_point.append(get_intersect_point(
+                            line, new_line))
                     break
+            print("orientation", orientation, "object_point", object_point, "new_line", new_line, 
+                  "intersect_flag", intersect_flag)
             return new_line, intersect_flag
         
         # construct or get all escape lines
         if orientation_flag[pivot] in [horizontal, orientation_both]:
             hor_escape_line, intersect_flag = construct_escape_line(horizontal)
         else:
-            hor_escape_line, intersect_flag = lines[pivot][horizontal][-1]
+            hor_escape_line = lines[pivot][horizontal][-1]
+        if intersect_flag:
+            return intersect_flag
         if orientation_flag[pivot] in [horizontal, orientation_both]:
             ver_escape_line, intersect_flag = construct_escape_line(vertical)
         else:
             ver_escape_line = lines[pivot][vertical][-1]
-        
         if intersect_flag:
             return intersect_flag
         
@@ -199,20 +236,98 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
         
         return intersect_flag
     
+    def first_refinement_algorithm(pivot):
+        """ p is list of escape points """
+        path = L_e[pivot]
+        # find escape line of escape point
+        orientation = horizontal
+        while True:
+            for k in reversed(lines[pivot][orientation]):
+                if is_point_on_line(intersection_point[0], k):
+                    print("found")
+                    break
+            else: # k not found
+                orientation = not orientation
+                continue
+            break
+        
+        L = []
+        while True:
+            for i in range(len(path)):
+                point = path[i]
+                if is_point_on_line(point, k):
+                    del path[i:]
+                    L.append(point)
+                    if i == 0:
+                        return L
+                    # find new k
+                    orientation = not orientation
+                    for k in lines[pivot][orientation]:
+                        if is_point_on_line(point, k):
+                            break
+                    else:
+                        assert False # algorithm broken
+                    break
+    
+    def second_refinement(path):
+        return path
+        #TODO: fix, paper seems to be incorrect here
+        if len(path) > 5:
+            pass
+        else:
+            m = -1
+            #TODO: loop over m
+            m += 1
+            for i in range(1, len(path)):
+                if path[i][x] == path[i+1][x]:
+                    if path[i][y] >= path[i+1][y]:
+                        q = (path[i][0], path[i][y] - m)
+                        if q[y] <= path[i+1][y]:
+                            continue
+                    else:
+                        q = (path[i][0], path[i][y] + m)
+                        if q[y] >= path[i+1][y]:
+                            continue
+                    # horizontal escape line through q
+                    k = get_same_line(q, horizontal)
+                else:
+                    if path[i][x] < path[i+1][x]:
+                        q = (path[i][0] + m, path[i][y])
+                        if q[x] >= path[i+1][x]:
+                            continue
+                    else:
+                        q = (path[i][0] - m, path[i][y])
+                        if q[x] >= path[i+1][x]:
+                            continue
+                    # vertical escape line through q
+                    k = get_same_line(q, vertical)
+                if (len(path) - 1 - i) <= 2:
+                    break
+                j = i + 2
+                while (len(path) - 1 - j) > 0:
+                    test_line = get_normalize_line(path[j], path[j+1])
+                    if do_lines_intersect(k, test_line):
+                        p_prime = get_intersect_point(k, test_line)
+                    j += 2
+            #TODO: H
+                
+    
     #
     # main loop
     #
     pivot = a
     while not no_escape_flag[a] or not no_escape_flag[b]:
         if not no_escape_flag[pivot]:
+            print("escape_algorithm", pivot)
             intersect_flag = escape_algorithm(pivot)
         
         if intersect_flag:
-            print(lines)
-            print(L_e)
-            return True
+            L_a = first_refinement_algorithm(a)
+            L_b = first_refinement_algorithm(b)
+            path = L_a + intersection_point + list(reversed(L_b))
+            return second_refinement(path)
         
         pivot = not pivot
     
-    return False
+    return False # could not find a path
     
