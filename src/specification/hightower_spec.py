@@ -58,7 +58,7 @@ class IsPointOnLine(unittest.TestCase):
 def area_to_input_data(area):
     lines = area.split('\n')
     search_rect = [(-1, -1), 
-                   (len(area), max(len(line) for line in lines))]
+                   (max(len(line) for line in lines), len(lines))]
     assert area.count('A') == area.count('B') == 1
     
     blocks = set([])
@@ -132,7 +132,6 @@ class HightowerSpec(unittest.TestCase):
         res = hightower_line_search(point_a, point_b, is_point_free, 
                                     search_rect)
         
-        print res
         self.assertTrue(res == [(5, 15), (5, 10), (25, 10), (25, 15)] or
                         res == [(5, 15), (5, 20), (25, 20), (25, 15)], res)
     
@@ -146,7 +145,6 @@ class HightowerSpec(unittest.TestCase):
         res = hightower_line_search(point_a, point_b, is_point_free, 
                                     search_rect)
         
-        print res
         self.assertTrue(res == [(15, 5), (10, 5), (10, 25), (15, 25)] or
                         res == [(15, 5), (20, 5), (20, 25), (15, 25)], res)
     
@@ -174,19 +172,16 @@ class HightowerSpec(unittest.TestCase):
     
     def test_narrow_hall(self):
         area = """
-        
                   + +
-                  |A|
                   | |
+                  |A|
              +----+ |
          2         1|
          B   +------+
-            
         """
         
         high_input, exp_res = area_to_input_data(area)
         res = hightower_line_search(*high_input)
-        
         self.assertListEqual(res, exp_res)
     
     
@@ -199,7 +194,6 @@ class HightowerSpec(unittest.TestCase):
              +----+ |
              |      |
          B   +------+
-            
         """
         
         high_input, exp_res = area_to_input_data(area)

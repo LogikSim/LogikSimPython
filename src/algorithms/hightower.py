@@ -189,16 +189,9 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
         # find escape point (process I)
         #
         def escape_cover(orientation):
-            def get_orientation(line):
-                """ get orientation of line """
-                if line[0][0] == line[1][0]:
-                    return vertical
-                else:
-                    return horizontal
-            
-            def grow_line_by_one(line):
-                """ grow line by one point in each direction """
-                if get_orientation(line) is horizontal:
+            def grow_line_by_one(line, orientation):
+                """ grow line by one point in direction of orientation """
+                if orientation is horizontal:
                     return ((line[0][0] - 1, line[0][1]),
                             (line[1][0] + 1, line[1][1]))
                 else:
@@ -206,7 +199,8 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
                             (line[1][0], line[1][1] + 1))
             
             # find extremities of cover
-            esc_line = grow_line_by_one(escape_line[not orientation])
+            esc_line = grow_line_by_one(escape_line[not orientation], 
+                                        not orientation)
             f1, f3 = get_same_line(esc_line[0], orientation)
             f2, f4 = get_same_line(esc_line[1], orientation)
             f_list = sorted([f1, f2, f3, f4], 
@@ -329,7 +323,11 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
     # main loop
     #
     pivot = a
+    t_i = 0
     while not no_escape_flag[a] or not no_escape_flag[b]:
+        if t_i > 8:
+            break
+        t_i += 1
         if not no_escape_flag[pivot]:
             print("escape_algorithm", pivot)
             intersect_flag = escape_algorithm(pivot)
