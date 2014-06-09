@@ -239,7 +239,7 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
                 orientation_flag[pivot] = not orientation
                 L_e[pivot].append(e)
             return found
-            
+        
         found = escape_cover(horizontal)
         if not found:
             found = escape_cover(vertical)

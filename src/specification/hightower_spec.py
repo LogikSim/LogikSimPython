@@ -53,6 +53,39 @@ class IsPointOnLine(unittest.TestCase):
 
 
 
+
+        
+def area_to_input_data(area):
+    lines = area.split('\n')
+    search_rect = [(-1, -1), 
+                   (len(area), max(len(line) for line in lines))]
+    assert area.count('A') == area.count('B') == 1
+    
+    blocks = set([])
+    sol_point = {}
+    for y, line in enumerate(lines):
+        for x, char in enumerate(line):
+            if char == 'A':
+                point_a = x, y
+            elif char == 'B':
+                point_b = x, y
+            elif char == '+':
+                blocks.add((x, y))
+            elif char in map(str, range(10)):
+                sol_point[int(char)] = x, y
+    
+    def is_point_free(p):
+        return p not in blocks
+    
+    high_input = point_a, point_b, is_point_free, search_rect
+    exp_res = ([point_a] + [sol_point[i] for i in sorted(sol_point)] + 
+               [point_b])
+    return high_input, exp_res
+
+
+
+
+
 class HightowerSpec(unittest.TestCase):
     
     def test_same_points(self):
@@ -116,3 +149,39 @@ class HightowerSpec(unittest.TestCase):
         print res
         self.assertTrue(res == [(15, 5), (10, 5), (10, 25), (15, 25)] or
                         res == [(15, 5), (20, 5), (20, 25), (15, 25)], res)
+    
+    
+    def test_narrow_hall(self):
+        area = """
+        
+                  + +
+                  +A+
+                  + +
+             ++++++ +
+         2         1+
+         B   ++++++++
+            
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertListEqual(res, exp_res)
+    
+    
+    def test_narrow_cave_entry(self):
+        area = """
+         2         1
+                  + +
+                  + +
+                  +A+
+             ++++++ +
+             +      +
+         B   ++++++++
+            
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertListEqual(res, exp_res)
