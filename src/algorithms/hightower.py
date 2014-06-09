@@ -238,9 +238,14 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
         if not found:
             found = escape_cover(vertical)
         
-        # find escape point (process II)
+        if not found:
+            # find escape point (process II)
         
-        # TODO
+            # TODO
+            pass
+        
+        if not found:
+            no_escape_flag[pivot] = True
         
         return intersect_flag
     
@@ -323,11 +328,7 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
     # main loop
     #
     pivot = a
-    t_i = 0
     while not no_escape_flag[a] or not no_escape_flag[b]:
-        if t_i > 8:
-            break
-        t_i += 1
         if not no_escape_flag[pivot]:
             print("escape_algorithm", pivot)
             intersect_flag = escape_algorithm(pivot)

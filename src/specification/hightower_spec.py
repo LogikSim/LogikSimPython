@@ -200,3 +200,18 @@ class HightowerSpec(unittest.TestCase):
         res = hightower_line_search(*high_input)
         
         self.assertListEqual(res, exp_res)
+    
+    
+    def test_cave_unsolvable(self):
+        area = """
+             +-----+
+             |     |
+             |  A  |
+             |     |
+         B   +-----+
+        """
+        
+        high_input, _ = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertEqual(res, None)
