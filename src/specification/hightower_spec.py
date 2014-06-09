@@ -215,3 +215,25 @@ class HightowerSpec(unittest.TestCase):
         res = hightower_line_search(*high_input)
         
         self.assertEqual(res, None)
+    
+    
+    def test_escape_point_loop(self): #TODO better name
+        area = """
+                                 
+               +---+             
+          1 A  |   |              
+               |   +-----+        
+             +-+   +---+ |       
+             |     | B | |       
+             | +---+   | |       
+           +-+ |  4  5 | |       
+           |   |    +--+ |       
+           +---+    |    |       
+          2       3 +----+       
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        print high_input
+        
+        self.assertListEqual(res, exp_res)

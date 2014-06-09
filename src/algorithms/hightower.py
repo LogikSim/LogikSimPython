@@ -214,8 +214,9 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
                         e = (f[0] - 1, object_point[1])
                     else:
                         e = (object_point[0], f[1] - 1)
-                    # test weather it is an escape point
-                    if is_point_on_line(e, escape_line[orientation]):
+                    # test weather it is an escape point not being used
+                    if (is_point_on_line(e, escape_line[orientation]) and
+                            e not in L_e[pivot]):
                         print("escape_point_found A", e)
                         break
                 else:
@@ -223,8 +224,9 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
                         e = (f[0] + 1, object_point[1])
                     else:
                         e = (object_point[0], f[1] + 1)
-                    # test weather it is an escape point
-                    if is_point_on_line(e, escape_line[orientation]):
+                    # test weather it is an escape point not being used
+                    if (is_point_on_line(e, escape_line[orientation]) and
+                            e not in L_e[pivot]):
                         print("escape_point_found B", e)
                         break
             else:
