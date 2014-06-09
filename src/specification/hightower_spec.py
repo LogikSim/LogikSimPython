@@ -69,7 +69,7 @@ def area_to_input_data(area):
                 point_a = x, y
             elif char == 'B':
                 point_b = x, y
-            elif char == '+':
+            elif char in ['+', '-', '|']:
                 blocks.add((x, y))
             elif char in map(str, range(10)):
                 sol_point[int(char)] = x, y
@@ -151,15 +151,36 @@ class HightowerSpec(unittest.TestCase):
                         res == [(15, 5), (20, 5), (20, 25), (15, 25)], res)
     
     
+    def test_paper_problem_one(self):
+        area = """
+                                                      
+          1                        2                  
+                         +--------+ +                 
+                         |          |                 
+                         |   B     3|                 
+                         |          |                 
+             +           +----------+                 
+             |                                        
+          A  |                                        
+             +                                        
+                                                      
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertListEqual(res, exp_res)
+    
+    
     def test_narrow_hall(self):
         area = """
         
                   + +
-                  +A+
-                  + +
-             ++++++ +
-         2         1+
-         B   ++++++++
+                  |A|
+                  | |
+             +----+ |
+         2         1|
+         B   +------+
             
         """
         
@@ -173,11 +194,11 @@ class HightowerSpec(unittest.TestCase):
         area = """
          2         1
                   + +
-                  + +
-                  +A+
-             ++++++ +
-             +      +
-         B   ++++++++
+                  | |
+                  |A|
+             +----+ |
+             |      |
+         B   +------+
             
         """
         

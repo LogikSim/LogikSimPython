@@ -324,7 +324,6 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
                         p_prime = get_intersect_point(k, test_line)
                     j += 2
             #TODO: H
-                
     
     #
     # main loop
