@@ -44,7 +44,7 @@ def get_normalize_line(line):
     
     For a given line ((xa, ya), (xb, yb)) returns normalized line
     ((x1, y1), (x2, y2)), while x1 <= x2 and y1 <= y2.
-    It is assumed that one line is horizontal and the other is vertical.
+    It is assumed that the line is either horizontal or vertical.
     """
     if line[0][0] > line[1][0] or line[0][1] > line[1][1]:
         return (line[1], line[0])
@@ -74,7 +74,7 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
     The algorithm is fast, but not guaranteed to find a path, 
     even if it exists.
     
-    Reference:
+    Based on:
         David W. Hightower. 1969. A solution to line-routing problems on the 
         continuous plane. In Proceedings of the 6th annual Design Automation 
         Conference (DAC '69). ACM, New York, NY, USA, 1-24. 
@@ -94,13 +94,17 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
     Return:
         Minimum path as list of tuples.
     """
+    assert is_point_free(point_a)
+    assert not is_point_out_bounds(point_a)
+    assert is_point_free(point_b)
+    assert not is_point_out_bounds(point_b)
     
     # define types
     a, b = True, False
     horizontal, vertical, orientation_both = True, False, object()
     x, y = 0, 1
     
-    #point = {a: point_a, b: point_b}
+    # define data structures
     L_e = {a: [point_a], b: [point_b]} # escape points
     orientation_flag = {a: orientation_both, b: orientation_both}
     no_escape_flag = {a: False, b: False}
@@ -151,8 +155,8 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
                     intersection_point.append(get_intersect_point(
                             line, new_line))
                     break
-            print("orientation", orientation, "object_point", object_point, "new_line", new_line, 
-                  "intersect_flag", intersect_flag)
+            print("orientation", orientation, "object_point", object_point, 
+                  "new_line", new_line, "intersect_flag", intersect_flag)
             return new_line, intersect_flag
         
         # construct or get all escape lines

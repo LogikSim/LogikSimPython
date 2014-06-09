@@ -13,6 +13,7 @@ from PySide import QtGui, QtCore
 from helper.timeit_mod import timeit
 import modes
 import logic_item
+from algorithms.hightower import hightower_line_search
 
 
 class BasicGridScene(QtGui.QGraphicsScene):
@@ -26,6 +27,9 @@ class BasicGridScene(QtGui.QGraphicsScene):
     def setGridEnabled(self, value):
         assert isinstance(value, bool)
         self._is_grid_enabled = value
+    
+    def get_grid_spacing(self):
+        return 100
 
     def get_grid_spacing_from_scale(self, scale):
         return 100 if scale > 0.033 else 500
@@ -95,7 +99,7 @@ class BasicGridScene(QtGui.QGraphicsScene):
         """
         if y is not None:
             pos = QtCore.QPointF(pos, y)
-        spacing = 100
+        spacing = self.get_grid_spacing()
         return (pos / spacing).toPoint() * spacing
     
     def selectionAllowed(self):
@@ -477,6 +481,9 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     """ while new lines are inserted """
     def __init__(self, *args, **kargs):
         super(InsertingLineSubMode, self).__init__(*args, **kargs)
+        # stores two tuples with start and end coordinates as used in
+        # mouseMoveEvent
+        self._insert_line_start_end = None
     
     def _do_end_insert_lines(self):
         if self._inserted_line_hor.line().length() == 0:
@@ -485,6 +492,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             self.scene().removeItem(self._inserted_line_ver)
         self._inserted_line_hor = None
         self._inserted_line_ver = None
+        self._insert_line_start_end = None
     
     @line_submode_filtered
     def mousePressEvent(self, event):
@@ -503,10 +511,15 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             self.setLinesubMode(ReadyToInsertLineSubMode)
     
     @line_submode_filtered
-    @timeit
     def mouseMoveEvent(self, event):
+        QtGui.QApplication.instance().processEvents()
+        
         super(InsertingLineSubMode, self).mouseMoveEvent(event)
         
+        self.do_mouseMoveEvent(event)
+    
+    @timeit
+    def do_mouseMoveEvent(self, event):
         gpos = self.mapToSceneGrid(event.pos())
         anchor = self._mouse_move_anchor
         end = gpos if anchor is None else anchor
@@ -520,20 +533,65 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         #
         # new graph based search
         #
-        # start, end
-        grid = 100
+        
+        spacing = self.scene().get_grid_spacing()
+        def to_grid(scene_point):
+            """ Converts points in self.scene to grid points used here.
+            
+            The functions always rounds down """
+            return int(scene_point / spacing)
+        def to_scene(grid_point):
+            """ Converts grid points used here to points in self.scene """
+            return grid_point * spacing
+        
+        p_start = to_grid(start.x()), to_grid(start.y())
+        p_end = to_grid(end.x()), to_grid(end.y())
+        
+        if (p_start, p_end) == self._insert_line_start_end:
+            return
+        self._insert_line_start_end = p_start, p_end
+        
+        # remove old results
+        _l_lines = getattr(self, "_l_lines", [])
+        for item in _l_lines:
+            self.scene().removeItem(item)
+        self._l_lines = []
+        
+        #TODO: itemBoundingRect is time consuming --> move out of mouseEvent
         bound_rect = self.scene().itemsBoundingRect()
-        def to_node(scene_point):
-            top_left = QtCore.QPoint(bound_rect.left(), bound_rect.top())
-            offset = (scene_point - top_left) / grid
-            return (offset.x(), offset.y())
-        node_start, node_end = to_node(start), to_node(end)
-        print(node_start, node_end)
+        r_left = to_grid(min(bound_rect.left(), start.x(), end.x())) - 1
+        r_top = to_grid(min(bound_rect.top(), start.y(), end.y())) - 1
+        r_right = to_grid(max(bound_rect.right(), start.x(), end.x())) + 2
+        r_bottom = to_grid(max(bound_rect.bottom(), 
+                                     start.y(), end.y())) + 2
         
-        def hightower_line_search(start, end, height, width, probe):
-            start_lines = []
-            end_lines = []
+        def is_point_free(point):
+            items = self.scene().items(QtCore.QPointF(*map(to_scene, point)))
+            for item in items:
+                if item not in (self._inserted_line_hor, 
+                                self._inserted_line_ver,
+                                self._line_anchor_indicator):
+                    return False
+            return True
         
+        def is_point_out_bounds(point):
+            """ is point (x, y) out of bounding rect """
+            return not (r_left <= point[0] <= r_right and 
+                        r_top <= point[1] <= r_bottom)
+        
+        print((r_left, r_top), (r_right, r_bottom))
+        
+        print(p_start, p_end)
+        res = hightower_line_search(p_start, p_end, is_point_free, 
+                                    is_point_out_bounds)
+        
+        # draw result
+        for line in zip(res, res[1:]):
+            start = QtCore.QPointF(*map(to_scene, line[0]))
+            end = QtCore.QPointF(*map(to_scene, line[1]))
+            l_line = logic_item.LineItem(QtCore.QLineF(start, end))
+            self.scene().addItem(l_line)
+            self._l_lines.append(l_line)
         
         
         
