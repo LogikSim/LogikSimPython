@@ -58,27 +58,61 @@ class HightowerSpec(unittest.TestCase):
     def test_same_points(self):
         point_a = (10, 5)
         point_b = (10, 5)
-        is_point_free = lambda x: True
-        is_point_out_bounds = (lambda x: not(0 <= x[0] <= 100 and 
-                                             0 <= x[1] <= 100))
+        is_point_free = lambda p: True
+        search_rect = [(0, 0), (100, 100)]
         
         res = hightower_line_search(point_a, point_b, is_point_free, 
-                                    is_point_out_bounds)
+                                    search_rect)
         
-        print("res = ", res)
-        # TODO: improve assertion
-        self.assertTrue(len(res) != 0)
+        self.assertListEqual([(10, 5), (10, 5)], res)
     
     def test_horizontal(self):
         point_a = (10, 5)
         point_b = (15, 5)
-        is_point_free = lambda x: True
-        is_point_out_bounds = (lambda x: not(0 <= x[0] <= 100 and 
-                                             0 <= x[1] <= 100))
+        is_point_free = lambda p: True
+        search_rect = [(0, 0), (100, 100)]
         
         res = hightower_line_search(point_a, point_b, is_point_free, 
-                                    is_point_out_bounds)
+                                    search_rect)
         
-        print("res = ", res)
-        # TODO: improve assertion
-        self.assertTrue(len(res) != 0)
+        self.assertListEqual([(10, 5), (15, 5)], res)
+    
+    def test_empty_space(self):
+        point_a = (10, 5)
+        point_b = (15, 10)
+        is_point_free = lambda p: True
+        search_rect = [(0, 0), (100, 100)]
+        
+        res = hightower_line_search(point_a, point_b, is_point_free, 
+                                    search_rect)
+        
+        self.assertTrue(res == [(10, 5), (15, 5), (15, 10)] or
+                        res == [(10, 5), (10, 10), (15, 10)], res)
+    
+    def test_horizontal_blocking_object(self):
+        point_a = ( 5, 15)
+        point_b = (25, 15)
+        is_point_free = (lambda p: not(10 < p[0] < 20 and
+                                       10 < p[1] < 20))
+        search_rect = [(0, 0), (30, 30)]
+        
+        res = hightower_line_search(point_a, point_b, is_point_free, 
+                                    search_rect)
+        
+        print res
+        self.assertTrue(res == [(5, 15), (5, 10), (25, 10), (25, 15)] or
+                        res == [(5, 15), (5, 20), (25, 20), (25, 15)], res)
+    
+    def test_vertical_blocking_object(self):
+        point_a = (15,  5)
+        point_b = (15, 25)
+        is_point_free = (lambda p: not(10 < p[0] < 20 and
+                                       10 < p[1] < 20))
+        search_rect = [(0, 0), (30, 30)]
+        
+        res = hightower_line_search(point_a, point_b, is_point_free, 
+                                    search_rect)
+        
+        print res
+        self.assertTrue(res == [(15, 5), (10, 5), (10, 25), (15, 25)] or
+                        res == [(15, 5), (20, 5), (20, 25), (15, 25)], res)

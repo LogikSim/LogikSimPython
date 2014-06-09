@@ -68,7 +68,7 @@ def distance(point_a, point_b):
     return ((point_a[0] - point_b[0])**2 + (point_a[1] - point_b[1])**2)**0.5
 
 
-def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
+def hightower_line_search(point_a, point_b, is_point_free, search_rect):
     """ Finds path with minimum bends from point A to B on a 2D grid.
     
     The algorithm is fast, but not guaranteed to find a path, 
@@ -85,19 +85,20 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
         point_b (tuple): Point B
         is_point_free (function): function used to probe the grid weather point
                 is free or taken. (x, y) -> boolean
-        is_point_out_bounds (function): function used to probe the grid weather
-                a point is out of the bounding area of the problem.
-                (x, y) -> boolean
-                It is assumed that there is a ring of free slots just within
-                the bounding box
+        search_rect [(top_left), (bottom_right)]: list of two points (tuple)
+                that define the search area. The borders are included.
+                It is assumed that there only free points on the border.
     
     Return:
-        Minimum path as list of tuples.
+        Minimum path as list of tuples or None if nothing could be found
     """
-    assert is_point_free(point_a)
-    assert not is_point_out_bounds(point_a)
-    assert is_point_free(point_b)
-    assert not is_point_out_bounds(point_b)
+    def is_point_in_bounds(point):
+        return (search_rect[0][0] <= point[0] <= search_rect[1][0] and
+                search_rect[0][1] <= point[1] <= search_rect[1][1])
+    
+    if not (is_point_free(point_a) and is_point_in_bounds(point_a) and
+            is_point_free(point_b) and is_point_in_bounds(point_b)):
+        return None
     
     # define types
     a, b = True, False
@@ -120,13 +121,21 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
         
         Can be used to find escape lines or obstacle lines.
         """
+        if not is_point_in_bounds(point):
+            if orientation is horizontal:
+                return ((search_rect[0][0], point[1]), 
+                        (search_rect[1][0], point[1]))
+            else:
+                return ((point[0], search_rect[0][1]), 
+                        (point[0], search_rect[1][1]))
+        
         point_free = is_point_free(point)
         def find_bound(point, update):
             while True:
                 next = update(point)
                 if is_point_free(next) != point_free:
                     break
-                if is_point_out_bounds(next):
+                if not is_point_in_bounds(next):
                     break
                 point = next
             return point
@@ -166,7 +175,7 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
             hor_escape_line = lines[pivot][horizontal][-1]
         if intersect_flag:
             return intersect_flag
-        if orientation_flag[pivot] in [horizontal, orientation_both]:
+        if orientation_flag[pivot] in [vertical, orientation_both]:
             ver_escape_line, intersect_flag = construct_escape_line(vertical)
         else:
             ver_escape_line = lines[pivot][vertical][-1]
@@ -184,20 +193,20 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
                                 ver_escape_line[1][1] + 1), horizontal)
         f_list = sorted([f1, f2, f3, f4], 
                         key=lambda f: distance(f, object_point))
-        
+        print("f_list hor", f_list)
         found = True
         for f in f_list:
             if f == f1 or f == f2:
                 e = (f[0] - 1, object_point[1])
                 # test weather it is an escape point
                 if is_point_on_line(e, hor_escape_line):
-                    print("escape_point_found", e)
+                    print("escape_point_found A", e)
                     break
             else:
                 e = (f[0] + 1, object_point[1])
                 # test weather it is an escape point
                 if is_point_on_line(e, hor_escape_line):
-                    print("escape_point_found", e)
+                    print("escape_point_found B", e)
                     break
         else:
             found = False
@@ -214,20 +223,20 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
                                     hor_escape_line[1][1]), vertical)
             f_list = sorted([f1, f2, f3, f4], 
                             key=lambda f: distance(f, object_point))
-            
+            print("f_list ver", f_list)
             found = True
             for f in f_list:
                 if f == f1 or f == f2:
                     e = (object_point[0], f[1] - 1)
                     # test weather it is an escape point
                     if is_point_on_line(e, ver_escape_line):
-                        print("escape_point_found", e)
+                        print("escape_point_found C", e)
                         break
                 else:
                     e = (object_point[0], f[1] + 1)
                     # test weather it is an escape point
                     if is_point_on_line(e, ver_escape_line):
-                        print("escape_point_found", e)
+                        print("escape_point_found D", e)
                         break
             else:
                 found = False
@@ -263,7 +272,7 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
                     del path[i:]
                     L.append(point)
                     if i == 0:
-                        return L
+                        return list(reversed(L))
                     # find new k
                     orientation = not orientation
                     for k in lines[pivot][orientation]:
@@ -328,10 +337,13 @@ def hightower_line_search(point_a, point_b, is_point_free, is_point_out_bounds):
         if intersect_flag:
             L_a = first_refinement_algorithm(a)
             L_b = first_refinement_algorithm(b)
-            path = L_a + intersection_point + list(reversed(L_b))
+            if intersection_point[0] in L_a + L_b:
+                path = L_a + list(reversed(L_b))
+            else:
+                path = L_a + intersection_point + list(reversed(L_b))
             return second_refinement(path)
         
         pivot = not pivot
     
-    return False # could not find a path
+    return None # could not find a path
     

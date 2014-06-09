@@ -525,10 +525,10 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         end = gpos if anchor is None else anchor
         start = self._insert_line_start
         # adjust lines
-        hline = QtCore.QLineF(start.x(), start.y(), end.x(), start.y())
-        vline = QtCore.QLineF(end.x(), start.y(), end.x(), end.y())
-        self._inserted_line_hor.setLine(hline)
-        self._inserted_line_ver.setLine(vline)
+        #hline = QtCore.QLineF(start.x(), start.y(), end.x(), start.y())
+        #vline = QtCore.QLineF(end.x(), start.y(), end.x(), end.y())
+        #self._inserted_line_hor.setLine(hline)
+        #self._inserted_line_ver.setLine(vline)
         
         #
         # new graph based search
@@ -574,16 +574,12 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                     return False
             return True
         
-        def is_point_out_bounds(point):
-            """ is point (x, y) out of bounding rect """
-            return not (r_left <= point[0] <= r_right and 
-                        r_top <= point[1] <= r_bottom)
+        search_rect = ((r_left, r_top), (r_right, r_bottom))
         
-        print((r_left, r_top), (r_right, r_bottom))
+        res = hightower_line_search(p_start, p_end, is_point_free, search_rect)
         
-        print(p_start, p_end)
-        res = hightower_line_search(p_start, p_end, is_point_free, 
-                                    is_point_out_bounds)
+        if res is None:
+            return
         
         # draw result
         for line in zip(res, res[1:]):
