@@ -481,9 +481,17 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     """ while new lines are inserted """
     def __init__(self, *args, **kargs):
         super(InsertingLineSubMode, self).__init__(*args, **kargs)
+        
+        self._update_line_timer = QtCore.QTimer()
+        self._update_line_timer.timeout.connect(self.do_update_line)
+        self._update_line_timer.setSingleShot(True)
+        self._insert_line_start_end = None
         # stores two tuples with start and end coordinates as used in
         # mouseMoveEvent
-        self._insert_line_start_end = None
+        self._insert_line_start_end_last = None
+        
+        print(self._update_line_timer.isSingleShot(), 
+              self._update_line_timer.interval())
     
     def _do_end_insert_lines(self):
         if self._inserted_line_hor.line().length() == 0:
@@ -492,7 +500,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             self.scene().removeItem(self._inserted_line_ver)
         self._inserted_line_hor = None
         self._inserted_line_ver = None
-        self._insert_line_start_end = None
+        self._insert_line_start_end_last = None
     
     @line_submode_filtered
     def mousePressEvent(self, event):
@@ -512,18 +520,23 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     
     @line_submode_filtered
     def mouseMoveEvent(self, event):
-        QtGui.QApplication.instance().processEvents()
+        #QtGui.QApplication.instance().processEvents()
         
         super(InsertingLineSubMode, self).mouseMoveEvent(event)
         
-        self.do_mouseMoveEvent(event)
-    
-    @timeit
-    def do_mouseMoveEvent(self, event):
         gpos = self.mapToSceneGrid(event.pos())
         anchor = self._mouse_move_anchor
         end = gpos if anchor is None else anchor
         start = self._insert_line_start
+        
+        self._insert_line_start_end = (start, end)
+        self._update_line_timer.start()
+        
+    
+    @timeit
+    def do_update_line(self):
+        start, end = self._insert_line_start_end
+        
         # adjust lines
         #hline = QtCore.QLineF(start.x(), start.y(), end.x(), start.y())
         #vline = QtCore.QLineF(end.x(), start.y(), end.x(), end.y())
@@ -547,9 +560,9 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         p_start = to_grid(start.x()), to_grid(start.y())
         p_end = to_grid(end.x()), to_grid(end.y())
         
-        if (p_start, p_end) == self._insert_line_start_end:
+        if (p_start, p_end) == self._insert_line_start_end_last:
             return
-        self._insert_line_start_end = p_start, p_end
+        self._insert_line_start_end_last = p_start, p_end
         
         # remove old results
         _l_lines = getattr(self, "_l_lines", [])
@@ -576,7 +589,8 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         
         search_rect = ((r_left, r_top), (r_right, r_bottom))
         
-        res = hightower_line_search(p_start, p_end, is_point_free, search_rect)
+        res = hightower_line_search(p_start, p_end, is_point_free, search_rect,
+                                    do_second_refinement=False)
         
         if res is None:
             return
@@ -588,8 +602,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             l_line = logic_item.LineItem(QtCore.QLineF(start, end))
             self.scene().addItem(l_line)
             self._l_lines.append(l_line)
-        
-        
         
     
     def linesub_leave(self):

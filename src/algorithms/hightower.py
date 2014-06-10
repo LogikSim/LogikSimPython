@@ -286,19 +286,15 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect,
     def second_refinement(path):
         i = 0
         while i < len(path) - 1:
-            print("i", i)
             for m in itertools.count():
-                print("i", i, "m", m)
                 if path[i][x] == path[i+1][x]:
                     if path[i][y] >= path[i+1][y]:
                         q = (path[i][0], path[i][y] - m)
                         if q[y] <= path[i+1][y]:
-                            print("break 1")
                             break
                     else:
                         q = (path[i][0], path[i][y] + m)
                         if q[y] >= path[i+1][y]:
-                            print("break 2")
                             break
                     # horizontal escape line through q
                     k = get_same_line(q, horizontal)
@@ -306,18 +302,15 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect,
                     if path[i][x] < path[i+1][x]:
                         q = (path[i][0] + m, path[i][y])
                         if q[x] >= path[i+1][x]:
-                            print("break 3")
                             break
                     else:
                         q = (path[i][0] - m, path[i][y])
                         if q[x] <= path[i+1][x]:
-                            print("break 4")
                             break
                     # vertical escape line through q
                     k = get_same_line(q, vertical)
                 j = i + 2
                 while j < len(path) - 1:
-                    print("i", i, "m", m, "j", j)
                     test_line = get_normalize_line((path[j], path[j+1]))
                     if do_lines_intersect(k, test_line):
                         p_prime = get_intersect_point(k, test_line)
