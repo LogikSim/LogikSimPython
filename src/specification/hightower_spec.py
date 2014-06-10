@@ -217,7 +217,7 @@ class HightowerSpec(unittest.TestCase):
         self.assertEqual(res, None)
     
     
-    def test_escape_point_loop(self): #TODO better name
+    def test_escape_point_loop(self):
         area = """
                                  
                +---+             
@@ -235,5 +235,61 @@ class HightowerSpec(unittest.TestCase):
         high_input, exp_res = area_to_input_data(area)
         res = hightower_line_search(*high_input)
         print high_input
+        
+        self.assertListEqual(res, exp_res)
+    
+    
+    @unittest.skip("Probably unsolvable by Hightower")
+    def test_escape_zigzag_valley(self):
+        area = """
+                  + 1 A + 
+                  |     | 
+                +-+     | 
+                |3  2+--+ 
+            +---+  +-+    
+            | B  4 |      
+            +------+      
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertListEqual(res, exp_res)
+    
+    
+    def test_refinement_2_example_1(self):
+        area = """
+          2                   1      
+            +-----------+            
+            |           |   +         
+            |           |   | A       
+        +   |           |   +         
+        | B |           +             +
+        |   |              +-------+  +
+        +---+                         
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertListEqual(res, exp_res)
+    
+    
+    def test_refinement_2_example_2(self):
+        area = """
+          1       2    
+               +-+     
+          A    | |     
+               +-+ 
+           +-+         
+           | |    B
+           | |
+          ++ |
+          |  |
+          +--+     
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
         
         self.assertListEqual(res, exp_res)

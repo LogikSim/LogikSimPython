@@ -6,6 +6,8 @@ Use of this source code is governed by the GNU GPL license that can
 be found in the LICENSE.txt file.
 '''
 
+import itertools
+
 def do_lines_intersect(line_a, line_b):
     """ Test weather two lines intersect. 
     
@@ -68,7 +70,8 @@ def distance(point_a, point_b):
     return ((point_a[0] - point_b[0])**2 + (point_a[1] - point_b[1])**2)**0.5
 
 
-def hightower_line_search(point_a, point_b, is_point_free, search_rect):
+def hightower_line_search(point_a, point_b, is_point_free, search_rect, 
+                          do_second_refinement=True):
     """ Finds path with minimum bends from point A to B on a 2D grid.
     
     The algorithm is fast, but not guaranteed to find a path, 
@@ -88,6 +91,7 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
         search_rect [(top_left), (bottom_right)]: list of two points (tuple)
                 that define the search area. The borders are included.
                 It is assumed that there only free points on the border.
+        do_second_refinement (boolean): do timeconsuming second refinement
     
     Return:
         Minimum path as list of tuples or None if nothing could be found
@@ -214,21 +218,16 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
                         e = (f[0] - 1, object_point[1])
                     else:
                         e = (object_point[0], f[1] - 1)
-                    # test weather it is an escape point not being used
-                    if (is_point_on_line(e, escape_line[orientation]) and
-                            e not in L_e[pivot]):
-                        print("escape_point_found A", e)
-                        break
                 else:
                     if orientation is horizontal:
                         e = (f[0] + 1, object_point[1])
                     else:
                         e = (object_point[0], f[1] + 1)
-                    # test weather it is an escape point not being used
-                    if (is_point_on_line(e, escape_line[orientation]) and
-                            e not in L_e[pivot]):
-                        print("escape_point_found B", e)
-                        break
+                # test weather it is an escape point not being used
+                if (is_point_on_line(e, escape_line[orientation]) and
+                        e not in L_e[pivot]):
+                    print("escape_point_found", e)
+                    break
             else:
                 found = False
             if found:
@@ -285,46 +284,59 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
                     break
     
     def second_refinement(path):
-        return path
-        #TODO: fix, paper seems to be incorrect here
-        if len(path) > 5:
-            pass
-        else:
-            m = -1
-            #TODO: loop over m
-            m += 1
-            for i in range(1, len(path)):
+        i = 0
+        while i < len(path) - 1:
+            print("i", i)
+            for m in itertools.count():
+                print("i", i, "m", m)
                 if path[i][x] == path[i+1][x]:
                     if path[i][y] >= path[i+1][y]:
                         q = (path[i][0], path[i][y] - m)
                         if q[y] <= path[i+1][y]:
-                            continue
+                            print("break 1")
+                            break
                     else:
                         q = (path[i][0], path[i][y] + m)
                         if q[y] >= path[i+1][y]:
-                            continue
+                            print("break 2")
+                            break
                     # horizontal escape line through q
                     k = get_same_line(q, horizontal)
                 else:
                     if path[i][x] < path[i+1][x]:
                         q = (path[i][0] + m, path[i][y])
                         if q[x] >= path[i+1][x]:
-                            continue
+                            print("break 3")
+                            break
                     else:
                         q = (path[i][0] - m, path[i][y])
-                        if q[x] >= path[i+1][x]:
-                            continue
+                        if q[x] <= path[i+1][x]:
+                            print("break 4")
+                            break
                     # vertical escape line through q
                     k = get_same_line(q, vertical)
-                if (len(path) - 1 - i) <= 2:
-                    break
                 j = i + 2
-                while (len(path) - 1 - j) > 0:
-                    test_line = get_normalize_line(path[j], path[j+1])
+                while j < len(path) - 1:
+                    print("i", i, "m", m, "j", j)
+                    test_line = get_normalize_line((path[j], path[j+1]))
                     if do_lines_intersect(k, test_line):
                         p_prime = get_intersect_point(k, test_line)
+                        if m == 0:
+                            del path[i+2:j+1]
+                            path[i+1] = p_prime
+                        else:
+                            del path[i+3:j+1]
+                            path[i+1] = q
+                            path[i+2] = p_prime
+                        print("found refinement intersection", p_prime)
+                        break
                     j += 2
-            #TODO: H
+                else:
+                    continue
+                break
+                #TODO: H
+            i += 1
+        return path
     
     #
     # main loop
@@ -342,7 +354,10 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect):
                 path = L_a + list(reversed(L_b))
             else:
                 path = L_a + intersection_point + list(reversed(L_b))
-            return second_refinement(path)
+            if do_second_refinement:
+                return second_refinement(path)
+            else:
+                return path
         
         pivot = not pivot
     
