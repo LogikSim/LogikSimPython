@@ -49,7 +49,7 @@ class ItemListScene(base_graphics_framework.BasicGridScene):
         return self._col_count
     
     def set_col_count(self, cols):
-        assert isinstance(cols, (int, long)) and cols > 0
+        assert isinstance(cols, int) and cols > 0
         self._col_count = cols
     
     def add_item(self, item_class):

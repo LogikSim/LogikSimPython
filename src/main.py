@@ -1,9 +1,12 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Use of this source code is governed by the GNU GPL license that can 
+# be found in the LICENSE.txt file.
+#
 '''
-Copyright 2014 The LogikSim Authors. All rights reserved.
-Use of this source code is governed by the GNU GPL license that can 
-be found in the LICENSE.txt file.
+Entry script to start the LogikSim GUI.
 '''
 
 import sys
@@ -29,15 +32,20 @@ def add_items(scene):
     
     add_simple_item(QtCore.QPointF(81000, 50500))
     add_simple_item(QtCore.QPointF(82000, 50500))
-    
-    item = QtGui.QGraphicsTextItem("Text Item")
-    item.setPos(80000, 50000)
-    item.setDefaultTextColor(QtCore.Qt.red)
-    item.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
-    font = item.font()
-    font.setPointSizeF(100)
-    item.setFont(font)
-    scene.addItem(item)
+
+    for text, pos in [("Modes:", (80000, 49000)),
+                      ("F1 - Selection", (80000, 49200)),
+                      ("F2 - Insert Logic Items", (80000, 49400)),
+                      ("F3 - Insert Connectors", (80000, 49600)),
+                      ("F4 - Insert Lines", (80000, 49800))]:
+        item = QtGui.QGraphicsTextItem(text)
+        item.setPos(*pos)
+        item.setDefaultTextColor(QtCore.Qt.red)
+        #item.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
+        font = item.font()
+        font.setPointSizeF(100)
+        item.setFont(font)
+        scene.addItem(item)
     
 
 def main():

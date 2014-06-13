@@ -156,8 +156,8 @@ class TestSubclassing(unittest.TestCase):
     
     def test_base_class_with_metaclass(self):
         class BaseMeta(type): pass
-        class Base(object):
-            __metaclass__ = BaseMeta
+        class Base(object, metaclass=BaseMeta):
+            pass
         BaseMode, _ = generate_mode_base(Base, '')
         class A(BaseMode): pass
         class User(A, Base): pass
@@ -269,8 +269,7 @@ class TestSubclassing(unittest.TestCase):
             def foo(self):
                 return super(Beta, self).foo() + 4
         class UserMeta(type(Alpha), type(Beta)): pass
-        class User(Alpha, Beta):
-            __metaclass__ = UserMeta
+        class User(Alpha, Beta, metaclass=UserMeta):
             def foo(self):
                 return super(User, self).foo() + 8
         # None, None

@@ -12,10 +12,9 @@ from simulation_model import Primitive
 
 
 
-class Rect(QtGui.QGraphicsRectItem, Primitive):
-    __metaclass__ = type('RectMeta', (type(Primitive), 
-            type(QtGui.QGraphicsRectItem)), {})
-    
+class Rect(QtGui.QGraphicsRectItem, Primitive,
+           metaclass=type('RectMeta', (type(Primitive), 
+                          type(QtGui.QGraphicsRectItem)), {})):
     def __init__(self, *args, **kargs):
         super(Rect, self).__init__(*args, **kargs)
         if kargs.get('json_data', None) is not None:

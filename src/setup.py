@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 '''
 Copyright 2014 The LogikSim Authors. All rights reserved.
@@ -17,5 +17,6 @@ setup(
         name = "QCanvasTest",
         version = "0.0.1",
         description = "Test QCanvas Capabilities",
+        #options = {"build_exe": {"compressed": True}}, 
         executables = [exe]
 )
