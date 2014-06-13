@@ -324,8 +324,7 @@ class InsertLineSubModeBase(LineSubModeBase):
         super(InsertLineSubModeBase, self).__init__(*args, **kargs)
         # store start position and new line items while inserting lines
         self._insert_line_start = None
-        self._inserted_line_hor = None
-        self._inserted_line_ver = None
+        self._inserted_lines = []
         self._line_anchor_indicator = None
         # shape used for mouse collision tests while searching for 
         # line anchors (must be float!)
@@ -376,8 +375,8 @@ class InsertLineSubModeBase(LineSubModeBase):
         def anchor_filter(item, path, radius):
             # line items
             if radius <= self._mouse_collision_line_radius and \
-                    isinstance(item, logic_item.LineItem) and item not in \
-                    (self._inserted_line_hor, self._inserted_line_ver):
+                    isinstance(item, logic_item.LineItem) and \
+                    item not in self._inserted_lines:
                 return item.isHorizontalOrVertical() or path.contains(
                         item.line().p1()) or path.contains(item.line().p2())
             # connector items
@@ -448,14 +447,8 @@ class InsertLineSubModeBase(LineSubModeBase):
         if anchor is None:
             anchor = self.find_line_anchor_at_view_pos(view_pos)
         start = self.mapToSceneGrid(view_pos) if anchor is None else anchor
-        # create lines
+        # store start position
         self._insert_line_start = start
-        self._inserted_line_hor = logic_item.LineItem(
-                QtCore.QLineF(start, start))
-        self._inserted_line_ver = logic_item.LineItem(
-                QtCore.QLineF(start, start))
-        self.scene().addItem(self._inserted_line_hor)
-        self.scene().addItem(self._inserted_line_ver)
     
     @mouse_mode_filtered
     def mouseMoveEvent(self, event):
@@ -494,12 +487,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
               self._update_line_timer.interval())
     
     def _do_end_insert_lines(self):
-        if self._inserted_line_hor.line().length() == 0:
-            self.scene().removeItem(self._inserted_line_hor)
-        if self._inserted_line_ver.line().length() == 0:
-            self.scene().removeItem(self._inserted_line_ver)
-        self._inserted_line_hor = None
-        self._inserted_line_ver = None
+        self._inserted_lines = []
         self._insert_line_start_end_last = None
     
     @line_submode_filtered
@@ -537,12 +525,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     def do_update_line(self):
         start, end = self._insert_line_start_end
         
-        # adjust lines
-        #hline = QtCore.QLineF(start.x(), start.y(), end.x(), start.y())
-        #vline = QtCore.QLineF(end.x(), start.y(), end.x(), end.y())
-        #self._inserted_line_hor.setLine(hline)
-        #self._inserted_line_ver.setLine(vline)
-        
         #
         # new graph based search
         #
@@ -565,12 +547,10 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         self._insert_line_start_end_last = p_start, p_end
         
         # remove old results
-        _l_lines = getattr(self, "_l_lines", [])
-        for item in _l_lines:
+        for item in self._inserted_lines:
             self.scene().removeItem(item)
-        self._l_lines = []
+        self._inserted_lines = []
         
-        #TODO: itemBoundingRect is time consuming --> move out of mouseEvent
         bound_rect = self.scene().itemsBoundingRect()
         r_left = to_grid(min(bound_rect.left(), start.x(), end.x())) - 1
         r_top = to_grid(min(bound_rect.top(), start.y(), end.y())) - 1
@@ -581,10 +561,14 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         def is_point_free(point):
             items = self.scene().items(QtCore.QPointF(*map(to_scene, point)))
             for item in items:
-                if item not in (self._inserted_line_hor, 
-                                self._inserted_line_ver,
-                                self._line_anchor_indicator):
-                    return False
+                print item
+                if item is self._line_anchor_indicator:
+                    continue
+                if isinstance(item, logic_item.ConnectorItem) and \
+                        point in (p_start, p_end):
+                    #continue
+                    pass
+                return False
             return True
         
         search_rect = ((r_left, r_top), (r_right, r_bottom))
@@ -601,18 +585,15 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             end = QtCore.QPointF(*map(to_scene, line[1]))
             l_line = logic_item.LineItem(QtCore.QLineF(start, end))
             self.scene().addItem(l_line)
-            self._l_lines.append(l_line)
+            self._inserted_lines.append(l_line)
         
     
     def linesub_leave(self):
         super(InsertingLineSubMode, self).linesub_leave()
         # cleanup InsertingLine
-        if self._inserted_line_hor is not None:
-            self.scene().removeItem(self._inserted_line_hor)
-            self._inserted_line_hor = None
-        if self._inserted_line_ver is not None:
-            self.scene().removeItem(self._inserted_line_ver)
-            self._inserted_line_ver = None
+        for item in self._inserted_lines:
+            self.scene().removeItem(item)
+        self._inserted_lines = []
 
 
 class InsertLineMode(ReadyToInsertLineSubMode, InsertingLineSubMode):
