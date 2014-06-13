@@ -49,13 +49,13 @@ def generate_mode_base(base_class, name):
                     pass
                 else:
                     return super_attr(*args, **kargs)
-        filter.func_name = name + '_filtered_' + attr_name + ': ' + repr(func)
+        filter.__name__ = name + '_filtered_' + attr_name + ': ' + repr(func)
         return filter
     
     class ModeMeta(type(base_class)):
         def __new__(cls, clsname, bases, attrs):
-            inst = super(ModeMeta, cls).__new__(cls, clsname, bases, attrs)
-            for name, attr in attrs.iteritems():
+            inst = super().__new__(cls, clsname, bases, attrs)
+            for name, attr in attrs.items():
                 if isinstance(attr, mode_filtered):
                     func = attr.func
                 elif name in [mode_enter_name, mode_leave_name]:
@@ -67,7 +67,7 @@ def generate_mode_base(base_class, name):
         
         
     
-    class ModeBase(base_class):
+    class ModeBase(base_class, metaclass=ModeMeta):
         """
         Base Class for implementing a specific mouse mode
     
@@ -93,14 +93,13 @@ def generate_mode_base(base_class, name):
             name='' --> enter, leave
         These methods are automatically mode filtered.
         """
-        __metaclass__ = ModeMeta
         
         def __init__(self, *args, **kargs):
-            super(ModeBase, self).__init__(*args, **kargs)
+            super().__init__(*args, **kargs)
             setattr(self, mode_attr_name, None)
         
         locals()[mode_enter_name] = lambda self: None
-        locals()[mode_enter_name].func_doc = \
+        locals()[mode_enter_name].__doc__ = \
             """
             called when the mouse mode is activated
             
@@ -108,7 +107,7 @@ def generate_mode_base(base_class, name):
             """
         
         locals()[mode_leave_name] = lambda self: None
-        locals()[mode_leave_name].func_doc = \
+        locals()[mode_leave_name].__doc__ = \
             """
             called when the mouse mode is  activated
             
@@ -124,7 +123,7 @@ def generate_mode_base(base_class, name):
                 setattr(self, mode_attr_name, mode)
                 if mode is not None:
                     getattr(mode, mode_enter_name)(self)
-        _mode_setter.func_name = mode_setter_name
+        _mode_setter.__name__ = mode_setter_name
         locals()[mode_setter_name] = _mode_setter
         del locals()['_mode_setter']
     

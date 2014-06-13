@@ -7,6 +7,10 @@ be found in the LICENSE.txt file.
 '''
 
 import itertools
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def do_lines_intersect(line_a, line_b):
     """ Test weather two lines intersect. 
@@ -168,8 +172,9 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect,
                     intersection_point.append(get_intersect_point(
                             line, new_line))
                     break
-            print("orientation", orientation, "object_point", object_point, 
-                  "new_line", new_line, "intersect_flag", intersect_flag)
+            log.debug("orientation %s object_point %s new_line %s "
+                      "intersect_flag %s", orientation, object_point, new_line,
+                      intersect_flag)
             return new_line, intersect_flag
         
         # construct or get all escape lines
@@ -209,7 +214,6 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect,
             f2, f4 = get_same_line(esc_line[1], orientation)
             f_list = sorted([f1, f2, f3, f4], 
                             key=lambda f: distance(f, object_point))
-            print("orientation =", orientation, ", f_list =", f_list)
             
             found = True
             for f in f_list:
@@ -226,7 +230,7 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect,
                 # test weather it is an escape point not being used
                 if (is_point_on_line(e, escape_line[orientation]) and
                         e not in L_e[pivot]):
-                    print("escape_point_found", e)
+                    log.debug("escape_point_found %s", e)
                     break
             else:
                 found = False
@@ -258,7 +262,6 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect,
         while True:
             for k in reversed(lines[pivot][orientation]):
                 if is_point_on_line(intersection_point[0], k):
-                    print("found")
                     break
             else: # k not found
                 orientation = not orientation
@@ -321,7 +324,7 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect,
                             del path[i+3:j+1]
                             path[i+1] = q
                             path[i+2] = p_prime
-                        print("found refinement intersection", p_prime)
+                        log.debug("found refinement intersection %s", p_prime)
                         break
                     j += 2
                 else:
@@ -337,7 +340,7 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect,
     pivot = a
     while not no_escape_flag[a] or not no_escape_flag[b]:
         if not no_escape_flag[pivot]:
-            print("escape_algorithm", pivot)
+            log.debug("escape_algorithm %s", pivot)
             intersect_flag = escape_algorithm(pivot)
         
         if intersect_flag:

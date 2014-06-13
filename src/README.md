@@ -1,28 +1,60 @@
+LogikSim Source
+===============
 
-Supported OS:
-	Windows (source, installer)
-	Linux (source)
+To run LogikSim from source run: ```main.py```
 
-
-Installer has been tested on:
-
-	Windows 7 64 bit (SP 1)
-	Windows XP 32 bit (SP 2)
-	Windows 2000 32 bit (SP 4)
+The test suit can be executed with: ```python3 -m unittest``` (Unix)
+or ```py -3 -m unittest``` (Windows).
 
 
-To run from source you need the following:
+Dependencies
+============
 
-	Python 2.7
-		http://python.org/
-	
-	PySide (tested with PySide 1.0.0 based on Qt 4.7.2)
-		http://pypi.python.org/pypi/PySide/
-		http://www.pyside.org/
-	
-	then run: main.py
+Under Linux the dependencies can usually be installed via the
+package manager. For Ubuntu run:
+```
+sudo apt-get install python3-pyside
+```
+
+On Windows the depencies have to be installed manually.
+
+### Python 3 ###
+
+The main source code interpreter.
+
+http://python.org
+
+*tested with version 3.4.1*
+
+### PySide ###
+
+Python bindings of the cross-platform GUI toolkit Qt.
+
+http://www.pyside.org/
+
+*tested with version 1.2.2*
+
+#### cx_Freeze (optional) ####
+
+Python extension to convert Python scripts into executables.
+It is only needed to build installers on Windows.
+
+http://cx-freeze.sourceforge.net/
+
+*tested with version 4.3.3 from
+http://www.lfd.uci.edu/~gohlke/pythonlibs/#cx_freeze*
 
 
-Ubuntu 11.04:
-	install the following package:
-		python-pyside
+Installer
+=========
+
+We provide installer for Windows. It can be build by running:
+```
+py setup.py build
+```
+
+To run the executable the Microsoft Visual C++ Redistributable Package
+has to be installed:
+- 32bit: http://www.microsoft.com/en-us/download/details.aspx?id=5555
+- 64bit: http://www.microsoft.com/en-us/download/details.aspx?id=14632
+

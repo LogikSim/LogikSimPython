@@ -22,13 +22,13 @@ class ValidateJsonData(unittest.TestCase):
         self.assertEqual(JsonMeta._json_classes, {})
     
     def test_string(self):
-        validate(basestring, 'a')
-        validate(basestring, u'a')
-        self.assertRaises(TypeError, validate, basestring, 1)
+        validate(str, 'a')
+        validate(str, 'a')
+        self.assertRaises(TypeError, validate, str, 1)
     
     def test_int(self):
         validate(numbers.Integral, 1)
-        validate(numbers.Integral, long(1))
+        validate(numbers.Integral, int(1))
         self.assertRaises(TypeError, validate, numbers.Integral, 1.5)
     
     def test_real(self):
@@ -53,10 +53,10 @@ class ValidateJsonData(unittest.TestCase):
         validate([float, numbers.Integral], [])
         validate([float, numbers.Integral], [1])
         validate([float, numbers.Integral], [1.])
-        validate([float, numbers.Integral], [long(1)])
-        validate([float, numbers.Integral], [1, 2., 3, 4., long(5)])
+        validate([float, numbers.Integral], [int(1)])
+        validate([float, numbers.Integral], [1, 2., 3, 4., int(5)])
         self.assertRaises(TypeError, validate, 
-                [float, numbers.Integral], [1, 2., 's', 4., long(5)])
+                [float, numbers.Integral], [1, 2., 's', 4., int(5)])
     
     def test_fixed_structured_array_test_type_checking(self):
         validate((float, numbers.Integral), [1., 1])
@@ -117,7 +117,7 @@ class ValidateJsonData(unittest.TestCase):
             @classmethod
             def validate_data(cls, data):
                 super(Test, cls).validate_data(data)
-                cls.validate_data_from_spec({'name': basestring}, data)
+                cls.validate_data_from_spec({'name': str}, data)
         
         validate(Test, {'type': 'Test', 'name': 'Test One'})
         self.assertRaises(Exception, validate, Test, 

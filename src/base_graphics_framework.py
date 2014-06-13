@@ -18,7 +18,7 @@ from algorithms.hightower import hightower_line_search
 
 class BasicGridScene(QtGui.QGraphicsScene):
     def __init__(self, *args, **kargs):
-        super(BasicGridScene, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         # draw grid?
         self._is_grid_enabled = True
         # can items be selected in this scenen?
@@ -89,7 +89,16 @@ class BasicGridScene(QtGui.QGraphicsScene):
         painter.restore()
         painter.setBrush(QtCore.Qt.NoBrush)
         painter.setPen(QtCore.Qt.black)
-        painter.drawRect(self.sceneRect().adjusted(-1/lod, -1/lod, 0, 0))
+        #painter.drawRect(self.sceneRect().adjusted(-1/lod, -1/lod, 0, 0))
+        ### above does not work in PySide 1.2.2
+        ## see http://stackoverflow.com/questions/18862234
+        ## starting workaround
+        rect = self.sceneRect().adjusted(-1/lod, -1/lod, 0, 0)
+        painter.drawLine(rect.topLeft(), rect.topRight())
+        painter.drawLine(rect.topRight(), rect.bottomRight())
+        painter.drawLine(rect.bottomRight(), rect.bottomLeft())
+        painter.drawLine(rect.bottomLeft(), rect.topLeft())
+        ### end workaround
     
     def roundToGrid(self, pos, y=None):
         """
@@ -138,7 +147,7 @@ class BasicGridScene(QtGui.QGraphicsScene):
 
 class BasicView(QtGui.QGraphicsView):
     def resizeEvent(self, event):
-        super(BasicView, self).resizeEvent(event)
+        super().resizeEvent(event)
         # workaround to immediately apply changes after maximize / restore
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.viewport().update()
@@ -146,7 +155,7 @@ class BasicView(QtGui.QGraphicsView):
 
 class BasicGridView(BasicView):
     def __init__(self, *args, **kargs):
-        super(BasicGridView, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         
         # used to store last position while dragging the view with the 
         # middle mouse button
@@ -170,7 +179,7 @@ class BasicGridView(BasicView):
                 self.viewportTransform())
     
     def wheelEvent(self, event):
-        super(BasicGridView, self).wheelEvent(event)
+        super().wheelEvent(event)
         
         if event.orientation() is QtCore.Qt.Horizontal or \
                 event.modifiers() != QtCore.Qt.NoModifier:
@@ -212,18 +221,21 @@ class BasicGridView(BasicView):
     
     def mousePressEvent(self, event):
         # call parent with masked drag mode
-        self._mask_drag_mode(super(BasicGridView, self).mousePressEvent, event)
-        
+        self._mask_drag_mode(super().mousePressEvent, event)
+
+        print(event.button())
         # drag mode
-        if event.button() is QtCore.Qt.MiddleButton:
+        if (event.button() is QtCore.Qt.MidButton or
+                event.button() is QtCore.Qt.MiddleButton):
             self._mouse_mid_last_pos = self.mapToScene(event.pos())
             self.setCursor(QtCore.Qt.ClosedHandCursor)
     
     def mouseMoveEvent(self, event):
-        super(BasicGridView, self).mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
         
         # mid mouse pressed -> drag grid
-        if event.buttons() & QtCore.Qt.MiddleButton:
+        if (event.buttons() & QtCore.Qt.MidButton or
+                event.buttons() & QtCore.Qt.MiddleButton):
             curr_pos = self.mapToScene(event.pos())
             delta = curr_pos - self._mouse_mid_last_pos
             topLeft = QtCore.QPointF(self.horizontalScrollBar().value(), 
@@ -233,15 +245,16 @@ class BasicGridView(BasicView):
             self.verticalScrollBar().setSliderPosition(desired_slider_pos.y())
     
     def mouseReleaseEvent(self, event):
-        super(BasicGridView, self).mouseReleaseEvent(event)
-        
-        if event.button() is QtCore.Qt.MiddleButton:
+        super().mouseReleaseEvent(event)
+
+        if (event.button() is QtCore.Qt.MidButton or
+                event.button() is QtCore.Qt.MiddleButton):
             self._mouse_mid_last_pos = None
             self.unsetCursor()
     
 #    @timeit
     def paintEvent(self, *args, **kargs):
-        super(BasicGridView, self).paintEvent(*args, **kargs)
+        super().paintEvent(*args, **kargs)
 
 
 GridViewMouseModeBase, mouse_mode_filtered = modes.generate_mode_base(
@@ -250,22 +263,22 @@ GridViewMouseModeBase, mouse_mode_filtered = modes.generate_mode_base(
 
 class SelectItemsMode(GridViewMouseModeBase):
     def __init__(self, *args, **kargs):
-        super(SelectItemsMode, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
     
     def mouse_enter(self):
-        super(SelectItemsMode, self).mouse_enter()
+        super().mouse_enter()
         self.setDragMode(QtGui.QGraphicsView.RubberBandDrag)
         self.scene().setSelectionAllowed(True)
     
     def mouse_leave(self):
-        super(SelectItemsMode, self).mouse_leave()
+        super().mouse_leave()
         self.setDragMode(QtGui.QGraphicsView.NoDrag)
         self.scene().setSelectionAllowed(False)
 
 
 class InsertItemMode(GridViewMouseModeBase):
     def __init__(self, *args, **kargs):
-        super(InsertItemMode, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         # class used to insert new items
         self._insert_item_class = logic_item.LogicItem
         # reference to currently inserted item (used to move it 
@@ -273,11 +286,11 @@ class InsertItemMode(GridViewMouseModeBase):
         self._inserted_item = None
     
     def mouse_enter(self):
-        super(InsertItemMode, self).mouse_enter()
+        super().mouse_enter()
     
     @mouse_mode_filtered
     def mousePressEvent(self, event):
-        super(InsertItemMode, self).mousePressEvent(event)
+        super().mousePressEvent(event)
         
         # left button
         if event.button() is QtCore.Qt.LeftButton:
@@ -289,7 +302,7 @@ class InsertItemMode(GridViewMouseModeBase):
     
     @mouse_mode_filtered
     def mouseMoveEvent(self, event):
-        super(InsertItemMode, self).mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
         
         # left button
         if event.buttons() & QtCore.Qt.LeftButton:
@@ -300,7 +313,7 @@ class InsertItemMode(GridViewMouseModeBase):
     
     @mouse_mode_filtered
     def mouseReleaseEvent(self, event):
-        super(InsertItemMode, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
         
         # left button
         if event.button() is QtCore.Qt.LeftButton:
@@ -308,7 +321,7 @@ class InsertItemMode(GridViewMouseModeBase):
             self._inserted_item = None
     
     def mouse_leave(self):
-        super(InsertItemMode, self).mouse_leave()
+        super().mouse_leave()
         # cleanup InsertItem
         if self._inserted_item is not None:
             self.scene().removeItem(self._inserted_item)
@@ -321,7 +334,7 @@ LineSubModeBase, line_submode_filtered = modes.generate_mode_base(
 
 class InsertLineSubModeBase(LineSubModeBase):
     def __init__(self, *args, **kargs):
-        super(InsertLineSubModeBase, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         # store start position and new line items while inserting lines
         self._insert_line_start = None
         self._inserted_lines = []
@@ -347,8 +360,8 @@ class InsertLineSubModeBase(LineSubModeBase):
             path.addEllipse(pos, radius, radius)
             items = self.items(path)
             if filter_func is not None:
-                return filter(functools.partial(filter_func, 
-                        path=self.mapToScene(path)), items)
+                return list(filter(functools.partial(filter_func, 
+                        path=self.mapToScene(path)), items))
             else:
                 return items
         r_min, r_max = 0, radius
@@ -452,7 +465,7 @@ class InsertLineSubModeBase(LineSubModeBase):
     
     @mouse_mode_filtered
     def mouseMoveEvent(self, event):
-        super(LineSubModeBase, self).mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
         
         self._mouse_move_anchor = self.find_line_anchor_at_view_pos(event.pos())
         self.setLineAnchorIndicator(self._mouse_move_anchor)
@@ -462,7 +475,7 @@ class ReadyToInsertLineSubMode(InsertLineSubModeBase):
     """ ready to insert line """
     @line_submode_filtered
     def mousePressEvent(self, event):
-        super(ReadyToInsertLineSubMode, self).mousePressEvent(event)
+        super().mousePressEvent(event)
         
         # left button
         if event.button() is QtCore.Qt.LeftButton:
@@ -473,7 +486,7 @@ class ReadyToInsertLineSubMode(InsertLineSubModeBase):
 class InsertingLineSubMode(InsertLineSubModeBase):
     """ while new lines are inserted """
     def __init__(self, *args, **kargs):
-        super(InsertingLineSubMode, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         
         self._update_line_timer = QtCore.QTimer()
         self._update_line_timer.timeout.connect(self.do_update_line)
@@ -492,7 +505,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     
     @line_submode_filtered
     def mousePressEvent(self, event):
-        super(InsertingLineSubMode, self).mousePressEvent(event)
+        super().mousePressEvent(event)
         
         # left button
         if event.button() is QtCore.Qt.LeftButton:
@@ -510,7 +523,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     def mouseMoveEvent(self, event):
         #QtGui.QApplication.instance().processEvents()
         
-        super(InsertingLineSubMode, self).mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
         
         gpos = self.mapToSceneGrid(event.pos())
         anchor = self._mouse_move_anchor
@@ -589,7 +602,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         
     
     def linesub_leave(self):
-        super(InsertingLineSubMode, self).linesub_leave()
+        super().linesub_leave()
         # cleanup InsertingLine
         for item in self._inserted_lines:
             self.scene().removeItem(item)
@@ -598,14 +611,14 @@ class InsertingLineSubMode(InsertLineSubModeBase):
 
 class InsertLineMode(ReadyToInsertLineSubMode, InsertingLineSubMode):
     def __init__(self, *args, **kargs):
-        super(InsertLineMode, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
     
     def mouse_enter(self):
-        super(InsertLineMode, self).linesub_enter()
+        super().linesub_enter()
         self.setLinesubMode(ReadyToInsertLineSubMode)
     
     def mouse_leave(self):
-        super(InsertLineMode, self).linesub_leave()
+        super().linesub_leave()
         # cleanup InsertLine
         self.setLineAnchorIndicator(None)
         self.setLinesubMode(None)
@@ -618,14 +631,14 @@ class InsertLineMode(ReadyToInsertLineSubMode, InsertingLineSubMode):
 
 class InsertConnectorMode(GridViewMouseModeBase):
     def __init__(self, *args, **kargs):
-        super(InsertConnectorMode, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         # stores start position and connector while inserting connectors
         self._insert_connector_start = None
         self._inserted_connector = None
     
     @mouse_mode_filtered
     def mousePressEvent(self, event):
-        super(InsertConnectorMode, self).mousePressEvent(event)
+        super().mousePressEvent(event)
         
         # left button
         if event.button() is QtCore.Qt.LeftButton:
@@ -637,7 +650,7 @@ class InsertConnectorMode(GridViewMouseModeBase):
     
     @mouse_mode_filtered
     def mouseMoveEvent(self, event):
-        super(InsertConnectorMode, self).mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
         
         # left button
         if event.buttons() & QtCore.Qt.LeftButton:
@@ -647,7 +660,7 @@ class InsertConnectorMode(GridViewMouseModeBase):
     
     @mouse_mode_filtered
     def mouseReleaseEvent(self, event):
-        super(InsertConnectorMode, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
         
         # left button
         if event.button() is QtCore.Qt.LeftButton:

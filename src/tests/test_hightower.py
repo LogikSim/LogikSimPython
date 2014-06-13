@@ -234,7 +234,6 @@ class HightowerSpec(unittest.TestCase):
         
         high_input, exp_res = area_to_input_data(area)
         res = hightower_line_search(*high_input)
-        print high_input
         
         self.assertListEqual(res, exp_res)
     

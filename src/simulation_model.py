@@ -330,7 +330,7 @@ class LogicValue(object):
         else:
             return LogicValue('X')
     
-    def __nonzero__(self):
+    def __bool__(self):
         """ bool, if, not """
         raise ValueError("Casting a LogicValue to bool is not supported")
     
@@ -385,7 +385,7 @@ class JsonMeta(type):
     
     @classmethod
     def get_all_json_classes(cls):
-        return cls._json_classes.values()
+        return list(cls._json_classes.values())
     
     @classmethod
     def validate_data(cls, data):
@@ -450,7 +450,7 @@ class JsonMeta(type):
                     raise TypeError("Cannot validate virtual JsonObject '%s'."
                             % spec)
             else:
-                assert spec in (basestring, Integral, float, bool), spec
+                assert spec in (str, Integral, float, bool), spec
                 if not isinstance(data, spec):
                     raise TypeError("Data has wrong type, expected "
                             "'%s' but got '%s'." % (spec, type(data)))
@@ -494,8 +494,7 @@ def json_virtual(cls):
 
 
 @json_virtual
-class JsonObject(object):
-    __metaclass__ = JsonMeta
+class JsonObject(object, metaclass=JsonMeta):
     """
     Has to be baseclass of every object that wants to be loadable as an object
     
@@ -556,8 +555,8 @@ class Instance(JsonObject):
     def validate_data(cls, data):
         super(Instance, cls).validate_data(data)
         cls.validate_data_from_spec({
-                'name': basestring, 
-                'id': basestring, 
+                'name': str, 
+                'id': str, 
                 }, data)
 
 
@@ -630,10 +629,10 @@ class BaseIC(JsonObject):
     def validate_data(cls, data):
         super(BaseIC, cls).validate_data(data)
         cls.validate_data_from_spec({
-                'id': basestring, #TODO: check hex form
-                'author': basestring, 
-                'date': basestring, #TODO: check format '%Y-%m-%dT%H:%M:%SZ'
-                'description': basestring, 
+                'id': str, #TODO: check hex form
+                'author': str, 
+                'date': str, #TODO: check format '%Y-%m-%dT%H:%M:%SZ'
+                'description': str, 
                 'symbol': Symbol, 
                 }, data)
 
@@ -644,7 +643,7 @@ class BaseConnector(JsonObject):
     def validate_data(cls, data):
         super(BaseConnector, cls).validate_data(data)
         cls.validate_data_from_spec({
-                'label': basestring, 
+                'label': str, 
                 'startpos': (float, float), 
                 'anchorpos': (float, float), 
                 'labelpos': (float, float), 
@@ -658,7 +657,7 @@ class ComputationIC(BaseIC):
         super(ComputationIC, cls).validate_data(data)
         cls.validate_data_from_spec({
                 'connectors': [InputConnector, OutputConnector ], 
-                'code': basestring, 
+                'code': str, 
                 }, data)
 
 
@@ -724,10 +723,9 @@ class Symbol(JsonObject):
                 }, data)
 
 
-class Primitive(QtGui.QGraphicsItem, JsonObject):
-    __metaclass__ = type('PrimitiveMeta', (type(QtGui.QGraphicsItem), 
-            type(JsonObject)), {})
-    
+class Primitive(QtGui.QGraphicsItem, JsonObject,
+                metaclass=type('PrimitiveMeta', (type(QtGui.QGraphicsItem), 
+                               type(JsonObject)), {})):
     @classmethod
     def validate_data(cls, data):
         super(Primitive, cls).validate_data(data)

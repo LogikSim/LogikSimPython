@@ -17,10 +17,10 @@ def repl_rex(text, replacements):
 
 def repl_rec_broken(text, replacements):
     replacements = replacements.copy()
-    print
+    print()
     def rec_repl(text_, key, value):
-        print replacements, 
-        print 'text_=%r   key=%r   value=%r, text_.split(key)=%s' % (text_, key, value, text_.split(key))
+        print(replacements, end=' ') 
+        print('text_=%r   key=%r   value=%r, text_.split(key)=%s' % (text_, key, value, text_.split(key)))
         try:
             item = replacements.popitem()
         except KeyError:
@@ -34,7 +34,7 @@ def repl_rec_broken(text, replacements):
 def repl_rec(text, replacements):
     def rec_repl(text_, key, irep):
         try:
-            next_key = irep.next()
+            next_key = next(irep)
         except StopIteration:
             return text_.replace(key, replacements[key])
         else:
@@ -42,7 +42,7 @@ def repl_rec(text, replacements):
             splits = text_.split(key)
             return replacements[key].join(map(f, splits, itertools.tee(irep, len(splits))))
     irep = iter(replacements)
-    return rec_repl(text, irep.next(), irep)
+    return rec_repl(text, next(irep), irep)
 
 if __name__ == '__main__':
     s = "ab de ke de ab jk"; d = {'a': 'de', 'de': 'a'}; res = "deb a ke a deb jk"
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     assert repl_rex(s, d) == res, repl_rex(s, d)
     assert repl_rec(s, d) == res, repl_rec(s, d)
 
-    print 'done'
+    print('done')
     
     # profile both functions
     ti = lambda stat, n=100000: min(timeit.repeat(stat, 
@@ -62,5 +62,5 @@ if __name__ == '__main__':
             "d = {'a': 'de', 'de': 'a'}", 
             repeat=3, number=n))
     
-    print ti('repl_rex(s, d)')
-    print ti('repl_rec(s, d)')
+    print(ti('repl_rex(s, d)'))
+    print(ti('repl_rec(s, d)'))

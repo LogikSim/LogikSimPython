@@ -13,7 +13,7 @@ import base_graphics_framework
 
 class SchematicScene(base_graphics_framework.BasicGridScene):
     def __init__(self, *args, **kargs):
-        super(SchematicScene, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         # set scene size
         height = 100 * 1000 # golden ratio
         self.setSceneRect(0, 0, height * (1+5**0.5)/2, height)
@@ -26,31 +26,31 @@ class SchematicView(
             base_graphics_framework.InsertConnectorMode, 
             base_graphics_framework.BasicGridView):
     def __init__(self, *args, **kargs):
-        super(SchematicView, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         self.setScene(SchematicScene(self))
         self.setMouseMode(base_graphics_framework.SelectItemsMode)
     
 #    @timeit
     def mouseMoveEvent(self, event):
-        super(SchematicView, self).mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
     
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_F1:
-            print 'selection mode'
+            print('selection mode')
             self.setMouseMode(base_graphics_framework.SelectItemsMode)
         elif event.key() == QtCore.Qt.Key_F2:
-            print 'insert logic element'
+            print('insert logic element')
             self.setMouseMode(base_graphics_framework.InsertItemMode)
         elif event.key() == QtCore.Qt.Key_F3:
-            print 'insert connector'
+            print('insert connector')
             self.setMouseMode(base_graphics_framework.InsertConnectorMode)
         elif event.key() == QtCore.Qt.Key_F4:
-            print 'insert lines'
+            print('insert lines')
             self.setMouseMode(base_graphics_framework.InsertLineMode)
         elif event.key() == QtCore.Qt.Key_Escape:
             self.abort_line_inserting()
         else:
-            super(SchematicView, self).keyPressEvent(event)
+            super().keyPressEvent(event)
 
 
 def main():

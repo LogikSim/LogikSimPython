@@ -21,7 +21,7 @@ def timeit(f):
             store[1] = max(store[1], t)
             store[2] += t
             store[3] += 1
-            print f.__name__ + ": min: %6.2f ms, max: %6.2f ms, " \
+            print(f.__name__ + ": min: %6.2f ms, max: %6.2f ms, " \
                     "mean: %6.2f ms, last: %6.2f ms" % (store[0], store[1], 
-                    store[2] / store[3], t)
+                    store[2] / store[3], t))
     return timeit_wrapper

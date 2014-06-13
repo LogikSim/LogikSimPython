@@ -56,7 +56,7 @@ class TestRect(QtGui.QGraphicsRectItem, QtGui.QGraphicsLayoutItem):
 
 def add_rect_with_layout(scene):
     item1 = TestRect()
-    print item1
+    print(item1)
     item2 = TestRect()
     scene.addItem(item1)
     scene.addItem(item2)
