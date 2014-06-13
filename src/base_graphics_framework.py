@@ -574,7 +574,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         def is_point_free(point):
             items = self.scene().items(QtCore.QPointF(*map(to_scene, point)))
             for item in items:
-                print item
                 if item is self._line_anchor_indicator:
                     continue
                 if isinstance(item, logic_item.ConnectorItem) and \
