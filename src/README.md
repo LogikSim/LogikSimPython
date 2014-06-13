@@ -3,11 +3,8 @@ LogikSim Source
 
 To run LogikSim from source run: ```main.py```
 
-The test suit can be run with:
-```
-Unix:    python3 -m unittest discover --patten="*_spec.py"
-Windows: py -3 -m unittest discover --patten="*_spec.py"
-```
+The test suit can be executed with: ```python3 -m unittest``` (Unix)
+or ```py -3 -m unittest``` (Windows).
 
 
 Dependencies
