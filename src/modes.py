@@ -1,11 +1,16 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Use of this source code is governed by the GNU GPL license that can 
+# be found in the LICENSE.txt file.
+#
 '''
-Copyright 2014 The LogikSim Authors. All rights reserved.
-Use of this source code is governed by the GNU GPL license that can 
-be found in the LICENSE.txt file.
+Defines an abstract class mechanism that can be used to create GUI modes.
+This is heavily used to implement Mouse events that are state specific.
 
-See specification for usage examples.
+It allows to group functions that are belong to one GUI state, like inserting
+Line elements together in a separte class.
 '''
 
 

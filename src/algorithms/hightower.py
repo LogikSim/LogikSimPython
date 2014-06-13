@@ -1,9 +1,14 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# Copyright 2014 The LogikSim Authors. All rights reserved.
+# Use of this source code is governed by the GNU GPL license that can 
+# be found in the LICENSE.txt file.
+#
 '''
-Copyright 2014 The LogikSim Authors. All rights reserved.
-Use of this source code is governed by the GNU GPL license that can 
-be found in the LICENSE.txt file.
+Hightower is an algorithm to find a path between two points on a 2D grid.
+
+It is used for inserting new line elements in the schematics view.
 '''
 
 import itertools

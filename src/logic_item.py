@@ -1,9 +1,16 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Use of this source code is governed by the GNU GPL license that can 
+# be found in the LICENSE.txt file.
+#
 '''
-Copyright 2014 The LogikSim Authors. All rights reserved.
-Use of this source code is governed by the GNU GPL license that can 
-be found in the LICENSE.txt file.
+Definition of base classes of all logic elements like Logic, 
+Connector and Line items. 
+
+All interactive elements of our circuit build on these classes.
+They can be found in the symbols folder.
 '''
 
 from PySide import QtGui, QtCore

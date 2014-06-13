@@ -1,9 +1,12 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Copyright 2014 The LogikSim Authors. All rights reserved.
-Use of this source code is governed by the GNU GPL license that can 
-be found in the LICENSE.txt file.
+#
+# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Use of this source code is governed by the GNU GPL license that can 
+# be found in the LICENSE.txt file.
+#
+'''
+Defines all the classes used to simulate and store logic circuits.
 
 
 Simulation Model
@@ -234,7 +237,7 @@ set_future_ic_event / get_ics_with_expired_delays will be on two
 priority queues and a separate dictionary to prevent multiple entries
 for the same input / ic.
 
-"""
+'''
 
 import weakref
 import uuid

@@ -1,14 +1,18 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Use of this source code is governed by the GNU GPL license that can 
+# be found in the LICENSE.txt file.
+#
 '''
-Copyright 2014 The LogikSim Authors. All rights reserved.
-Use of this source code is governed by the GNU GPL license that can 
-be found in the LICENSE.txt file.
+Time functions on each call and print statistics on the console.
 '''
 
 import time
 
 def timeit(f):
+    """ Decorator to time functions on each call and print stats """
     # min, max, sum, count
     store = [1.E16, 0, 0, 0]
     def timeit_wrapper(*args, **kargs):

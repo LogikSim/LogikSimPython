@@ -1,9 +1,16 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Use of this source code is governed by the GNU GPL license that can 
+# be found in the LICENSE.txt file.
+#
 '''
-Copyright 2014 The LogikSim Authors. All rights reserved.
-Use of this source code is governed by the GNU GPL license that can 
-be found in the LICENSE.txt file.
+The graphics framework defines reusable GUI classes to interact with 
+schematics. 
+
+Behaviour like drawing the grid, scrolling, interting elements
+and lines is implemented here.
 '''
 
 import functools
