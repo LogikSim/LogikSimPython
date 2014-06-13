@@ -28,9 +28,9 @@ http://python.org
 
 ### PySide ###
 
-Python bindings of the cross-platform GUI toolkit Qt.
+Python bindings of the cross-platform GUI toolkit Qt. http://www.pyside.org/
 
-http://www.pyside.org/
+On Windows install with: ```py -3 -m pip install PySide```
 
 *tested with version 1.2.2*
 
@@ -38,11 +38,12 @@ http://www.pyside.org/
 
 Python extension to convert Python scripts into executables.
 It is only needed to build installers on Windows.
-
 http://cx-freeze.sourceforge.net/
 
+On Windows install with: ```py -3 -m pip install cx_Freeze```
+
 *tested with version 4.3.3 from
-http://www.lfd.uci.edu/~gohlke/pythonlibs/#cx_freeze*
+http://www.lfd.uci.edu/~gohlke/pythonlibs/#cx_freeze as version on PyPI is broken*
 
 
 Installer
