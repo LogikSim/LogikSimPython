@@ -6,11 +6,12 @@
 # be found in the LICENSE.txt file.
 #
 '''
-Defines an abstract class mechanism that can be used to create GUI modes.
-This is heavily used to implement Mouse events that are state specific.
+Defines an meta class mechanism that used to create context specific GUI 
+modes.
 
 It allows to group functions that are belong to one GUI state, like inserting
-Line elements together in a separte class.
+Line elements together in a separte class. Those modes are heavily used to 
+implement Mouse events that are state specific.
 '''
 
 

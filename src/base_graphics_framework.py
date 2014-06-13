@@ -230,7 +230,6 @@ class BasicGridView(BasicView):
         # call parent with masked drag mode
         self._mask_drag_mode(super().mousePressEvent, event)
 
-        print(event.button())
         # drag mode
         if (event.button() is QtCore.Qt.MidButton or
                 event.button() is QtCore.Qt.MiddleButton):
@@ -502,9 +501,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         # stores two tuples with start and end coordinates as used in
         # mouseMoveEvent
         self._insert_line_start_end_last = None
-        
-        print(self._update_line_timer.isSingleShot(), 
-              self._update_line_timer.interval())
     
     def _do_end_insert_lines(self):
         self._inserted_lines = []
