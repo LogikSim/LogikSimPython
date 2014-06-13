@@ -34,7 +34,7 @@ http://www.pyside.org/
 
 *tested with version 1.2.2*
 
-## cx_Freeze (optional) ##
+#### cx_Freeze (optional) ####
 
 Python extension to convert Python scripts into executables.
 It is only needed to build installers on Windows.
