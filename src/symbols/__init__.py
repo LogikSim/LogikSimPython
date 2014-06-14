@@ -12,7 +12,7 @@ Auto discovery of symbols, as they might be user defined.
 import os
 
 # dynamic importing of symbols is currently not working with installer,
-# that's why we do it manually until we need flexibility
+# that's why we do it manually until we need the flexibility
 import symbols.rect
 
 def load_all_symbols():
