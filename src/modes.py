@@ -6,12 +6,19 @@
 # be found in the LICENSE.txt file.
 #
 '''
-Defines an meta class mechanism that used to create context specific GUI 
-modes.
+Defines a meta class mechanism to group context specific functionality of 
+one object into separate classes.
 
-It allows to group functions that are belong to one GUI state, like inserting
-Line elements together in a separte class. Those modes are heavily used to 
-implement Mouse events that are state specific.
+This mechanism abstract context sensitive behaviour of GUI elements like
+mouse behaviour that is only valid for specific modes like inserting line 
+elements. With modes it is possible to define the functionality for
+inserting lines in a separate class. After defining all relevant contexts
+you can create classes based on these context and switch between them in
+a controled fashion.
+
+The mechanism is extremely useful for state sensitive mouse event,
+where you often have to write matching code in several event handlers like
+mousePressEvent, mouseMoveEvent and mouseLeaveEvent.
 '''
 
 
