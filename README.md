@@ -23,15 +23,15 @@ depth and quality of courses covering digital circuits.
 We have always been fascinated by the huge levels of abstraction that 
 makes it possible to build processors from simple two input logic 
 functions like AND. With LogikSim we are sharing our fascination. 
-We make this possible by showing you ibe abstraction layer after the 
-other. The starting point are simple digital element. From there, you will 
-quickly transition to more complex functions like adders. The next 
-step will be to introduce feedbacks and build circuits that can store 
-information. This will enable you to build flip-flops, opening the 
-door to sequential logic. By introducing clocks you can build state 
-machines and more complex memories. Your final task will be to abstract 
-from the logic layer. First you will think about how to build programmable
-state machines that operate on programs stored in memories.
+Through LogikSim you will be able to see these abstraction layer for 
+yourself, one by one. At first you will start with simple digital element. 
+From there, you will quickly transition to more complex functions like 
+adders. The next step will be to introduce feedbacks and build circuits 
+that can store information. This will enable you to build flip-flops, 
+opening the door to sequential logic. By introducing clocks you can build 
+state machines and more complex memories. Your final task will be to 
+abstract from the logic layer. First you will think about how to build 
+programmable state machines that operate on programs stored in memories.
 This will lead the path to a formalized instruction set and memory 
 sub-systems. This final step will bridge the gap to software programming
 and make you grasp how today processors operate.
