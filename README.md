@@ -6,7 +6,7 @@ LogikSim
 Our vision is to build the earth's best software to understand digital 
 circuits; A logic simulator that makes it easy and fun to explore and 
 design digital circuits starting from simple AND gates, up to complex 
-computing systems as we see them today.
+computing systems as we use them today.
 
 ### Who uses LogikSim ###
 
@@ -18,13 +18,13 @@ can design logic circuits by themselves and learn key lessons
 from firsthand experience. We are sure this will both increase the 
 depth and quality of courses covering digital circuits. 
 
-### Why we build LogikSim ###
+### Why we create LogikSim ###
 
 We have always been fascinated by the huge levels of abstraction that 
 makes it possible to build processors from simple two input logic 
-functions like the AND. With LogikSim we want to share this fascination. 
-With LogikSim it is possible to learn one abstraction layer after the 
-other. The starting point are simple digital element. You will 
+functions like AND. With LogikSim we are sharing our fascination. 
+We make this possible by showing you ibe abstraction layer after the 
+other. The starting point are simple digital element. From there, you will 
 quickly transition to more complex functions like adders. The next 
 step will be to introduce feedbacks and build circuits that can store 
 information. This will enable you to build flip-flops, opening the 

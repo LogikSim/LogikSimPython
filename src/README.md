@@ -3,7 +3,7 @@ LogikSim Source
 
 To run LogikSim from source run: ```main.py```
 
-The test suit can be executed with: ```python3 -m unittest``` on Linux
+The test suit can be executed with: ```python3 -m unittest``` on Unix
 and ```py -3 -m unittest``` on Windows.
 
 
@@ -20,11 +20,9 @@ On Windows the depencies have to be installed manually.
 
 ### Python 3 ###
 
-The main source code interpreter.
+The main source code interpreter. http://python.org
 
-http://python.org
-
-*tested with version 3.4.1*
+*(tested with version 3.4.1)*
 
 ### PySide ###
 
@@ -32,7 +30,7 @@ Python bindings of the cross-platform GUI toolkit Qt. http://www.pyside.org/
 
 On Windows install with: ```py -3 -m pip install PySide```
 
-*tested with version 1.2.2*
+*(tested with version 1.2.2)*
 
 #### cx_Freeze (optional) ####
 
@@ -42,8 +40,9 @@ http://cx-freeze.sourceforge.net/
 
 On Windows install with: ```py -3 -m pip install cx_Freeze```
 
-*tested with version 4.3.3 from
-http://www.lfd.uci.edu/~gohlke/pythonlibs/#cx_freeze as version on PyPI is broken*
+*(tested with version 4.3.3 from
+http://www.lfd.uci.edu/~gohlke/pythonlibs/#cx_freeze as 
+version on PyPI is broken)*
 
 
 Installer
