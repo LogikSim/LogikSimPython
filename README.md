@@ -38,6 +38,6 @@ and make you grasp how today processors operate on a fundamental level.
 
 ---
 
-The project is currently in an early stage of development, have a look at
-the [wiki](https://github.com/chris-/LogikSim/wiki#how-you-can-help-us) 
+The project is currently in an early stage of development, see the 
+[wiki](https://github.com/chris-/LogikSim/wiki#how-you-can-help-us) 
 on how you can help us.
