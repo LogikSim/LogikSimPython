@@ -1,5 +1,5 @@
-LogikSim Source
-===============
+How to run LogikSim
+===================
 
 To run LogikSim from source run: ```main.py```
 
