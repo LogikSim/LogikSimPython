@@ -3,7 +3,7 @@ How to run LogikSim
 
 To run LogikSim from source run: ```main.py```
 
-The test suit can be executed with: ```python3 -m unittest``` on Unix
+The test suite can be executed with: ```python3 -m unittest``` on Unix
 and ```py -3 -m unittest``` on Windows.
 
 
