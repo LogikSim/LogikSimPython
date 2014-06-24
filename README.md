@@ -3,7 +3,7 @@ LogikSim
 
 ### Our Vision ###
 
-Our vision is to build the earth's best software to understand digital 
+Our vision is to build the world's best software to understand digital 
 circuits; A logic simulator that makes it easy and fun to explore and 
 design digital circuits starting from simple AND gates, up to complex 
 computing systems as we use them today.
