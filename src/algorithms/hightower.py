@@ -363,6 +363,7 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
             intersect_flag = escape_algorithm(pivot)
         
         if intersect_flag:
+            log.debug("intersection found at %s", intersection_point[0])
             L_a = first_refinement_algorithm(a)
             L_b = first_refinement_algorithm(b)
             if intersection_point[0] in L_a + L_b:
