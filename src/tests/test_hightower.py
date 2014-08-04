@@ -12,7 +12,7 @@ Test the hightower algorithm.
 import unittest
 
 from algorithms.hightower import (do_lines_intersect, is_point_on_line, 
-                                  hightower_line_search, Solid)
+                                  hightower_line_search, Solid, Line)
 
 
 class DoLinesIntersectSpec(unittest.TestCase):
@@ -64,7 +64,7 @@ def area_to_input_data(area):
                    (max(len(line) for line in lines), len(lines))]
     assert area.count('A') == area.count('B') == 1
     
-    blocks = set([])
+    blocks = {}
     sol_point = {}
     for y, line in enumerate(lines):
         for x, char in enumerate(line):
@@ -73,13 +73,14 @@ def area_to_input_data(area):
             elif char == 'B':
                 point_b = x, y
             elif char in ['+', '-', '|']:
-                blocks.add((x, y))
+                blocks[(x, y)] = Solid
+            elif char in ['*']:
+                blocks[(x, y)] = Line
             elif char in map(str, range(10)):
                 sol_point[int(char)] = x, y
     
     def get_obj_at_point(p):
-        if p in blocks:
-            return Solid
+        return blocks.get(p, None)
     
     high_input = point_a, point_b, get_obj_at_point, search_rect
     exp_res = ([point_a] + [sol_point[i] for i in sorted(sol_point)] + 
@@ -292,6 +293,21 @@ class HightowerSpec(unittest.TestCase):
           ++ |
           |  |
           +--+     
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertListEqual(res, exp_res)
+    
+    
+    def test_line_crossing(self):
+        area = """
+            A
+            
+        *************
+            
+            B
         """
         
         high_input, exp_res = area_to_input_data(area)
