@@ -82,7 +82,7 @@ def distance(point_a, point_b):
 class CollisionObject():
     pass
 
-class Line(CollisionObject):
+class PassableLine(CollisionObject):
     pass
 
 class Solid(CollisionObject):
@@ -107,6 +107,9 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
         get_obj_at_point (function): function used to probe the grid weather
                 it is free or taken by an object. 
                 (x, y) -> CollisionObject or None
+                Only the parts of the lines that might be crossed by new
+                lines should be reported as PassableLine. That means
+                line end points or corners should be reported Solid.
         search_rect [(top_left), (bottom_right)]: list of two points (tuple)
                 that define the search area. The borders are included.
                 It is assumed that there only free points on the border.

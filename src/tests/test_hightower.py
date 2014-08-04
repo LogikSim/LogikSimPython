@@ -12,7 +12,7 @@ Test the hightower algorithm.
 import unittest
 
 from algorithms.hightower import (do_lines_intersect, is_point_on_line, 
-                                  hightower_line_search, Solid, Line)
+                                  hightower_line_search, Solid, PassableLine)
 
 
 class DoLinesIntersectSpec(unittest.TestCase):
@@ -72,10 +72,10 @@ def area_to_input_data(area):
                 point_a = x, y
             elif char == 'B':
                 point_b = x, y
-            elif char in ['+', '-', '|']:
+            elif char in ['#', '+']:
                 blocks[(x, y)] = Solid
-            elif char in ['*']:
-                blocks[(x, y)] = Line
+            elif char in ['-', '|']:
+                blocks[(x, y)] = PassableLine
             elif char in map(str, range(10)):
                 sol_point[int(char)] = x, y
     
@@ -130,10 +130,10 @@ class HightowerSpec(unittest.TestCase):
     def test_horizontal_blocking_object(self):
         area = """
          1                 2
-                 ++
-         A       ++        B
-                 ++
-                 ++
+                 ##
+         A       ##        B
+                 ##
+                 ##
         """
         high_input, exp_res = area_to_input_data(area)
         res = hightower_line_search(*high_input)
@@ -145,8 +145,8 @@ class HightowerSpec(unittest.TestCase):
 
         1      A
 
-         +++++++++++++++++
-         +++++++++++++++++
+         #################
+         #################
 
         2      B
         """
@@ -160,14 +160,14 @@ class HightowerSpec(unittest.TestCase):
         area = """
                                                       
           1                        2                  
-                         +--------+ +                 
-                         |          |                 
-                         |   B     3|                 
-                         |          |                 
-             +           +----------+                 
-             |                                        
-          A  |                                        
-             +                                        
+                         ########## #                 
+                         #          #                 
+                         #   B     3#                 
+                         #          #                 
+             #           ############                 
+             #                                        
+          A  #                                        
+             #                                        
                                                       
         """
         
@@ -179,12 +179,12 @@ class HightowerSpec(unittest.TestCase):
     
     def test_narrow_hall(self):
         area = """
-                  + +
-                  | |
-                  |A|
-             +----+ |
-         2         1|
-         B   +------+
+                  # #
+                  # #
+                  #A#
+             ###### #
+         2         1#
+         B   ########
         """
         
         high_input, exp_res = area_to_input_data(area)
@@ -195,12 +195,12 @@ class HightowerSpec(unittest.TestCase):
     def test_narrow_cave_entry(self):
         area = """
          2         1
-                  + +
-                  | |
-                  |A|
-             +----+ |
-             |      |
-         B   +------+
+                  # #
+                  # #
+                  #A#
+             ###### #
+             #      #
+         B   ########
         """
         
         high_input, exp_res = area_to_input_data(area)
@@ -211,11 +211,11 @@ class HightowerSpec(unittest.TestCase):
     
     def test_cave_unsolvable(self):
         area = """
-             +-----+
-             |     |
-             |  A  |
-             |     |
-         B   +-----+
+             #######
+             #     #
+             #  A  #
+             #     #
+         B   #######
         """
         
         high_input, _ = area_to_input_data(area)
@@ -227,16 +227,16 @@ class HightowerSpec(unittest.TestCase):
     def test_escape_point_loop(self):
         area = """
                                  
-               +---+             
-          1 A  |   |              
-               |   +-----+        
-             +-+   +---+ |       
-             |     | B | |       
-             | +---+   | |       
-           +-+ |  4  5 | |       
-           |   |    +--+ |       
-           +---+    |    |       
-          2       3 +----+       
+               #####             
+          1 A  #####              
+               ###########        
+             ##### #######       
+             ####### B ###       
+             #######   ###       
+           #####  4  5 ###       
+           #####    ######       
+           #####    ######       
+          2       3 ######       
         """
         
         high_input, exp_res = area_to_input_data(area)
@@ -248,13 +248,13 @@ class HightowerSpec(unittest.TestCase):
     @unittest.skip("Probably unsolvable by Hightower")
     def test_escape_zigzag_valley(self):
         area = """
-                  + 1 A + 
-                  |     | 
-                +-+     | 
-                |3  2+--+ 
-            +---+  +-+    
-            | B  4 |      
-            +------+      
+                  # 1 A # 
+                  #     # 
+                ###     # 
+                #3  2#### 
+            #####  ###    
+            # B  4 #      
+            ########      
         """
         
         high_input, exp_res = area_to_input_data(area)
@@ -266,13 +266,13 @@ class HightowerSpec(unittest.TestCase):
     def test_refinement_2_example_1(self):
         area = """
           2                   1      
-            +-----------+            
-            |           |   +         
-            |           |   | A       
-        +   |           |   +         
-        | B |           +             +
-        |   |              +-------+  +
-        +---+                         
+            #############            
+            #           #   #         
+            #           #   # A       
+        #   #           #   #         
+        # B #           #             #
+        #   #              #########  #
+        #####                         
         """
         
         high_input, exp_res = area_to_input_data(area)
@@ -284,15 +284,15 @@ class HightowerSpec(unittest.TestCase):
     def test_refinement_2_example_2(self):
         area = """
           1       2    
-               +-+     
-          A    | |     
-               +-+ 
-           +-+         
-           | |    B
-           | |
-          ++ |
-          |  |
-          +--+     
+               ###     
+          A    ###     
+               ### 
+           ###         
+           ###    B
+           ###
+          ####
+          ####
+          ####     
         """
         
         high_input, exp_res = area_to_input_data(area)
@@ -305,8 +305,36 @@ class HightowerSpec(unittest.TestCase):
         area = """
             A
             
-        *************
+        +-----------+
             
+            B
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertListEqual(res, exp_res)
+    
+    
+    def test_line_corner(self):
+        area = """
+        1                2
+        A    +-------+   B
+        
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertListEqual(res, exp_res)
+    
+    @unittest.skip("Implement for later")
+    def test_line_not_crossing(self):
+        area = """
+                 A
+           ###
+        +-----------+
+            1    2
             B
         """
         
