@@ -79,7 +79,16 @@ def distance(point_a, point_b):
     return ((point_a[0] - point_b[0])**2 + (point_a[1] - point_b[1])**2)**0.5
 
 
-def hightower_line_search(point_a, point_b, is_point_free, search_rect, 
+class CollisionObject():
+    pass
+
+class Line(CollisionObject):
+    pass
+
+class Solid(CollisionObject):
+    pass
+
+def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect, 
                           do_second_refinement=True):
     """ Finds path with minimum bends from point A to B on a 2D grid.
     
@@ -95,8 +104,9 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect,
     Args:
         point_a (tuple): Point A
         point_b (tuple): Point B
-        is_point_free (function): function used to probe the grid weather point
-                is free or taken. (x, y) -> boolean
+        get_obj_at_point (function): function used to probe the grid weather
+                it is free or taken by an object. 
+                (x, y) -> CollisionObject or None
         search_rect [(top_left), (bottom_right)]: list of two points (tuple)
                 that define the search area. The borders are included.
                 It is assumed that there only free points on the border.
@@ -109,6 +119,7 @@ def hightower_line_search(point_a, point_b, is_point_free, search_rect,
         return (search_rect[0][0] <= point[0] <= search_rect[1][0] and
                 search_rect[0][1] <= point[1] <= search_rect[1][1])
     
+    is_point_free = lambda point: get_obj_at_point(point) is None
     if not (is_point_free(point_a) and is_point_in_bounds(point_a) and
             is_point_free(point_b) and is_point_in_bounds(point_b)):
         return None

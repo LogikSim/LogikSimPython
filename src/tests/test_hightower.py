@@ -12,7 +12,7 @@ Test the hightower algorithm.
 import unittest
 
 from algorithms.hightower import (do_lines_intersect, is_point_on_line, 
-                                  hightower_line_search)
+                                  hightower_line_search, Solid)
 
 
 class DoLinesIntersectSpec(unittest.TestCase):
@@ -77,10 +77,11 @@ def area_to_input_data(area):
             elif char in map(str, range(10)):
                 sol_point[int(char)] = x, y
     
-    def is_point_free(p):
-        return p not in blocks
+    def get_obj_at_point(p):
+        if p in blocks:
+            return Solid
     
-    high_input = point_a, point_b, is_point_free, search_rect
+    high_input = point_a, point_b, get_obj_at_point, search_rect
     exp_res = ([point_a] + [sol_point[i] for i in sorted(sol_point)] + 
                [point_b])
     return high_input, exp_res
@@ -94,10 +95,10 @@ class HightowerSpec(unittest.TestCase):
     def test_same_points(self):
         point_a = (10, 5)
         point_b = (10, 5)
-        is_point_free = lambda p: True
+        get_obj_at_point = lambda p: None
         search_rect = [(0, 0), (100, 100)]
         
-        res = hightower_line_search(point_a, point_b, is_point_free, 
+        res = hightower_line_search(point_a, point_b, get_obj_at_point, 
                                     search_rect)
         
         self.assertListEqual([(10, 5), (10, 5)], res)
@@ -105,10 +106,10 @@ class HightowerSpec(unittest.TestCase):
     def test_horizontal(self):
         point_a = (10, 5)
         point_b = (15, 5)
-        is_point_free = lambda p: True
+        get_obj_at_point = lambda p: None
         search_rect = [(0, 0), (100, 100)]
         
-        res = hightower_line_search(point_a, point_b, is_point_free, 
+        res = hightower_line_search(point_a, point_b, get_obj_at_point, 
                                     search_rect)
         
         self.assertListEqual([(10, 5), (15, 5)], res)
@@ -116,40 +117,42 @@ class HightowerSpec(unittest.TestCase):
     def test_empty_space(self):
         point_a = (10, 5)
         point_b = (15, 10)
-        is_point_free = lambda p: True
+        get_obj_at_point = lambda p: None
         search_rect = [(0, 0), (100, 100)]
         
-        res = hightower_line_search(point_a, point_b, is_point_free, 
+        res = hightower_line_search(point_a, point_b, get_obj_at_point, 
                                     search_rect)
-        
+        print(res)
         self.assertTrue(res == [(10, 5), (15, 5), (15, 10)] or
                         res == [(10, 5), (10, 10), (15, 10)], res)
     
     def test_horizontal_blocking_object(self):
-        point_a = ( 5, 15)
-        point_b = (25, 15)
-        is_point_free = (lambda p: not(10 < p[0] < 20 and
-                                       10 < p[1] < 20))
-        search_rect = [(0, 0), (30, 30)]
+        area = """
+         1                 2
+                 ++
+         A       ++        B
+                 ++
+                 ++
+        """
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
         
-        res = hightower_line_search(point_a, point_b, is_point_free, 
-                                    search_rect)
-        
-        self.assertTrue(res == [(5, 15), (5, 10), (25, 10), (25, 15)] or
-                        res == [(5, 15), (5, 20), (25, 20), (25, 15)], res)
+        self.assertListEqual(res, exp_res)
     
     def test_vertical_blocking_object(self):
-        point_a = (15,  5)
-        point_b = (15, 25)
-        is_point_free = (lambda p: not(10 < p[0] < 20 and
-                                       10 < p[1] < 20))
-        search_rect = [(0, 0), (30, 30)]
+        area = """
+
+        1      A
+
+         +++++++++++++++++
+         +++++++++++++++++
+
+        2      B
+        """
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
         
-        res = hightower_line_search(point_a, point_b, is_point_free, 
-                                    search_rect)
-        
-        self.assertTrue(res == [(15, 5), (10, 5), (10, 25), (15, 25)] or
-                        res == [(15, 5), (20, 5), (20, 25), (15, 25)], res)
+        self.assertListEqual(res, exp_res)
     
     
     def test_paper_problem_one(self):
