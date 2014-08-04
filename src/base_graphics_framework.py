@@ -20,7 +20,8 @@ from PySide import QtGui, QtCore
 from helper.timeit_mod import timeit
 import modes
 import logic_item
-from algorithms.hightower import hightower_line_search
+
+import algorithms.hightower as hightower
 
 
 class BasicGridScene(QtGui.QGraphicsScene):
@@ -574,8 +575,9 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         r_bottom = to_grid(max(bound_rect.bottom(), 
                                      start.y(), end.y())) + 2
         
-        def is_point_free(point):
+        def get_obj_at_point(point):
             items = self.scene().items(QtCore.QPointF(*map(to_scene, point)))
+            line_found = False
             for item in items:
                 if item is self._line_anchor_indicator:
                     continue
@@ -583,13 +585,19 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                         point in (p_start, p_end):
                     #continue
                     pass
-                return False
-            return True
+                if isinstance(item, logic_item.LineItem):
+                    line_found = True
+                    continue
+                return hightower.Solid
+            
+            if line_found:
+                return hightower.Line
         
         search_rect = ((r_left, r_top), (r_right, r_bottom))
         
-        res = hightower_line_search(p_start, p_end, is_point_free, search_rect,
-                                    do_second_refinement=False)
+        res = hightower.hightower_line_search(p_start, p_end, get_obj_at_point, 
+                                              search_rect, 
+                                              do_second_refinement=False)
         
         if res is None:
             return

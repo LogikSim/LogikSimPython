@@ -119,7 +119,7 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
         return (search_rect[0][0] <= point[0] <= search_rect[1][0] and
                 search_rect[0][1] <= point[1] <= search_rect[1][1])
     
-    is_point_free = lambda point: get_obj_at_point(point) is None
+    is_point_free = lambda point: get_obj_at_point(point) is not Solid
     if not (is_point_free(point_a) and is_point_in_bounds(point_a) and
             is_point_free(point_b) and is_point_in_bounds(point_b)):
         return None
