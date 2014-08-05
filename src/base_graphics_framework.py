@@ -14,6 +14,7 @@ and lines is implemented here.
 '''
 
 import functools
+import time
 
 from PySide import QtGui, QtCore
 
@@ -575,10 +576,18 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         r_bottom = to_grid(max(bound_rect.bottom(), 
                                      start.y(), end.y())) + 2
         
+        # only try to find path for max. 100 ms
+        max_time = [time.time() + 0.1]
+        class TimeReached(Exception):
+            pass
         def get_obj_at_point(point):
+            if time.time() > max_time[0]:
+                raise TimeReached()
+            
             scene_point = QtCore.QPointF(*map(to_scene, point))
             items = self.scene().items(scene_point)
-            line = None
+            found_passable_line = False
+            found_line_edge = False
             for item in items:
                 if item is self._line_anchor_indicator:
                     continue
@@ -587,21 +596,27 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                     #continue
                     pass
                 if isinstance(item, logic_item.LineItem):
-                    line = item
+                    if item.is_edge(scene_point):
+                        found_line_edge = True
+                    else:
+                        found_passable_line = True
                     continue
                 return hightower.Solid
             
-            if line is not None:
-                if line.is_edge(scene_point):
-                    return hightower.LineEdge
-                else:
-                    return hightower.PassableLine
+            if found_line_edge:
+                return hightower.LineEdge
+            elif found_passable_line:
+                return hightower.PassableLine
         
         search_rect = ((r_left, r_top), (r_right, r_bottom))
         
-        res = hightower.hightower_line_search(p_start, p_end, get_obj_at_point, 
-                                              search_rect, 
-                                              do_second_refinement=False)
+        try:
+            res = hightower.hightower_line_search(p_start, p_end, 
+                                                  get_obj_at_point, 
+                                                  search_rect, 
+                                                  do_second_refinement=False)
+        except TimeReached:
+            return
         
         if res is None:
             return

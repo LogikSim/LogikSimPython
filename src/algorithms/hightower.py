@@ -116,7 +116,7 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
         search_rect [(top_left), (bottom_right)]: list of two points (tuple)
                 that define the search area. The borders are included.
                 It is assumed that there only free points on the border.
-        do_second_refinement (boolean): do timeconsuming second refinement
+        do_second_refinement (boolean): do time-consuming second refinement
     
     Return:
         Minimum path as list of tuples or None if nothing could be found

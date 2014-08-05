@@ -385,13 +385,16 @@ class HightowerSpec(unittest.TestCase):
     
     def test_lines_endings(self):
         area = """
-               B2
-               +
-               |
-               |
+               
+              #
+              #B2
+              #
+              #+
+              #|
+              #|
         +------+
                   
-            A   1       
+            A   1      
         """
         
         high_input, exp_res = area_to_input_data(area)
