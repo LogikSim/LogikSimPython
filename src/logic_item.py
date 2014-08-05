@@ -243,6 +243,9 @@ class LineItem(SmoothGrahpicsLineItem):
     
     def shape(self):
         return self._shape
+    
+    def is_edge(self, scene_point):
+        return scene_point in [self.line().p1(), self.line().p2()]
 
 
 class LineConnectorItem(QtGui.QGraphicsEllipseItem):

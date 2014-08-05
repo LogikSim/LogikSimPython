@@ -576,8 +576,9 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                                      start.y(), end.y())) + 2
         
         def get_obj_at_point(point):
-            items = self.scene().items(QtCore.QPointF(*map(to_scene, point)))
-            line_found = False
+            scene_point = QtCore.QPointF(*map(to_scene, point))
+            items = self.scene().items(scene_point)
+            line = None
             for item in items:
                 if item is self._line_anchor_indicator:
                     continue
@@ -586,12 +587,15 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                     #continue
                     pass
                 if isinstance(item, logic_item.LineItem):
-                    line_found = True
+                    line = item
                     continue
                 return hightower.Solid
             
-            if line_found:
-                return hightower.Line
+            if line is not None:
+                if line.is_edge(scene_point):
+                    return hightower.LineEdge
+                else:
+                    return hightower.PassableLine
         
         search_rect = ((r_left, r_top), (r_right, r_bottom))
         

@@ -366,3 +366,35 @@ class HightowerSpec(unittest.TestCase):
         res = hightower_line_search(*high_input)
         
         self.assertListEqual(res, exp_res)
+    
+    def test_lines_only(self):
+        area = """
+         
+        +
+        |     B        1
+        |
+        +-----------+
+                  
+                       A
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertListEqual(res, exp_res)
+    
+    def test_lines_endings(self):
+        area = """
+               B2
+               +
+               |
+               |
+        +------+
+                  
+            A   1       
+        """
+        
+        high_input, exp_res = area_to_input_data(area)
+        res = hightower_line_search(*high_input)
+        
+        self.assertListEqual(res, exp_res)
