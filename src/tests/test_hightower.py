@@ -358,8 +358,8 @@ class HightowerSpec(unittest.TestCase):
                  A
            ###
         +-----------+
-            1    2
-            B
+                  
+            B    1
         """
         
         high_input, exp_res = area_to_input_data(area)

@@ -173,7 +173,6 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
                 if not is_point_in_bounds(next):
                     break
                 next_obj = get_obj_at_point(next)
-                print(next_obj)
                 if next_obj in [Solid, LineEdge]:
                     break
                 elif next_obj is None:
@@ -196,7 +195,8 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
         Construct cover line for point and orientation. 
         
         The points next to the cover will contain a path in direction given 
-        by up_or_left that can escape the cover.
+        by to_up_or_left that can escape the cover. The point given is 
+        assumed to be just in front of the cover.
         """
         next_point = get_next_point(point, not orientation, to_up_or_left)
         if not is_point_in_bounds(next_point):
@@ -207,12 +207,11 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
                 return ((next_point[0], search_rect[0][1]), 
                         (next_point[0], search_rect[1][1]))
         
-        point = next_point
         def find_bound(point, bound_up_or_left):
-            point_free = get_obj_at_point(point)
             while True:
                 next = get_next_point(point, orientation, bound_up_or_left)
-                if get_obj_at_point(next) != point_free:
+                if get_escape_line_end(next, not orientation, 
+                                       to_up_or_left) != next:
                     break
                 if not is_point_in_bounds(next):
                     break
