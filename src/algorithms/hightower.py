@@ -144,15 +144,32 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
     intersect_flag = False
     intersection_point = []
     
+    
+    def get_next_point(point, orientation, up_or_left):
+        """
+        Get next point in direction given by orientation and up_or_left.
+        """
+        if orientation is horizontal:
+            if up_or_left:
+                return (point[0] - 1, point[1])
+            else:
+                return (point[0] + 1, point[1])
+        else:
+            if up_or_left:
+                return (point[0], point[1] - 1)
+            else:
+                return (point[0], point[1] + 1)
+    
+    
     def get_escape_line_end(point, orientation, up_or_left):
         """
         Find end of escape line from the given point and orientation to
         given direction up_or_left
         """
-        def find_bound(point, update):
+        def find_bound(point):
             last_free_point = point
             while True:
-                next = update(point)
+                next = get_next_point(point, orientation, up_or_left)
                 if not is_point_in_bounds(next):
                     break
                 next_obj = get_obj_at_point(next)
@@ -163,19 +180,9 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
                     last_free_point = next
                 point = next
             return last_free_point
+        return find_bound(point)
         
-        if orientation is horizontal:
-            if up_or_left:
-                return find_bound(point, lambda left: (left[0] - 1, left[1]))
-            else:
-                return find_bound(point, lambda left: (left[0] + 1, left[1]))
-        else:
-            if up_or_left:
-                return find_bound(point, lambda left: (left[0], left[1] - 1))
-            else:
-                return find_bound(point, lambda left: (left[0], left[1] + 1))
         
-    
     def get_escape_line(point, orientation):
         """
         Construct an escape line from the given point and direction.
@@ -184,25 +191,27 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
                 get_escape_line_end(point, orientation, False))
         
     
-    def get_cover(point, orientation, up_or_left):
+    def get_cover(point, orientation, to_up_or_left):
         """ 
         Construct cover line for point and orientation. 
         
         The points next to the cover will contain a path in direction given 
         by up_or_left that can escape the cover.
         """
-        if not is_point_in_bounds(point):
+        next_point = get_next_point(point, not orientation, to_up_or_left)
+        if not is_point_in_bounds(next_point):
             if orientation is horizontal:
-                return ((search_rect[0][0], point[1]), 
-                        (search_rect[1][0], point[1]))
+                return ((search_rect[0][0], next_point[1]), 
+                        (search_rect[1][0], next_point[1]))
             else:
-                return ((point[0], search_rect[0][1]), 
-                        (point[0], search_rect[1][1]))
+                return ((next_point[0], search_rect[0][1]), 
+                        (next_point[0], search_rect[1][1]))
         
-        def find_bound(point, update):
+        point = next_point
+        def find_bound(point, bound_up_or_left):
             point_free = get_obj_at_point(point)
             while True:
-                next = update(point)
+                next = get_next_point(point, orientation, bound_up_or_left)
                 if get_obj_at_point(next) != point_free:
                     break
                 if not is_point_in_bounds(next):
@@ -210,12 +219,7 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
                 point = next
             return point
         
-        if orientation is horizontal:
-            return (find_bound(point, lambda left: (left[0] - 1, left[1])),
-                    find_bound(point, lambda left: (left[0] + 1, left[1])))
-        else:
-            return (find_bound(point, lambda left: (left[0], left[1] - 1)),
-                    find_bound(point, lambda left: (left[0], left[1] + 1)))
+        return (find_bound(point, True), find_bound(point, False))
     
     
     def escape_algorithm(pivot):
@@ -261,18 +265,8 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
         # find escape point (process I)
         #
         def escape_cover(orientation):
-            def grow_line_by_one(line, orientation):
-                """ grow line by one point in direction of orientation """
-                if orientation is horizontal:
-                    return ((line[0][0] - 1, line[0][1]),
-                            (line[1][0] + 1, line[1][1]))
-                else:
-                    return ((line[0][0], line[0][1] - 1),
-                            (line[1][0], line[1][1] + 1))
-            
             # find extremities of cover
-            esc_line = grow_line_by_one(escape_line[not orientation], 
-                                        not orientation)
+            esc_line = escape_line[not orientation]
             f1, f3 = get_cover(esc_line[0], orientation, True)
             f2, f4 = get_cover(esc_line[1], orientation, False)
             f_list = sorted([f1, f2, f3, f4], 
