@@ -12,7 +12,8 @@ Test the hightower algorithm.
 import unittest
 
 from algorithms.hightower import (do_lines_intersect, is_point_on_line, 
-                                  hightower_line_search, Solid, PassableLine)
+                                  hightower_line_search, Solid, PassableLine,
+                                  LineEdge)
 
 
 class DoLinesIntersectSpec(unittest.TestCase):
@@ -72,8 +73,10 @@ def area_to_input_data(area):
                 point_a = x, y
             elif char == 'B':
                 point_b = x, y
-            elif char in ['#', '+']:
+            elif char in ['#']:
                 blocks[(x, y)] = Solid
+            elif char in ['+']:
+                blocks[(x, y)] = LineEdge
             elif char in ['-', '|']:
                 blocks[(x, y)] = PassableLine
             elif char in map(str, range(10)):

@@ -85,6 +85,9 @@ class CollisionObject():
 class PassableLine(CollisionObject):
     pass
 
+class LineEdge(CollisionObject):
+    pass
+
 class Solid(CollisionObject):
     pass
 
@@ -109,7 +112,7 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
                 (x, y) -> CollisionObject or None
                 Only the parts of the lines that might be crossed by new
                 lines should be reported as PassableLine. That means
-                line end points or corners should be reported Solid.
+                line end points or corners should be reported as LineEdge.
         search_rect [(top_left), (bottom_right)]: list of two points (tuple)
                 that define the search area. The borders are included.
                 It is assumed that there only free points on the border.
@@ -122,7 +125,7 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
         return (search_rect[0][0] <= point[0] <= search_rect[1][0] and
                 search_rect[0][1] <= point[1] <= search_rect[1][1])
     
-    is_point_free = lambda point: get_obj_at_point(point) is not Solid
+    is_point_free = lambda point: get_obj_at_point(point) is None
     if not (is_point_free(point_a) and is_point_in_bounds(point_a) and
             is_point_free(point_b) and is_point_in_bounds(point_b)):
         return None
@@ -141,12 +144,52 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
     intersect_flag = False
     intersection_point = []
     
-    def get_same_line(point, orientation):
-        """ 
-        Construct line for given point and orientation with same 
-        is_point_free status as the given point.
+    def get_escape_line_end(point, orientation, up_or_left):
+        """
+        Find end of escape line from the given point and orientation to
+        given direction up_or_left
+        """
+        def find_bound(point, update):
+            last_free_point = point
+            while True:
+                next = update(point)
+                if not is_point_in_bounds(next):
+                    break
+                next_obj = get_obj_at_point(next)
+                print(next_obj)
+                if next_obj in [Solid, LineEdge]:
+                    break
+                elif next_obj is None:
+                    last_free_point = next
+                point = next
+            return last_free_point
         
-        Can be used to find escape lines or obstacle lines.
+        if orientation is horizontal:
+            if up_or_left:
+                return find_bound(point, lambda left: (left[0] - 1, left[1]))
+            else:
+                return find_bound(point, lambda left: (left[0] + 1, left[1]))
+        else:
+            if up_or_left:
+                return find_bound(point, lambda left: (left[0], left[1] - 1))
+            else:
+                return find_bound(point, lambda left: (left[0], left[1] + 1))
+        
+    
+    def get_escape_line(point, orientation):
+        """
+        Construct an escape line from the given point and direction.
+        """
+        return (get_escape_line_end(point, orientation, True),
+                get_escape_line_end(point, orientation, False))
+        
+    
+    def get_cover(point, orientation, up_or_left):
+        """ 
+        Construct cover line for point and orientation. 
+        
+        The points next to the cover will contain a path in direction given 
+        by up_or_left that can escape the cover.
         """
         if not is_point_in_bounds(point):
             if orientation is horizontal:
@@ -156,16 +199,17 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
                 return ((point[0], search_rect[0][1]), 
                         (point[0], search_rect[1][1]))
         
-        point_free = is_point_free(point)
         def find_bound(point, update):
+            point_free = get_obj_at_point(point)
             while True:
                 next = update(point)
-                if is_point_free(next) != point_free:
+                if get_obj_at_point(next) != point_free:
                     break
                 if not is_point_in_bounds(next):
                     break
                 point = next
             return point
+        
         if orientation is horizontal:
             return (find_bound(point, lambda left: (left[0] - 1, left[1])),
                     find_bound(point, lambda left: (left[0] + 1, left[1])))
@@ -182,7 +226,7 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
         def construct_escape_line(orientation):
             """ Construct new escape line """
             intersect_flag = False
-            new_line = get_same_line(object_point, orientation)
+            new_line = get_escape_line(object_point, orientation)
             lines[pivot][orientation].append(new_line)
             # does line intersect with any entry in target list
             for line in lines[not pivot][not orientation]:
@@ -229,8 +273,8 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
             # find extremities of cover
             esc_line = grow_line_by_one(escape_line[not orientation], 
                                         not orientation)
-            f1, f3 = get_same_line(esc_line[0], orientation)
-            f2, f4 = get_same_line(esc_line[1], orientation)
+            f1, f3 = get_cover(esc_line[0], orientation, True)
+            f2, f4 = get_cover(esc_line[1], orientation, False)
             f_list = sorted([f1, f2, f3, f4], 
                             key=lambda f: distance(f, object_point))
             
@@ -319,7 +363,7 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
                         if q[y] >= path[i+1][y]:
                             break
                     # horizontal escape line through q
-                    k = get_same_line(q, horizontal)
+                    k = get_escape_line(q, horizontal)
                 else:
                     if path[i][x] < path[i+1][x]:
                         q = (path[i][0] + m, path[i][y])
@@ -330,7 +374,7 @@ def hightower_line_search(point_a, point_b, get_obj_at_point, search_rect,
                         if q[x] <= path[i+1][x]:
                             break
                     # vertical escape line through q
-                    k = get_same_line(q, vertical)
+                    k = get_escape_line(q, vertical)
                 j = i + 2
                 while j < len(path) - 1:
                     test_line = get_normalize_line((path[j], path[j+1]))
