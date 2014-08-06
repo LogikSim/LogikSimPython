@@ -577,7 +577,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                                      start.y(), end.y())) + 2
         
         # only try to find path for max. 100 ms
-        max_time = [time.time() + 0.1]
+        max_time = [time.time() + 0.3]
         class TimeReached(Exception):
             pass
         def get_obj_at_point(point):
@@ -603,6 +603,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                     continue
                 return hightower.Solid
             
+            print()
             if found_line_edge:
                 return hightower.LineEdge
             elif found_passable_line:

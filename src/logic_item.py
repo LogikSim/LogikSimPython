@@ -225,21 +225,23 @@ class LineItem(SmoothGrahpicsLineItem):
         SmoothGrahpicsLineItem.__init__(self, *args, **kargs)
         
         self.setPen(QtGui.QPen(QtCore.Qt.red))
-        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
+        #self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
+        #self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         
         self._update_shape()
     
     def _update_shape(self):
         self.prepareGeometryChange()
-        rect = self.ownBoundingRect().adjusted(-25, -25, 25, 25)
+        bounding_rect = QtCore.QRectF(self.line().p1(), self.line().p2())
+        self._rect = bounding_rect.normalized().adjusted(-25, -25, 50, 50)
+        print(self._rect, self.line().p1(), self.line().p2())
+        
         path = QtGui.QPainterPath()
-        path.addRect(rect)
+        path.addRect(self._rect)
         self._shape = path
         
-    def ownBoundingRect(self):
-        l = self.line()
-        return QtCore.QRectF(l.p1(), l.p2())
+    def boundingRect(self):
+        return self._rect
     
     def shape(self):
         return self._shape
