@@ -249,13 +249,13 @@ class LineTree(QtGui.QGraphicsItem):
         bounding_rect = None
         shape_path = QtGui.QPainterPath()
         for line in self._lines:
-            l_bounding_rect = QtCore.QRectF(line.p1(), line.p2())
-            l_bounding_rect.normalized().adjusted(-25, -25, 50, 50)
+            l_bounding_rect = QtCore.QRectF(line.p1(), line.p2()).\
+                    normalized().adjusted(-25, -25, 25, 25)
+            shape_path.addRect(l_bounding_rect)
             if bounding_rect is None:
                 bounding_rect = l_bounding_rect
             else:
                 bounding_rect = bounding_rect.united(l_bounding_rect)
-            shape_path.addRect(l_bounding_rect)
         self._shape = shape_path
         self._rect = bounding_rect
         
@@ -273,6 +273,29 @@ class LineTree(QtGui.QGraphicsItem):
         painter.setPen(QtGui.QPen(QtCore.Qt.red))
         for line in self._lines:
             painter.drawLine(line)
+        
+    def _get_nearest_point_of_line(self, scene_point, line):
+        grid_point = self.scene().roundToGrid(scene_point)
+        vline = line.p2() - line.p1()
+        def constrain_to_range(x, l1, l2):
+            return max(min(x, max(l1, l2)), min(l1, l2))
+        if vline.x() == 0: # vertical
+            return QtCore.QPointF(line.p1().x(), constrain_to_range(
+                    grid_point.y(), line.p1().y(), line.p2().y()))
+        elif vline.y() == 0: # horizontal
+            return QtCore.QPointF(constrain_to_range(grid_point.x(), 
+                    line.p1().x(), line.p2().x()), line.p1().y())
+        else: # somehow tilted
+            raise Exception("Found tilted line")
+            
+    def get_nearest_point(self, scene_point):
+        p_nearest = None
+        for line in self._lines:
+            p = self._get_nearest_point_of_line(scene_point, line)
+            if p_nearest is None or ((scene_point - p).manhattanLength() < 
+                    (scene_point - p_nearest).manhattanLength()):
+                p_nearest = p
+        return p_nearest
 
 
 class LineConnectorItem(QtGui.QGraphicsEllipseItem):

@@ -396,10 +396,9 @@ class InsertLineSubModeBase(LineSubModeBase):
         def anchor_filter(item, path, radius):
             # line items
             if radius <= self._mouse_collision_line_radius and \
-                    isinstance(item, logic_item.LineItem) and \
+                    isinstance(item, logic_item.LineTree) and \
                     item not in self._inserted_lines:
-                return item.isHorizontalOrVertical() or path.contains(
-                        item.line().p1()) or path.contains(item.line().p2())
+                return True
             # connector items
             elif radius <= self._mouse_collision_connector_radius and \
                     isinstance(item, logic_item.ConnectorItem) and \
@@ -418,25 +417,9 @@ class InsertLineSubModeBase(LineSubModeBase):
             item = self.find_nearest_item_at_pos(pos, r_max, 
                     functools.partial(anchor_filter, radius=r_max))
         # find nearest point on line (in scene coordinates)
-        if isinstance(item, logic_item.LineItem):
-            line = item.line()
-            spos = self.mapToScene(pos)
-            gpos = self.scene().roundToGrid(spos)
-            vline = line.p2() - line.p1()
-            def contrain_to_range(x, l1, l2):
-                return max(min(x, max(l1, l2)), min(l1, l2))
-            if vline.x() == 0: # vertical
-                return QtCore.QPointF(line.p1().x(), contrain_to_range(
-                        gpos.y(), line.p1().y(), line.p2().y()))
-            elif vline.y() == 0: # horizontal
-                return QtCore.QPointF(contrain_to_range(gpos.x(), 
-                        line.p1().x(), line.p2().x()), line.p1().y())
-            else: # somehow tilted
-                if (line.p1() - spos).manhattanLength() < \
-                        (line.p2() - spos).manhattanLength():
-                    return line.p1()
-                else:
-                    return line.p2()
+        if isinstance(item, logic_item.LineTree):
+            scene_pos = self.mapToScene(pos)
+            return item.get_nearest_point(scene_pos)
         # return anchor point for connectors
         if isinstance(item, logic_item.ConnectorItem):
             return item.mapToScene(item.anchorPoint())
@@ -582,7 +565,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             scene_point = QtCore.QPointF(*map(to_scene, point))
             items = self.scene().items(scene_point)
             for item in items:
-                if isinstance(item, logic_item.LineItem):
+                if isinstance(item, logic_item.LineTree):
                     # we assume that there is only one line at each point
                     return item
         endpoint_lines = [get_line_at(p_start), get_line_at(p_end)]
@@ -605,7 +588,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                 if isinstance(item, logic_item.ConnectorItem) and \
                         point in (p_start, p_end):
                     continue
-                if isinstance(item, logic_item.LineItem):
+                if isinstance(item, logic_item.LineTree):
                     if item in endpoint_lines:
                         continue
                     if item.is_edge(scene_point):
@@ -615,7 +598,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                     continue
                 return hightower.Solid
             
-            print()
             if found_line_edge:
                 return hightower.LineEdge
             elif found_passable_line:
@@ -634,8 +616,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         if res is None:
             return
         
-        # draw result
-        
+        # add result
         lines = []
         for line in zip(res, res[1:]):
             start = QtCore.QPointF(*map(to_scene, line[0]))
@@ -644,14 +625,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         l_tree = logic_item.LineTree(lines)
         self.scene().addItem(l_tree)
         self._inserted_lines.append(l_tree)
-        
-        return
-        for line in zip(res, res[1:]):
-            start = QtCore.QPointF(*map(to_scene, line[0]))
-            end = QtCore.QPointF(*map(to_scene, line[1]))
-            l_line = logic_item.LineItem(QtCore.QLineF(start, end))
-            self.scene().addItem(l_line)
-            self._inserted_lines.append(l_line)
         
     
     def linesub_leave(self):
