@@ -576,6 +576,17 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         r_bottom = to_grid(max(bound_rect.bottom(), 
                                      start.y(), end.y())) + 2
         
+        # save lines at endpoints
+        def get_line_at(point):
+            """ get line at given point """
+            scene_point = QtCore.QPointF(*map(to_scene, point))
+            items = self.scene().items(scene_point)
+            for item in items:
+                if isinstance(item, logic_item.LineItem):
+                    # we assume that there is only one line at each point
+                    return item
+        endpoint_lines = [get_line_at(p_start), get_line_at(p_end)]
+        
         # only try to find path for max. 100 ms
         max_time = [time.time() + 0.3]
         class TimeReached(Exception):
@@ -593,9 +604,10 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                     continue
                 if isinstance(item, logic_item.ConnectorItem) and \
                         point in (p_start, p_end):
-                    #continue
-                    pass
+                    continue
                 if isinstance(item, logic_item.LineItem):
+                    if item in endpoint_lines:
+                        continue
                     if item.is_edge(scene_point):
                         found_line_edge = True
                     else:
@@ -623,6 +635,17 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             return
         
         # draw result
+        
+        lines = []
+        for line in zip(res, res[1:]):
+            start = QtCore.QPointF(*map(to_scene, line[0]))
+            end = QtCore.QPointF(*map(to_scene, line[1]))
+            lines.append(QtCore.QLineF(start, end))
+        l_tree = logic_item.LineTree(lines)
+        self.scene().addItem(l_tree)
+        self._inserted_lines.append(l_tree)
+        
+        return
         for line in zip(res, res[1:]):
             start = QtCore.QPointF(*map(to_scene, line[0]))
             end = QtCore.QPointF(*map(to_scene, line[1]))

@@ -46,7 +46,7 @@ def add_items(scene):
         font.setPointSizeF(100)
         item.setFont(font)
         scene.addItem(item)
-    
+
 
 def main():
     symbols.load_all_symbols()

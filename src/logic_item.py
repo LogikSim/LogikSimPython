@@ -220,25 +220,44 @@ class ConnectorItem(SmoothGrahpicsLineItem):
         SmoothGrahpicsLineItem.setLine(self, line)
 
 
-class LineItem(SmoothGrahpicsLineItem):
-    def __init__(self, *args, **kargs):
-        SmoothGrahpicsLineItem.__init__(self, *args, **kargs)
+class LineTree(QtGui.QGraphicsItem):
+    """ A collection of simple lines grouped together """
+    def __init__(self, lines):
+        QtGui.QGraphicsItem.__init__(self)
+        """lines is list of QLines"""
+        self._lines = None  # list with all lines
+        self._edges = None  # set with all edges as tuples
+        self._shape = None  # shape path
+        self._rect = None   # bounding rect
         
-        self.setPen(QtGui.QPen(QtCore.Qt.red))
         #self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
         #self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         
+        self._update_lines(lines)
+    
+    def _update_lines(self, lines):
+        """ Updates internal storage when lines change """
+        self._lines = lines
+        self._edges = set()
+        for line in lines:
+            self._edges.add(line.p1().toTuple())
+            self._edges.add(line.p2().toTuple())
         self._update_shape()
     
     def _update_shape(self):
         self.prepareGeometryChange()
-        bounding_rect = QtCore.QRectF(self.line().p1(), self.line().p2())
-        self._rect = bounding_rect.normalized().adjusted(-25, -25, 50, 50)
-        print(self._rect, self.line().p1(), self.line().p2())
-        
-        path = QtGui.QPainterPath()
-        path.addRect(self._rect)
-        self._shape = path
+        bounding_rect = None
+        shape_path = QtGui.QPainterPath()
+        for line in self._lines:
+            l_bounding_rect = QtCore.QRectF(line.p1(), line.p2())
+            l_bounding_rect.normalized().adjusted(-25, -25, 50, 50)
+            if bounding_rect is None:
+                bounding_rect = l_bounding_rect
+            else:
+                bounding_rect = bounding_rect.united(l_bounding_rect)
+            shape_path.addRect(l_bounding_rect)
+        self._shape = shape_path
+        self._rect = bounding_rect
         
     def boundingRect(self):
         return self._rect
@@ -247,7 +266,13 @@ class LineItem(SmoothGrahpicsLineItem):
         return self._shape
     
     def is_edge(self, scene_point):
-        return scene_point in [self.line().p1(), self.line().p2()]
+        """ Is there an edge at scene_point """
+        return scene_point.toTuple() in self._edges
+    
+    def paint(self, painter, option, widget=None):
+        painter.setPen(QtGui.QPen(QtCore.Qt.red))
+        for line in self._lines:
+            painter.drawLine(line)
 
 
 class LineConnectorItem(QtGui.QGraphicsEllipseItem):
