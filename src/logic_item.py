@@ -248,6 +248,7 @@ class LineTree(QtGui.QGraphicsItem):
         self.prepareGeometryChange()
         bounding_rect = None
         shape_path = QtGui.QPainterPath()
+        shape_path.setFillRule(QtCore.Qt.WindingFill)
         for line in self._lines:
             l_bounding_rect = QtCore.QRectF(line.p1(), line.p2()).\
                     normalized().adjusted(-25, -25, 25, 25)
