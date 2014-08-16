@@ -13,6 +13,8 @@ All interactive elements of our circuit build on these classes.
 They can be found in the symbols folder.
 '''
 
+import itertools
+
 from PySide import QtGui, QtCore
 
 
@@ -264,7 +266,47 @@ class LineTree(QtGui.QGraphicsItem):
         """
         Add lines to tree.
         """
-        self._update_lines(self.lines() + new_lines)
+        res = self.lines() + new_lines
+        
+        # find point where both trees are meeting each other
+        p_collisions = []
+        for line in new_lines:
+            if line.p1().toTuple() in self._edges:
+                p_collisions.append(line.p1())
+            elif line.p2().toTuple() in self._edges:
+                p_collisions.append(line.p2())
+        def remove_duplicates(l):
+            ret = []
+            for item in l:
+                if item not in ret:
+                    ret.append(item)
+            return ret
+        p_collisions = remove_duplicates(p_collisions)
+        assert len(p_collisions) <= 1, "expect that trees touch only once " + \
+                str(p_collisions) + str(self.lines()) + str(new_lines)
+        for p_col in p_collisions:
+            # find two lines which are involved in collision
+            l_collision = [line for line in res 
+                          if p_col in [line.p1(), line.p2()]]
+            assert 2 <= len(l_collision) <= 3, "expecting no double edge " + \
+                    str(l_collision) + str(self.lines()) + str(new_lines)
+            def is_horizontal(line):
+                return line.p1().y() == line.p2().y()
+            def to_rect(line):
+                return QtCore.QRectF(line.p1(), line.p2())
+            def to_line(rect):
+                return QtCore.QLineF(rect.topLeft(), rect.bottomRight())
+            # if both have same orientation combine them
+            for line_pair in itertools.permutations(l_collision, 2):
+                if is_horizontal(line_pair[0]) == is_horizontal(line_pair[1]):
+                    new_line = to_line(
+                            to_rect(line_pair[0]).united(to_rect(line_pair[1])))
+                    res.remove(line_pair[0])
+                    res.remove(line_pair[1])
+                    res.append(new_line)
+                    break
+        
+        self._update_lines(res)
     
     def lines(self):
         """ return lines """
