@@ -259,6 +259,16 @@ class LineTree(QtGui.QGraphicsItem):
                 bounding_rect = bounding_rect.united(l_bounding_rect)
         self._shape = shape_path
         self._rect = bounding_rect
+    
+    def add_lines(self, new_lines):
+        """
+        Add lines to tree.
+        """
+        self._update_lines(self.lines() + new_lines)
+    
+    def lines(self):
+        """ return lines """
+        return self._lines
         
     def boundingRect(self):
         return self._rect
@@ -274,6 +284,14 @@ class LineTree(QtGui.QGraphicsItem):
         painter.setPen(QtGui.QPen(QtCore.Qt.red))
         for line in self._lines:
             painter.drawLine(line)
+        
+        # paint all lines - debuging
+        painter.setPen(QtCore.Qt.NoPen)
+        painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 128)))
+        for line in self._lines:
+            rect = QtCore.QRectF(line.p1(), line.p2()).\
+                    normalized().adjusted(-25, -25, 25, 25)
+            painter.drawRect(rect)
         
     def _get_nearest_point_of_line(self, scene_point, line):
         grid_point = self.scene().roundToGrid(scene_point)
