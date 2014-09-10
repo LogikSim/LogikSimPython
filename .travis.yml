@@ -1,8 +1,7 @@
 language: python
 python:
-    - "3.2"
-    - "3.4"
+    - "3.2_with_system_site_packages"
 install:
-    - "pip install -r requirements.txt"
+    - "sudo apt-get install -qq python3-pyside"
 script:
     - "python -m unittest discover -s src/tests/ -t src"
