@@ -13,6 +13,7 @@ from PySide import QtGui, QtCore
 
 from helper.timeit_mod import timeit
 import base_graphics_framework
+from actions.ActionStack import ActionStack
 
 class SchematicScene(base_graphics_framework.BasicGridScene):
     def __init__(self, *args, **kargs):
@@ -21,6 +22,7 @@ class SchematicScene(base_graphics_framework.BasicGridScene):
         height = 100 * 1000 # golden ratio
         self.setSceneRect(0, 0, height * (1+5**0.5)/2, height)
 
+        self.actions =  ActionStack(self)
 
 class SchematicView(
             base_graphics_framework.SelectItemsMode, 
@@ -50,6 +52,23 @@ class SchematicView(
         elif event.key() == QtCore.Qt.Key_F4:
             print('insert lines')
             self.setMouseMode(base_graphics_framework.InsertLineMode)
+        elif event.key() == QtCore.Qt.Key_F5:
+            actions = self.scene().actions
+
+            if actions.canUndo():
+                print('undo')
+                self.scene().actions.undo()
+            else:
+                print("can't undo")
+
+        elif event.key() == QtCore.Qt.Key_F6:
+            actions = self.scene().actions
+
+            if actions.canRedo():
+                print('redo')
+                self.scene().actions.redo()
+            else:
+                print("can't redo")
         elif event.key() == QtCore.Qt.Key_Escape:
             self.abort_line_inserting()
         else:

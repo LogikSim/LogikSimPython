@@ -37,7 +37,9 @@ def add_items(scene):
                       ("F1 - Selection", (80000, 49200)),
                       ("F2 - Insert Logic Items", (80000, 49400)),
                       ("F3 - Insert Connectors", (80000, 49600)),
-                      ("F4 - Insert Lines", (80000, 49800))]:
+                      ("F4 - Insert Lines", (80000, 49800)),
+                      ("F5 - Undo", (80000, 50000)),
+                      ("F6 - Redo", (80000, 50200))]:
         item = QtGui.QGraphicsTextItem(text)
         item.setPos(*pos)
         item.setDefaultTextColor(QtCore.Qt.red)

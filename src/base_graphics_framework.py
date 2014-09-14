@@ -295,7 +295,14 @@ class InsertItemMode(GridViewMouseModeBase):
     
     def mouse_enter(self):
         super().mouse_enter()
-    
+
+    def insert_item(self, gpos):
+        item = self._insert_item_class()
+        item.setPos(gpos)
+        self.scene().addItem(item)
+
+        return item
+
     @mouse_mode_filtered
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
@@ -303,9 +310,7 @@ class InsertItemMode(GridViewMouseModeBase):
         # left button
         if event.button() is QtCore.Qt.LeftButton:
             gpos = self.mapToSceneGrid(event.pos())
-            item = self._insert_item_class()
-            item.setPos(gpos)
-            self.scene().addItem(item)
+            item = self.insert_item(gpos)
             self._inserted_item = item
     
     @mouse_mode_filtered
@@ -324,7 +329,24 @@ class InsertItemMode(GridViewMouseModeBase):
         super().mouseReleaseEvent(event)
         
         # left button
-        if event.button() is QtCore.Qt.LeftButton:
+        if event.button() is QtCore.Qt.LeftButton and self._inserted_item is not None:
+            # Add undo/redo action
+            scene = self.scene()
+            gpos = self._inserted_item.pos()
+            item = self._inserted_item
+
+            def do():
+                nonlocal item
+                item = self.insert_item(gpos)
+
+            def undo():
+                nonlocal item
+                scene.removeItem(item)
+
+            self.scene().actions.executed(
+                do, undo, "Insert logic item"
+            )
+
             # prevent item from being deleted when switching modes
             self._inserted_item = None
     
