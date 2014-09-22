@@ -6,7 +6,7 @@
 # be found in the LICENSE.txt file.
 
 from PySide import QtGui
-from actions.Action import Action
+from actions.action import Action
 
 class ActionStack(QtGui.QUndoStack):
     """
