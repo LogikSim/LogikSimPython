@@ -20,7 +20,7 @@ from PySide import QtGui, QtCore
 
 from helper.timeit_mod import timeit
 import modes
-import logic_item
+import logicitems
 
 import algorithms.hightower as hightower
 
@@ -288,7 +288,7 @@ class InsertItemMode(GridViewMouseModeBase):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
         # class used to insert new items
-        self._insert_item_class = logic_item.LogicItem
+        self._insert_item_class = logicitems.LogicItem
         # reference to currently inserted item (used to move it 
         # while the mouse button is still pressed)
         self._inserted_item = None
@@ -418,12 +418,12 @@ class InsertLineSubModeBase(LineSubModeBase):
         def anchor_filter(item, path, radius):
             # line items
             if radius <= self._mouse_collision_line_radius and \
-                    isinstance(item, logic_item.LineTree) and \
+                    isinstance(item, logicitems.LineTree) and \
                     item is not self._inserted_lines:
                 return True
             # connector items
             elif radius <= self._mouse_collision_connector_radius and \
-                    isinstance(item, logic_item.ConnectorItem) and \
+                    isinstance(item, logicitems.ConnectorItem) and \
                     item is not self._inserted_connector:
                 return path.contains(item.mapToScene(item.anchorPoint()))
         
@@ -439,11 +439,11 @@ class InsertLineSubModeBase(LineSubModeBase):
             item = self.find_nearest_item_at_pos(pos, r_max, 
                     functools.partial(anchor_filter, radius=r_max))
         # find nearest point on line (in scene coordinates)
-        if isinstance(item, logic_item.LineTree):
+        if isinstance(item, logicitems.LineTree):
             scene_pos = self.mapToScene(pos)
             return item.get_nearest_point(scene_pos)
         # return anchor point for connectors
-        if isinstance(item, logic_item.ConnectorItem):
+        if isinstance(item, logicitems.ConnectorItem):
             return item.mapToScene(item.anchorPoint())
     
     def setLineAnchorIndicator(self, pos):
@@ -459,7 +459,7 @@ class InsertLineSubModeBase(LineSubModeBase):
             pen_width = max(1 / scale, 8)
             if self._line_anchor_indicator is None:
                 # create new
-                item = logic_item.LineAnchorIndicator(rect)
+                item = logicitems.LineAnchorIndicator(rect)
                 item.setWidthF(pen_width)
                 self._line_anchor_indicator = item
                 self.scene().addItem(item)
@@ -558,7 +558,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         """ get line at given scene point """
         items = self.scene().items(scene_point)
         for item in items:
-            if isinstance(item, logic_item.LineTree):
+            if isinstance(item, logicitems.LineTree):
                 # we assume that there is only one line at each point
                 return item
     
@@ -627,10 +627,10 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             for item in items:
                 if item is self._line_anchor_indicator:
                     continue
-                if isinstance(item, logic_item.ConnectorItem) and \
+                if isinstance(item, logicitems.ConnectorItem) and \
                         point in (p_start, p_end):
                     continue
-                if isinstance(item, logic_item.LineTree):
+                if isinstance(item, logicitems.LineTree):
                     if item in endpoint_lines:
                         continue
                     if item.is_edge(scene_point):
@@ -698,7 +698,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             start = to_scene_point(line[0])
             end = to_scene_point(line[1])
             lines.append(QtCore.QLineF(start, end))
-        l_tree = logic_item.LineTree(lines)
+        l_tree = logicitems.LineTree(lines)
         # try to merge start end end lines
         #   we don't delete them yet, rather we delete them when finally
         #   inserting the new line
@@ -752,7 +752,7 @@ class InsertConnectorMode(GridViewMouseModeBase):
         if event.button() is QtCore.Qt.LeftButton:
             gpos = self.mapToSceneGrid(event.pos())
             self._insert_connector_start = gpos
-            self._inserted_connector = logic_item.ConnectorItem(
+            self._inserted_connector = logicitems.ConnectorItem(
                     QtCore.QLineF(gpos, gpos))
             self.scene().addItem(self._inserted_connector)
     

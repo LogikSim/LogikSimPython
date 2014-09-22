@@ -14,17 +14,17 @@ import sys
 from PySide import QtGui, QtCore
 
 import main_window
-import logic_item
+import logicitems
 import symbols
 
 def add_items(scene):
     def add_simple_item(pos):
-        item = logic_item.LogicItem()
+        item = logicitems.LogicItem()
         for i in range(1, 6):
-            con1 = logic_item.ConnectorItem(
+            con1 = logicitems.ConnectorItem(
                     QtCore.QLineF(0, 100 * i, -100, 100 * i))
             con1.setParentItem(item)
-            con2 = logic_item.ConnectorItem(
+            con2 = logicitems.ConnectorItem(
                     QtCore.QLineF(300, 100 * i, 400, 100 * i))
             con2.setParentItem(item)
         item.setPos(pos)
