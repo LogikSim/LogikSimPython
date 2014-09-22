@@ -84,7 +84,7 @@ def generate_mode_base(base_class, name):
         """
         Base Class for implementing a specific mouse mode
     
-        To use this class you should derive from BasicGridView and as many
+        To use this class you should derive from InteractiveGridView and as many
         BaseMouseMode subclasses you want. Then you can use set_mouse_mode
         to select a specific enable / switch mouse modes.
         

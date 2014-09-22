@@ -11,7 +11,7 @@ The item list view is used to show all available logic elements.
 
 from PySide import QtGui, QtCore
 
-import base_graphics_framework
+import schematics
 
 class TestRect(QtGui.QGraphicsRectItem, QtGui.QGraphicsLayoutItem):
     def __init__(self, *args, **kargs):
@@ -20,7 +20,7 @@ class TestRect(QtGui.QGraphicsRectItem, QtGui.QGraphicsLayoutItem):
         self.setPen(QtGui.QPen(QtCore.Qt.black))
         self.setBrush(QtCore.Qt.white)
 
-class ItemListScene(base_graphics_framework.BasicGridScene):
+class ItemListScene(schematics.GridScene):
     def __init__(self, *args, **kargs):
         super(ItemListScene, self).__init__(*args, **kargs)
         # top level widget is needed to layout all other items
@@ -64,7 +64,7 @@ class ItemListScene(base_graphics_framework.BasicGridScene):
 #        self._top_widget.setLayout(self._layout)
 
 
-class ItemListView(base_graphics_framework.BasicView):
+class ItemListView(schematics.GridView):
     def __init__(self, *args, **kargs):
         super(ItemListView, self).__init__(*args, **kargs)
         self.setScene(ItemListScene(self))

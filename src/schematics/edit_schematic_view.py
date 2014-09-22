@@ -6,34 +6,24 @@
 # be found in the LICENSE.txt file.
 #
 '''
-Defines the schematic widged used to create and visualize the logic circuits.
+Defines the schematic view used to create and visualize logic circuits.
 '''
 
-from PySide import QtGui, QtCore
+from . import mouse_modes
+from . import grid_scene
 
-from helper.timeit_mod import timeit
-import base_graphics_framework
-from actions.ActionStack import ActionStack
+from PySide import QtCore
 
-class SchematicScene(base_graphics_framework.BasicGridScene):
+
+class EditSchematicView(
+            mouse_modes.SelectItemsMode, 
+            mouse_modes.InsertItemMode,
+            mouse_modes.InsertLineMode,
+            mouse_modes.InsertConnectorMode):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
-        # set scene size
-        height = 100 * 1000 # golden ratio
-        self.setSceneRect(0, 0, height * (1+5**0.5)/2, height)
-
-        self.actions =  ActionStack(self)
-
-class SchematicView(
-            base_graphics_framework.SelectItemsMode, 
-            base_graphics_framework.InsertItemMode,
-            base_graphics_framework.InsertLineMode,
-            base_graphics_framework.InsertConnectorMode, 
-            base_graphics_framework.BasicGridView):
-    def __init__(self, *args, **kargs):
-        super().__init__(*args, **kargs)
-        self.setScene(SchematicScene(self))
-        self.setMouseMode(base_graphics_framework.SelectItemsMode)
+        self.setScene(grid_scene.GridScene(self))
+        self.setMouseMode(mouse_modes.SelectItemsMode)
     
 #    @timeit
     def mouseMoveEvent(self, event):
@@ -42,16 +32,16 @@ class SchematicView(
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_F1:
             print('selection mode')
-            self.setMouseMode(base_graphics_framework.SelectItemsMode)
+            self.setMouseMode(mouse_modes.SelectItemsMode)
         elif event.key() == QtCore.Qt.Key_F2:
             print('insert logic element')
-            self.setMouseMode(base_graphics_framework.InsertItemMode)
+            self.setMouseMode(mouse_modes.InsertItemMode)
         elif event.key() == QtCore.Qt.Key_F3:
             print('insert connector')
-            self.setMouseMode(base_graphics_framework.InsertConnectorMode)
+            self.setMouseMode(mouse_modes.InsertConnectorMode)
         elif event.key() == QtCore.Qt.Key_F4:
             print('insert lines')
-            self.setMouseMode(base_graphics_framework.InsertLineMode)
+            self.setMouseMode(mouse_modes.InsertLineMode)
         elif event.key() == QtCore.Qt.Key_F5:
             actions = self.scene().actions
 
@@ -74,13 +64,3 @@ class SchematicView(
         else:
             super().keyPressEvent(event)
 
-
-def main():
-    import sys
-    app = QtGui.QApplication(sys.argv)
-    view = SchematicView()
-    view.show()
-    app.exec_()
- 
-if __name__ == '__main__':
-    main()
