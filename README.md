@@ -1,6 +1,6 @@
 LogikSim
 ========
-[![Build Status](https://travis-ci.org/LogikSim/LogikSim.svg?branch=master)](https://travis-ci.org/LogikSim/LogikSim)
+[![Build Status](https://travis-ci.org/LogikSim/LogikSim.svg?branch=master)](https://travis-ci.org/LogikSim/LogikSim) [![Coverage Status](https://coveralls.io/repos/LogikSim/LogikSim/badge.png)](https://coveralls.io/r/LogikSim/LogikSim)
 
 ### Our Vision ###
 
