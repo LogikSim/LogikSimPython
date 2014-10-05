@@ -16,7 +16,7 @@ class ActionStack(QtGui.QUndoStack):
     def __init__(self, parent = None):
         super().__init__(parent)
 
-    def executed(self, redo, undo, description = None):
+    def executed(self, redo, undo, description):
         """
         Creates an already performed Action from parameters and puts it onto the action stack.
 
@@ -40,7 +40,7 @@ class ActionStack(QtGui.QUndoStack):
 
         return action
 
-    def execute(self, do, undo, description = None):
+    def execute(self, do, undo, description):
         """
         Creates an Action, executes it and puts it onto the action stack.
 

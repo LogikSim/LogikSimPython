@@ -9,7 +9,7 @@
 Defines scene that contain all the parts of the schematics.
 '''
 
-from actions.ActionStack import ActionStack
+from actions.ActionStackModel import ActionStackModel
 
 from PySide import QtGui, QtCore
 
@@ -22,7 +22,7 @@ class GridScene(QtGui.QGraphicsScene):
         # can items be selected in this scenen?
         self._allow_item_selection = False
 
-        self.actions =  ActionStack(self)
+        self.actions =  ActionStackModel(parent = self)
         
         # default values for new scene
         height = 100 * 1000 # golden ratio

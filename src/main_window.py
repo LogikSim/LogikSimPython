@@ -10,6 +10,7 @@ Define the main window of the LogikSim GUI.
 '''
 
 from PySide import QtGui
+from actions.HistoryWindow import HistoryWindow
 
 #import item_list_widget
 import schematics
@@ -18,6 +19,7 @@ class MainWindow(QtGui.QWidget):
     def __init__(self, *args, **kargs):
         QtGui.QWidget.__init__(self, *args, **kargs)
         # main layout
+
         self._main_layout = QtGui.QBoxLayout(QtGui.QBoxLayout.LeftToRight, self)
         self._main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._main_layout)
@@ -32,6 +34,9 @@ class MainWindow(QtGui.QWidget):
 #        self._main_layout.addWidget(self._symbol, 2)
         # set frame size
         #self.resize(400, 400)
+
+        self._history_window = HistoryWindow(self._view.scene().actions, self)
+        self._history_window.show()
     
     def view(self):
         return self._view
