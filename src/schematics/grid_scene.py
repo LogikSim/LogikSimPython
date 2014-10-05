@@ -9,7 +9,7 @@
 Defines scene that contain all the parts of the schematics.
 '''
 
-from actions.ActionStackModel import ActionStackModel
+from actions.action_stack_model import ActionStackModel
 
 from PySide import QtGui, QtCore
 

@@ -6,7 +6,7 @@
 # be found in the LICENSE.txt file.
 #
 from PySide import QtCore, QtGui
-from actions.ActionStack import ActionStack
+from actions.action_stack import ActionStack
 
 
 class ActionStackModel(QtCore.QAbstractListModel):

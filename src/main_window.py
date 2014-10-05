@@ -10,7 +10,7 @@ Define the main window of the LogikSim GUI.
 '''
 
 from PySide import QtGui
-from actions.HistoryWindow import HistoryWindow
+from actions.history_window import HistoryWindow
 
 #import item_list_widget
 import schematics
