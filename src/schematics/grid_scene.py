@@ -22,7 +22,7 @@ class GridScene(QtGui.QGraphicsScene):
         # can items be selected in this scenen?
         self._allow_item_selection = False
 
-        self.actions =  ActionStackModel(parent = self)
+        self.actions =  ActionStackModel(self.tr("New circuit"), parent = self)
         
         # default values for new scene
         height = 100 * 1000 # golden ratio
