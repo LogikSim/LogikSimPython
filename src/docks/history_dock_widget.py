@@ -6,16 +6,13 @@
 # be found in the LICENSE.txt file.
 #
 from PySide import QtGui, QtCore
-from actions.action_stack_view import ActionStackView
+from actions.history_window import HistoryWindow
 
-class HistoryWindow(QtGui.QWidget):
+class HistoryDockWidget(QtGui.QDockWidget):
     def __init__(self, action_stack_model, parent = None):
         super().__init__(parent)
 
-        layout = QtGui.QVBoxLayout()
-        history = ActionStackView(self)
-        history.setModel(action_stack_model)
-        layout.addWidget(history)
-        self.setLayout(layout)
+        self._history_widget = HistoryWindow(action_stack_model, self)
+        self.setWidget(self._history_widget)
 
-        self.setWindowTitle(self.tr("History"))
+        self.setWindowTitle(self._history_widget.windowTitle())
