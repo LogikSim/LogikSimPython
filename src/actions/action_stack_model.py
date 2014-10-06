@@ -30,6 +30,9 @@ class ActionStackModel(QtCore.QAbstractListModel):
         # state. If we queue the signal we know it will be deferred until our functions complete.
         self.action_stack.indexChanged.connect(self._stackIndexChanged, QtCore.Qt.QueuedConnection)
 
+        self.action_stack.canUndoChanged.connect(self.canUndoChanged)
+        self.action_stack.canRedoChanged.connect(self.canRedoChanged)
+
     def reset(self, base_action):
         self.beginResetModel()
         self.base_action = base_action
@@ -169,6 +172,9 @@ class ActionStackModel(QtCore.QAbstractListModel):
     def canRedo(self):
         return self.action_stack.canRedo()
 
+
+    canRedo.__doc__ = ActionStack.canRedo.__doc__
+
     def undoRedoToIndex(self, modelIndex):
         """
         Given a model index attempts to undo or redo the stack to the given index
@@ -200,8 +206,6 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
         return completed
 
-    currentModelIndexChanged = QtCore.Signal(QtCore.QModelIndex)
-
     @QtCore.Slot(int)
     def _stackIndexChanged(self, index):
         """
@@ -212,5 +216,6 @@ class ActionStackModel(QtCore.QAbstractListModel):
         # As index always point to last done + 1 it maps one to one to our model rows.
         self.currentModelIndexChanged.emit(self.index(index))
 
-    canRedo.__doc__ = ActionStack.canRedo.__doc__
-
+    currentModelIndexChanged = QtCore.Signal(QtCore.QModelIndex)
+    canRedoChanged = QtCore.Signal(bool)
+    canUndoChanged = QtCore.Signal(bool)
