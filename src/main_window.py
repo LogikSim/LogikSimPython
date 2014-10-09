@@ -32,13 +32,21 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.add_items(scene)
 
         actions = scene.actions
-        #TODO: Wrap QUndoStack::createRedo(Undo)Action and use it instead
-        self.action_stack_view.setModel(actions)
-        self.action_undo.triggered.connect(actions.undo)
-        actions.canUndoChanged.connect(self.action_undo.setEnabled)
-        self.action_redo.triggered.connect(actions.redo)
-        actions.canRedoChanged.connect(self.action_redo.setEnabled)
 
+        self.action_stack_view.setModel(actions)
+
+        # Prepend undo/redo QActions to menu_edit
+        first_menu_edit_qaction = self.menu_edit.actions()[0] if len(self.menu_edit.actions()) > 0 else None
+
+        undo_qaction = actions.createUndoAction(self)
+        undo_qaction.setShortcut(QtGui.QKeySequence.Undo)
+        self.menu_edit.insertAction(first_menu_edit_qaction, undo_qaction)
+
+        redo_qaction = actions.createRedoAction(self)
+        redo_qaction.setShortcut(QtGui.QKeySequence.Redo)
+        self.menu_edit.insertAction(first_menu_edit_qaction, redo_qaction)
+
+        # Add toggle view actions for dockwidgets
         self.menu_view.addAction(self.history_dock_widget.toggleViewAction())
 
 
@@ -68,9 +76,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
                           ("F1 - Selection", (80000, 49200)),
                           ("F2 - Insert Logic Items", (80000, 49400)),
                           ("F3 - Insert Connectors", (80000, 49600)),
-                          ("F4 - Insert Lines", (80000, 49800)),
-                          ("F5 - Undo", (80000, 50000)),
-                          ("F6 - Redo", (80000, 50200))]:
+                          ("F4 - Insert Lines", (80000, 49800))]:
             item = QtGui.QGraphicsTextItem(text)
             item.setPos(*pos)
             item.setDefaultTextColor(QtCore.Qt.red)

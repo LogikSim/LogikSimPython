@@ -72,8 +72,6 @@
     <property name="title">
      <string>&amp;Edit</string>
     </property>
-    <addaction name="action_redo"/>
-    <addaction name="action_undo"/>
    </widget>
    <addaction name="menu_file"/>
    <addaction name="menu_edit"/>

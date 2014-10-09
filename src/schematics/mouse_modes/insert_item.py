@@ -75,7 +75,7 @@ class InsertItemMode(GridViewMouseModeBase):
                 scene.removeItem(item)
 
             self.scene().actions.executed(
-                do, undo, "Insert logic item"
+                do, undo, "insert logic item"
             )
 
             # prevent item from being deleted when switching modes

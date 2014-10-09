@@ -42,23 +42,6 @@ class EditSchematicView(
         elif event.key() == QtCore.Qt.Key_F4:
             print('insert lines')
             self.setMouseMode(mouse_modes.InsertLineMode)
-        elif event.key() == QtCore.Qt.Key_F5:
-            actions = self.scene().actions
-
-            if actions.canUndo():
-                print('undo')
-                self.scene().actions.undo()
-            else:
-                print("can't undo")
-
-        elif event.key() == QtCore.Qt.Key_F6:
-            actions = self.scene().actions
-
-            if actions.canRedo():
-                print('redo')
-                self.scene().actions.redo()
-            else:
-                print("can't redo")
         elif event.key() == QtCore.Qt.Key_Escape:
             self.abort_line_inserting()
         else:

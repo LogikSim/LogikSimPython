@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created: Tue Oct  7 01:39:14 2014
+# Created: Fri Oct 10 00:03:26 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -70,8 +70,6 @@ class Ui_MainWindow(object):
         self.action_undo.setEnabled(False)
         self.action_undo.setObjectName("action_undo")
         self.menu_file.addAction(self.action_exit)
-        self.menu_edit.addAction(self.action_redo)
-        self.menu_edit.addAction(self.action_undo)
         self.menu_bar.addAction(self.menu_file.menuAction())
         self.menu_bar.addAction(self.menu_edit.menuAction())
         self.menu_bar.addAction(self.menu_view.menuAction())
