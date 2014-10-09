@@ -8,6 +8,20 @@
 from PySide import QtCore, QtGui
 from actions.action_stack import ActionStack
 
+class TemplateTextSlotAction(QtGui.QAction):
+    """
+    Thin wrapper around QAction that given a template
+    with a variable offers a slot to change the action
+    text based on the template. {0} is the template variable.
+    """
+    def __init__(self, template = "{0}", *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._template = template
+
+    @QtCore.Slot(str)
+    def on_text_changed(self, text):
+        self.setText(self._template.format(text))
 
 class ActionStackModel(QtCore.QAbstractListModel):
     """
@@ -32,6 +46,9 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
         self.action_stack.canUndoChanged.connect(self.canUndoChanged)
         self.action_stack.canRedoChanged.connect(self.canRedoChanged)
+        self.action_stack.cleanChanged.connect(self.cleanChanged)
+        self.action_stack.redoTextChanged.connect(self.redoTextChanged)
+        self.action_stack.undoTextChanged.connect(self.undoTextChanged)
 
     def reset(self, base_action):
         self.beginResetModel()
@@ -67,7 +84,10 @@ class ActionStackModel(QtCore.QAbstractListModel):
         has_been_undone = stack_index >= self.action_stack.index()
 
         if role == QtCore.Qt.DisplayRole:
-            return action.actionText()
+            # Capitalize action text here so the view entries look like sentences.
+            # Wanted to use a QIdentityProxyModel for capitalization per view but PySide doesn't have it yet
+            # The other option would be to de-capitalize where needed (menu entries etc.)
+            return action.actionText().capitalize()
         elif role == QtCore.Qt.ForegroundRole:
             #FIXME: Should probably use system palette derived color, a delegate or a user defined role for this
             if has_been_undone:
@@ -86,9 +106,41 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
         return self.tr("Action")
 
-    # Wrap the parts of ActionStack we need. Likely will end up
+    # Wrap/emulate the parts of ActionStack we need. Likely will end up
     # with big parts of QUndoStack wrapper but there's not really a
     # cleaner way
+
+    def _create_undoredo_action(self, parent, prefix, initialText, initialCanDo, canDoChangedSignal, textChangedSignal, triggered):
+        template = prefix + " {0}"
+        action = TemplateTextSlotAction(template, template.format(initialText), parent)
+        action.setEnabled(initialCanDo)
+        canDoChangedSignal.connect(action.setEnabled)
+        textChangedSignal.connect(action.on_text_changed)
+        action.triggered.connect(triggered)
+
+        return action
+
+    def createUndoAction(self, parent, prefix = None):
+        return self._create_undoredo_action(parent,
+                                            self.tr("Undo") if prefix is None else prefix,
+                                            self.undoText(),
+                                            self.canUndo(),
+                                            self.canUndoChanged,
+                                            self.undoTextChanged,
+                                            self.undo)
+
+    createUndoAction.__doc__ = ActionStack.createUndoAction.__doc__
+
+    def createRedoAction(self, parent, prefix = None):
+        return self._create_undoredo_action(parent,
+                                            self.tr("Redo") if prefix is None else prefix,
+                                            self.redoText(),
+                                            self.canRedo(),
+                                            self.canRedoChanged,
+                                            self.redoTextChanged,
+                                            self.redo)
+
+    createRedoAction.__doc__ = ActionStack.createRedoAction.__doc__
 
     def _push_action_wrap(fun):
         """
@@ -216,6 +268,25 @@ class ActionStackModel(QtCore.QAbstractListModel):
         # As index always point to last done + 1 it maps one to one to our model rows.
         self.currentModelIndexChanged.emit(self.index(index))
 
+    @QtCore.Slot()
+    def setClean(self):
+        self.action_stack.setClean()
+
+    setClean.__doc__ = ActionStack.setClean.__doc__
+
+    def undoText(self):
+        return self.action_stack.undoText()
+
+    undoText.__doc__ = ActionStack.undoText.__doc__
+
+    def redoText(self):
+        return self.action_stack.redoText()
+
+    redoText.__doc__ = ActionStack.redoText.__doc__
+
     currentModelIndexChanged = QtCore.Signal(QtCore.QModelIndex)
     canRedoChanged = QtCore.Signal(bool)
     canUndoChanged = QtCore.Signal(bool)
+    cleanChanged = QtCore.Signal(bool)
+    redoTextChanged = QtCore.Signal(str)
+    undoTextChanged= QtCore.Signal(str)
