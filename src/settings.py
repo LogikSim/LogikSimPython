@@ -41,8 +41,8 @@ def Setting(settings_type, name, doc = None):
 
     return decorator
 
-@Setting(QtCore.QByteArray, "geometry", "Stores main window geometry")
-#@Setting(QtCore.QByteArray, "state", "Stores main window state")
+@Setting(QtCore.QByteArray, "main_window_geometry", "Stores main window geometry")
+@Setting(QtCore.QByteArray, "main_window_state", "Stores main window state")
 class Settings(QtCore.QObject):
     """
     Class for storing and loading LogikSim settings.
@@ -62,8 +62,8 @@ class Settings(QtCore.QObject):
 
         # Set default values, we initialize those explicitly here so
         # IDEs pick them up and offer auto-completion.
-        self.geometry = QtCore.QByteArray()
-        self.state = QtCore.QByteArray()
+        self.main_window_geometry = QtCore.QByteArray()
+        self.main_window_state = QtCore.QByteArray()
 
         self.load()
 
@@ -115,7 +115,8 @@ _settings = None # Settings singleton stored here
 def settings():
     """
     Returns the global settings singleton.
-    Expects setupSettings to be called first
+    Expects setupSettings to be called first.
+    :return Settings() object
     """
     global _settings
     assert _settings is not None, "setupSettings not yet called"

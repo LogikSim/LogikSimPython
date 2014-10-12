@@ -15,6 +15,7 @@ import logicitems
 #import item_list_widget
 import schematics
 from ui_main_window import Ui_MainWindow
+from settings import settings
 
 class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
     def __init__(self, parent = None):
@@ -49,7 +50,16 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         # Add toggle view actions for dockwidgets
         self.menu_view.addAction(self.history_dock_widget.toggleViewAction())
 
+        s = settings()
+        # Restore layout
+        self.restoreGeometry(s.main_window_geometry)
+        self.restoreState(s.main_window_state)
 
+    def closeEvent(self, event):
+        s = settings()
+        # Save layout
+        s.main_window_geometry = self.saveGeometry()
+        s.main_window_state = self.saveState()
 
     def showEvent(self, event):
         #FIXME: Temporary workaround, should be part of circuit instance management
