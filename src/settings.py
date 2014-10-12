@@ -115,11 +115,11 @@ _settings = None # Settings singleton stored here
 def settings():
     """
     Returns the global settings singleton.
-    Expects setupSettings to be called first.
+    Expects setup_settings to be called first.
     :return Settings() object
     """
     global _settings
-    assert _settings is not None, "setupSettings not yet called"
+    assert _settings is not None, "setup_settings not yet called"
     return _settings
 
 def setup_settings(qsettingsObject = None, parent = None):
