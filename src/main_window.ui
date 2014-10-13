@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>LogikSim</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="resources.qrc">
+    <normaloff>:/LogikSim.ico</normaloff>:/LogikSim.ico</iconset>
+  </property>
   <widget class="QWidget" name="central_widget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <property name="spacing">
@@ -73,9 +77,17 @@
      <string>&amp;Edit</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menu_help">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="action_about"/>
+    <addaction name="action_about_qt"/>
+   </widget>
    <addaction name="menu_file"/>
    <addaction name="menu_edit"/>
    <addaction name="menu_view"/>
+   <addaction name="menu_help"/>
   </widget>
   <widget class="QStatusBar" name="status_bar"/>
   <widget class="QToolBar" name="tool_bar">
@@ -140,6 +152,16 @@
     <string>&amp;Undo</string>
    </property>
   </action>
+  <action name="action_about">
+   <property name="text">
+    <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="action_about_qt">
+   <property name="text">
+    <string>About &amp;Qt</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -148,7 +170,9 @@
    <header>actions/action_stack_view/</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>action_exit</sender>

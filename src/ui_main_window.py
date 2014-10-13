@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created: Fri Oct 10 00:03:26 2014
+# Created: Tue Oct 14 00:13:31 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -13,6 +13,9 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/LogikSim.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        MainWindow.setWindowIcon(icon)
         self.central_widget = QtGui.QWidget(MainWindow)
         self.central_widget.setObjectName("central_widget")
         self.verticalLayout = QtGui.QVBoxLayout(self.central_widget)
@@ -36,6 +39,8 @@ class Ui_MainWindow(object):
         self.menu_view.setObjectName("menu_view")
         self.menu_edit = QtGui.QMenu(self.menu_bar)
         self.menu_edit.setObjectName("menu_edit")
+        self.menu_help = QtGui.QMenu(self.menu_bar)
+        self.menu_help.setObjectName("menu_help")
         MainWindow.setMenuBar(self.menu_bar)
         self.status_bar = QtGui.QStatusBar(MainWindow)
         self.status_bar.setObjectName("status_bar")
@@ -69,10 +74,17 @@ class Ui_MainWindow(object):
         self.action_undo = QtGui.QAction(MainWindow)
         self.action_undo.setEnabled(False)
         self.action_undo.setObjectName("action_undo")
+        self.action_about = QtGui.QAction(MainWindow)
+        self.action_about.setObjectName("action_about")
+        self.action_about_qt = QtGui.QAction(MainWindow)
+        self.action_about_qt.setObjectName("action_about_qt")
         self.menu_file.addAction(self.action_exit)
+        self.menu_help.addAction(self.action_about)
+        self.menu_help.addAction(self.action_about_qt)
         self.menu_bar.addAction(self.menu_file.menuAction())
         self.menu_bar.addAction(self.menu_edit.menuAction())
         self.menu_bar.addAction(self.menu_view.menuAction())
+        self.menu_bar.addAction(self.menu_help.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QObject.connect(self.action_exit, QtCore.SIGNAL("triggered()"), MainWindow.close)
@@ -83,10 +95,14 @@ class Ui_MainWindow(object):
         self.menu_file.setTitle(QtGui.QApplication.translate("MainWindow", "&File", None, QtGui.QApplication.UnicodeUTF8))
         self.menu_view.setTitle(QtGui.QApplication.translate("MainWindow", "&View", None, QtGui.QApplication.UnicodeUTF8))
         self.menu_edit.setTitle(QtGui.QApplication.translate("MainWindow", "&Edit", None, QtGui.QApplication.UnicodeUTF8))
+        self.menu_help.setTitle(QtGui.QApplication.translate("MainWindow", "&Help", None, QtGui.QApplication.UnicodeUTF8))
         self.tool_bar.setWindowTitle(QtGui.QApplication.translate("MainWindow", "toolBar", None, QtGui.QApplication.UnicodeUTF8))
         self.history_dock_widget.setWindowTitle(QtGui.QApplication.translate("MainWindow", "History", None, QtGui.QApplication.UnicodeUTF8))
         self.action_exit.setText(QtGui.QApplication.translate("MainWindow", "&Exit", None, QtGui.QApplication.UnicodeUTF8))
         self.action_redo.setText(QtGui.QApplication.translate("MainWindow", "&Redo", None, QtGui.QApplication.UnicodeUTF8))
         self.action_undo.setText(QtGui.QApplication.translate("MainWindow", "&Undo", None, QtGui.QApplication.UnicodeUTF8))
+        self.action_about.setText(QtGui.QApplication.translate("MainWindow", "&About", None, QtGui.QApplication.UnicodeUTF8))
+        self.action_about_qt.setText(QtGui.QApplication.translate("MainWindow", "About &Qt", None, QtGui.QApplication.UnicodeUTF8))
 
 from actions.action_stack_view import ActionStackView
+import resources_rc
