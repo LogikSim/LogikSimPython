@@ -13,6 +13,8 @@ from cx_Freeze import setup, Executable
 
 exe = Executable(
         script = "main.py",
+        targetName = "LogikSim.exe",
+        icon = "resources/LogikSim.ico",
         #base = "Win32GUI",
 )
 
@@ -20,6 +22,7 @@ setup(
         name = "QCanvasTest",
         version = "0.0.1",
         description = "Test QCanvas Capabilities",
-        #options = {"build_exe": {"compressed": True}}, 
+        options = {"build_exe": {"compressed": True,
+                                 "includes" : ["PySide.QtXml"]}}, 
         executables = [exe]
 )
