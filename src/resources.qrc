@@ -1,5 +1,9 @@
 <RCC>
-    <qresource>
+    <qresource prefix="/">
         <file alias="LogikSim.ico">resources/LogikSim.ico</file>
+        <file>resources/and.png</file>
+        <file>resources/connection.png</file>
+        <file>resources/or.png</file>
+        <file>resources/xor.png</file>
     </qresource>
 </RCC>

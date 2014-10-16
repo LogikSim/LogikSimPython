@@ -28,21 +28,9 @@ class EditSchematicView(
 #    @timeit
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
-    
+
     def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_F1:
-            print('selection mode')
-            self.setMouseMode(mouse_modes.SelectItemsMode)
-        elif event.key() == QtCore.Qt.Key_F2:
-            print('insert logic element')
-            self.setMouseMode(mouse_modes.InsertItemMode)
-        elif event.key() == QtCore.Qt.Key_F3:
-            print('insert connector')
-            self.setMouseMode(mouse_modes.InsertConnectorMode)
-        elif event.key() == QtCore.Qt.Key_F4:
-            print('insert lines')
-            self.setMouseMode(mouse_modes.InsertLineMode)
-        elif event.key() == QtCore.Qt.Key_Escape:
+        if event.key() == QtCore.Qt.Key_Escape:
             self.abort_line_inserting()
         else:
             super().keyPressEvent(event)

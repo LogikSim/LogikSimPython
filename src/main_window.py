@@ -27,10 +27,27 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self._view = schematics.EditSchematicView(self)
         self.tab_widget.addTab(self._view, self.tr("New circuit"))
         self.tab_widget.tabBar().hide() # For now we only have one so hide
-        self.tool_bar.hide() # For now we have no tools
+
+        # Build tool-bar
+        self.tool_actions = QtGui.QActionGroup(self)
+        self.tool_actions.triggered.connect(self._on_tool_action_triggered)
+
+        self.tool_selection = self.tool_actions.addAction(QtGui.QIcon(":/resources/connection.png"), self.tr("Selection (F1)"))
+        self.tool_selection.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F1))
+        self.tool_logic = self.tool_actions.addAction(QtGui.QIcon(":/resources/and.png"), self.tr("Insert Logic Items (F2)"))
+        self.tool_logic.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F2))
+        self.tool_connector = self.tool_actions.addAction(QtGui.QIcon(":/resources/or.png"), self.tr("Insert Connectors (F3)"))
+        self.tool_connector.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F3))
+        self.tool_lines = self.tool_actions.addAction(QtGui.QIcon(":/resources/xor.png"), self.tr("Insert Lines (F4)"))
+        self.tool_lines.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F4))
+
+        for action in self.tool_actions.actions():
+            action.setCheckable(True)
+
+        self.tool_bar.addActions(self.tool_actions.actions())
+        self.tool_selection.setChecked(True)
 
         scene = self._view.scene()
-        self.add_items(scene)
 
         actions = scene.actions
 
@@ -61,42 +78,6 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         s.main_window_geometry = self.saveGeometry()
         s.main_window_state = self.saveState()
 
-    def showEvent(self, event):
-        #FIXME: Temporary workaround, should be part of circuit instance management
-        self._view.fitInView(self._view.scene().itemsBoundingRect().adjusted(-2000,-2000,2000,2000), QtCore.Qt.KeepAspectRatio)
-
-    def add_items(self, scene):
-        #TODO: Get rid of this and replace with proper toolbox implementation
-        def add_simple_item(pos):
-            item = logicitems.LogicItem()
-            for i in range(1, 6):
-                con1 = logicitems.ConnectorItem(
-                    QtCore.QLineF(0, 100 * i, -100, 100 * i))
-                con1.setParentItem(item)
-                con2 = logicitems.ConnectorItem(
-                    QtCore.QLineF(300, 100 * i, 400, 100 * i))
-                con2.setParentItem(item)
-            item.setPos(pos)
-            scene.addItem(item)
-
-        add_simple_item(QtCore.QPointF(81000, 50500))
-        add_simple_item(QtCore.QPointF(82000, 50500))
-
-        for text, pos in [("Modes:", (80000, 49000)),
-                          ("F1 - Selection", (80000, 49200)),
-                          ("F2 - Insert Logic Items", (80000, 49400)),
-                          ("F3 - Insert Connectors", (80000, 49600)),
-                          ("F4 - Insert Lines", (80000, 49800))]:
-            item = QtGui.QGraphicsTextItem(text)
-            item.setPos(*pos)
-            item.setDefaultTextColor(QtCore.Qt.red)
-            #item.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
-            font = item.font()
-            font.setPointSizeF(100)
-            item.setFont(font)
-            scene.addItem(item)
-
-    
     def view(self):
         return self._view
 
@@ -114,3 +95,20 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
     @QtCore.Slot()
     def on_action_about_qt_triggered(self):
         QtGui.QMessageBox.aboutQt(self)
+
+    @QtCore.Slot(QtGui.QAction)
+    def _on_tool_action_triggered(self, action):
+        if action == self.tool_selection:
+            self._view.setMouseMode(schematics.mouse_modes.SelectItemsMode)
+            print('selection mode')
+        elif action == self.tool_logic:
+            self._view.setMouseMode(schematics.mouse_modes.InsertItemMode)
+            print('insert logic element')
+        elif action == self.tool_connector:
+            self._view.setMouseMode(schematics.mouse_modes.InsertConnectorMode)
+            print('insert connector')
+        elif action == self.tool_lines:
+            self._view.setMouseMode(schematics.mouse_modes.InsertLineMode)
+            print('insert lines')
+        else:
+            assert False, "Unexpected action {0} triggered".format(action)
