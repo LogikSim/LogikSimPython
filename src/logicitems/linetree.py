@@ -15,6 +15,8 @@ from PySide import QtGui, QtCore
 
 
 class LineTree(QtGui.QGraphicsItem):
+    _debug_painting = False
+    
     """ A collection of simple lines grouped together """
     def __init__(self, lines):
         QtGui.QGraphicsItem.__init__(self)
@@ -23,6 +25,7 @@ class LineTree(QtGui.QGraphicsItem):
         self._edges = None  # set with all edges as tuples
         self._shape = None  # shape path
         self._rect = None   # bounding rect
+        self._edge_indicators = None # list of points for edge indicators
         
         #self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
         #self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
@@ -32,10 +35,24 @@ class LineTree(QtGui.QGraphicsItem):
     def _update_lines(self, lines):
         """ Updates internal storage when lines change """
         self._lines = lines
+        
+        # extract all edges
         self._edges = set()
         for line in lines:
             self._edges.add(line.p1().toTuple())
             self._edges.add(line.p2().toTuple())
+            
+        # identify line edge indicator
+        self._edge_indicators = []
+        for i, line1 in enumerate(lines):
+            for line2 in lines[i+1:]:
+                int_type, int_point = line1.intersect(line2)
+                if int_type is QtCore.QLineF.IntersectType.BoundedIntersection:
+                    # exclude edges
+                    if not (int_point in [line1.p1(), line1.p2()] and 
+                            int_point in [line2.p1(), line2.p2()]):
+                        self._edge_indicators.append(int_point)
+        
         self._update_shape()
     
     def _update_shape(self):
@@ -116,14 +133,22 @@ class LineTree(QtGui.QGraphicsItem):
         painter.setPen(QtGui.QPen(QtCore.Qt.red))
         for line in self._lines:
             painter.drawLine(line)
+            
+        # draw edge indicators
+        painter.setBrush(QtGui.QBrush(QtCore.Qt.red))
+        for edge in self._edge_indicators:
+            painter.drawEllipse(edge, 20, 20)
         
         # paint all lines - debuging
-        painter.setPen(QtCore.Qt.NoPen)
-        painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 128)))
-        for line in self._lines:
-            rect = QtCore.QRectF(line.p1(), line.p2()).\
-                    normalized().adjusted(-25, -25, 25, 25)
-            painter.drawRect(rect)
+        if self._debug_painting:
+            painter.setPen(QtCore.Qt.NoPen)
+            painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 128)))
+            for line in self._lines:
+                rect = QtCore.QRectF(line.p1(), line.p2()).\
+                        normalized().adjusted(-25, -25, 25, 25)
+                painter.drawRect(rect)
+            for edge in self._edge_indicators:
+                painter.drawEllipse(edge, 50, 50)
         
     def _get_nearest_point_of_line(self, scene_point, line):
         grid_point = self.scene().roundToGrid(scene_point)
