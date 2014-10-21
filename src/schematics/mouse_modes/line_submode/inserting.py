@@ -20,10 +20,14 @@ from PySide import QtCore
 
 
 class InsertingLineSubMode(InsertLineSubModeBase):
+    # time budget to search for lines
+    _max_line_search_time = 0.3
+    
     """ while new lines are inserted """
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
         
+        # use timer to only process most recent event
         self._update_line_timer = QtCore.QTimer()
         self._update_line_timer.timeout.connect(self.do_update_line)
         self._update_line_timer.setSingleShot(True)
@@ -31,20 +35,9 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         # stores two tuples with start and end coordinates as used in
         # mouseMoveEvent
         self._insert_line_start_end_last = None
-    
-    def _do_end_insert_lines(self):
-        """ insert lines """
-        if self._inserted_lines is not None:
-            # remove already merged lines at endpoints
-            self.scene().removeItem(self._inserted_lines)
-            for point in self._insert_line_start_end:
-                line = self._get_line_at_point(point)
-                if line is not None:
-                    self.scene().removeItem(line)
-            self.scene().addItem(self._inserted_lines)
-        
-        self._inserted_lines = None
-        self._insert_line_start_end_last = None
+        # contains merged lines that can be removed when inserting lines 
+        # stored in _inserted_lines
+        self._merged_line_trees = []
     
     @line_submode_filtered
     def mousePressEvent(self, event):
@@ -56,10 +49,11 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         # left button
         if event.button() is QtCore.Qt.LeftButton:
             anchor = self.find_line_anchor_at_view_pos(event.pos())
-            self._do_end_insert_lines()
+            self._commit_inserted_lines()
+            # if there is no anchor, immediately start inserting new lines
             if anchor is None:
                 self._do_start_insert_lines(event.pos(), anchor)
-            else:
+            else:  # otherwise stop for now
                 self.setLinesubMode(ReadyToInsertLineSubMode)
         # right button
         elif event.button() is QtCore.Qt.RightButton:
@@ -67,8 +61,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     
     @line_submode_filtered
     def mouseMoveEvent(self, event):
-        #QtGui.QApplication.instance().processEvents()
-        
         super().mouseMoveEvent(event)
         
         gpos = self.mapToSceneGrid(event.pos())
@@ -119,10 +111,9 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         self._insert_line_start_end_last = p_start, p_end
         
         # remove old results
-        if self._inserted_lines is not None:
-            self.scene().removeItem(self._inserted_lines)
-        self._inserted_lines = None
+        self._undo_temp_insert_lines()
         
+        # get rectangle with one space free around the scene
         bound_rect = self.scene().itemsBoundingRect()
         r_left = to_grid(min(bound_rect.left(), start.x(), end.x())) - 1
         r_top = to_grid(min(bound_rect.top(), start.y(), end.y())) - 1
@@ -138,12 +129,12 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         if endpoint_lines[0] is endpoint_lines[1] is not None:
             return
         
-        # only try to find path for max. 100 ms
-        max_time = [time.time() + 0.3]
+        # only try to find path for only specific time
+        max_time = time.time() + self._max_line_search_time
         class TimeReached(Exception):
             pass
         def get_obj_at_point(point):
-            if time.time() > max_time[0]:
+            if time.time() > max_time:
                 raise TimeReached()
             
             scene_point = to_scene_point(point)
@@ -179,7 +170,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                                                   search_rect, 
                                                   do_second_refinement=False)
         except TimeReached:
-            return
+            res = None
         
         if res is None:
             return
@@ -225,20 +216,64 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             end = to_scene_point(line[1])
             lines.append(QtCore.QLineF(start, end))
         l_tree = logicitems.LineTree(lines)
-        # try to merge start end end lines
-        #   we don't delete them yet, rather we delete them when finally
-        #   inserting the new line
+        
+        # merge start end end lines
+        merged_trees = []
         for line in endpoint_lines:
             if line is not None:
                 l_tree.add_lines(line.lines())
-        self.scene().addItem(l_tree)
-        self._inserted_lines = l_tree
+                merged_trees.append(line)
         
+        self._do_temp_insert_lines(l_tree, merged_trees)
+    
+    def _do_temp_insert_lines(self, l_tree, merged_trees):
+        """ insert given line tree and remove merged trees """
+        self.scene().addItem(l_tree)
+        for linetree in merged_trees:
+            self.scene().removeItem(linetree)
+            
+        self._inserted_lines = l_tree
+        self._merged_line_trees = merged_trees
+    
+    def _undo_temp_insert_lines(self):
+        """ undo previously inserted lines and restore merged trees """
+        if self._inserted_lines is not None:
+            self.scene().removeItem(self._inserted_lines)
+        for linetree in self._merged_line_trees:
+            self.scene().addItem(linetree)
+        
+        self._inserted_lines = None
+        self._merged_line_trees = []
+    
+    def _commit_inserted_lines(self):
+        """ insert lines currently drawn persistently """
+        if self._inserted_lines is None:
+            return
+        
+        # go back to neutral state, before inserting
+        inserted_lines = self._inserted_lines
+        merged_trees = self._merged_line_trees
+        self._undo_temp_insert_lines()
+        
+        def do():
+            self._do_temp_insert_lines(inserted_lines, merged_trees)
+            self._inserted_lines = None
+            self._merged_line_trees = []
+            self._insert_line_start_end_last = None
+        
+        def undo():
+            self._inserted_lines = inserted_lines
+            self._merged_line_trees = merged_trees
+            self._undo_temp_insert_lines()
+        
+        self.scene().actions.executed(
+            do, undo, "insert lines"
+        )
+        
+        do()
     
     def linesub_leave(self):
         super().linesub_leave()
         # cleanup InsertingLine
-        if self._inserted_lines is not None:
-            self.scene().removeItem(self._inserted_lines)
-        self._inserted_lines = None
+        self._undo_temp_insert_lines()
 
