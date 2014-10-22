@@ -267,11 +267,9 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             self._merged_line_trees = merged_trees
             self._undo_temp_insert_lines()
         
-        self.scene().actions.executed(
+        self.scene().actions.execute(
             do, undo, "insert lines"
         )
-        
-        do()
     
     def linesub_leave(self):
         super().linesub_leave()

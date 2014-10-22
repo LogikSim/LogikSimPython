@@ -49,7 +49,7 @@ class ActionStack(QtGui.QUndoStack):
         :param description: Short user facing description of the action
         :return: The created action
         """
-        action = Action.create(do, undo, description)
+        action = Action(do, undo, description)
         self.push(action)
 
         return action
