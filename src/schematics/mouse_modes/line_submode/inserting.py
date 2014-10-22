@@ -80,6 +80,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                 # we assume that there is only one line at each point
                 return item
     
+    @line_submode_filtered
     @timeit
     def do_update_line(self):
         start, end = self._insert_line_start_end
