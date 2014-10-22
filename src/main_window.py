@@ -87,9 +87,9 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
                                 self.tr("About LogikSim"),
                                 self.tr("<p>A logic simulator that makes it easy and fun to explore and design digital circuits "
                                         "starting from simple AND gates, up to complex computing systems as we use them today.</b></p>"
-                                        "<p><i>Copyright (C) 2011-2014 The LogikSim Authors</i></p>"
-                                        "<p><i>Use of this source code is governed by the GNU GPL license that can "
-                                        "be found in the LICENSE.txt file.</i></p>"
+                                        "<p>Copyright (C) 2011-2014 The LogikSim Authors</p>"
+                                        "<p>Distribution of this application and its source is governed by the GNU GPLv3 license that can "
+                                        "be found in the LICENSE.txt file.</p>"
                                         "<p>For more information visit <a href=\"http://www.logiksim.org\">www.logiksim.org</a></p>"))
 
     @QtCore.Slot()
