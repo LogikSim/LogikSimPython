@@ -72,8 +72,8 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         self._update_line_timer.start()
     
     
-    def _get_line_at_point(self, scene_point):
-        """ get line at given scene point """
+    def _get_linetree_at_point(self, scene_point):
+        """ get line tree at given scene point """
         items = self.scene().items(scene_point)
         for item in items:
             if isinstance(item, logicitems.LineTree):
@@ -123,11 +123,11 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                                      start.y(), end.y())) + 2
         
         # save lines at endpoints
-        endpoint_lines = (self._get_line_at_point(start), 
-                          self._get_line_at_point(end))
+        endpoint_tree = (self._get_linetree_at_point(start), 
+                          self._get_linetree_at_point(end))
         
         # if both are the same --> line already exists --> nothing todo
-        if endpoint_lines[0] is endpoint_lines[1] is not None:
+        if endpoint_tree[0] is endpoint_tree[1] is not None:
             return
         
         # only try to find path for only specific time
@@ -149,7 +149,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                         point in (p_start, p_end):
                     continue
                 if isinstance(item, logicitems.LineTree):
-                    if item in endpoint_lines:
+                    if item in endpoint_tree:
                         continue
                     if item.is_edge(scene_point):
                         found_line_edge = True
@@ -175,6 +175,9 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         
         if res is None:
             return
+        
+        # remove parts of the path that are already part of 
+        # adjacent line trees of the end points
         
         def iter_line(line):
             """
@@ -207,24 +210,21 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                 res[last_index] = last_point
                 del res[:last_index]
             return res
-        res = extract_new_path(res, endpoint_lines[0])
-        res = extract_new_path(list(reversed(res)), endpoint_lines[1])
+        res = extract_new_path(res, endpoint_tree[0])
+        res = extract_new_path(list(reversed(res)), endpoint_tree[1])
         
-        # add result
-        lines = []
-        for line in zip(res, res[1:]):
-            start = to_scene_point(line[0])
-            end = to_scene_point(line[1])
-            lines.append(QtCore.QLineF(start, end))
-        l_tree = logicitems.LineTree(lines)
+        # create line tree from results
+        path = list(map(to_scene_point, res))
+        l_tree = logicitems.LineTree(path)
         
         # merge start end end lines
         merged_trees = []
-        for line in endpoint_lines:
-            if line is not None:
-                l_tree.add_lines(line.lines())
-                merged_trees.append(line)
+        for tree in endpoint_tree:
+            if tree is not None:
+                l_tree.merge_tree(tree)
+                merged_trees.append(tree)
         
+        # temporarily add them to scene
         self._do_temp_insert_lines(l_tree, merged_trees)
     
     def _do_temp_insert_lines(self, l_tree, merged_trees):
