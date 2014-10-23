@@ -193,13 +193,14 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             """
             Iterate through all points on the line, except endpoint
             """
-            # define two way range
-            range2w = lambda a, b: range(a, b, -1 if a > b else 1)
+            # define two way range, including edges
+            fullrange2w = lambda a, b: range(a, b + (-1 if a > b else 1), 
+                                         -1 if a > b else 1)
             if line[0][1] == line[1][1]:
-                for x in range2w(line[0][0], line[1][0]):
+                for x in fullrange2w(line[0][0], line[1][0]):
                     yield (x, line[0][1])
             else:
-                for y in range2w(line[0][1], line[1][1]):
+                for y in fullrange2w(line[0][1], line[1][1]):
                     yield (line[0][0], y)
         
         def extract_new_path(path, line_tree):
