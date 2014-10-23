@@ -241,8 +241,8 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     def _do_temp_insert_lines(self, l_tree, merged_trees):
         """ insert given line tree and remove merged trees """
         self.scene().addItem(l_tree)
-        for linetree in merged_trees:
-            self.scene().removeItem(linetree)
+        # we do not delete merged_trees, otherwise line 
+        # indicator is not drawn any more
             
         self._inserted_lines = l_tree
         self._merged_line_trees = merged_trees
@@ -251,8 +251,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         """ undo previously inserted lines and restore merged trees """
         if self._inserted_lines is not None:
             self.scene().removeItem(self._inserted_lines)
-        for linetree in self._merged_line_trees:
-            self.scene().addItem(linetree)
         
         self._inserted_lines = None
         self._merged_line_trees = []
@@ -269,6 +267,8 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         
         def do():
             self._do_temp_insert_lines(inserted_lines, merged_trees)
+            for linetree in merged_trees:
+                self.scene().removeItem(linetree)
             self._inserted_lines = None
             self._merged_line_trees = []
             self._insert_line_start_end_last = None
@@ -277,6 +277,8 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             self._inserted_lines = inserted_lines
             self._merged_line_trees = merged_trees
             self._undo_temp_insert_lines()
+            for linetree in merged_trees:
+                self.scene().addItem(linetree)
         
         self.scene().actions.execute(
             do, undo, "insert lines"
