@@ -72,13 +72,10 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         self._update_line_timer.start()
     
     
-    def _get_linetree_at_point(self, scene_point):
-        """ get line tree at given scene point """
-        items = self.scene().items(scene_point)
-        for item in items:
-            if isinstance(item, logicitems.LineTree):
-                # we assume that there is only one line at each point
-                return item
+    def _get_linetrees_at_point(self, scene_point):
+        """ get line trees at given scene point as list """
+        return [item for item in self.scene().items(scene_point)
+                if isinstance(item, logicitems.LineTree)]
     
     @line_submode_filtered
     @timeit
@@ -122,12 +119,25 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         r_bottom = to_grid(max(bound_rect.bottom(), 
                                      start.y(), end.y())) + 2
         
-        # save lines at endpoints
-        endpoint_tree = (self._get_linetree_at_point(start), 
-                          self._get_linetree_at_point(end))
+        # save line trees at endpoints
+        tree_start = self._get_linetrees_at_point(start)
+        tree_end = self._get_linetrees_at_point(end)
         
-        # if both are the same --> line already exists --> nothing todo
-        if endpoint_tree[0] is endpoint_tree[1] is not None:
+        # can only merge two trees if start == end
+        if (len(tree_start) > 1 or len(tree_end) > 1):
+            if (p_start == p_end):
+                # pick one, as they are the same
+                endpoint_trees = tree_start
+            else:
+                return
+        else:
+            if (p_start == p_end):
+                return
+            endpoint_trees = [tree_start[0] if len(tree_start) > 0 else None, 
+                              tree_end[0] if len(tree_end) > 0 else None]
+        
+        # if both trees are the same --> line already exists --> nothing todo
+        if endpoint_trees[0] is endpoint_trees[1] is not None:
             return
         
         # only try to find path for only specific time
@@ -149,7 +159,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                         point in (p_start, p_end):
                     continue
                 if isinstance(item, logicitems.LineTree):
-                    if item in endpoint_tree:
+                    if item in endpoint_trees:
                         continue
                     if item.is_edge(scene_point):
                         found_line_edge = True
@@ -210,16 +220,16 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                 res[last_index] = last_point
                 del res[:last_index]
             return res
-        res = extract_new_path(res, endpoint_tree[0])
-        res = extract_new_path(list(reversed(res)), endpoint_tree[1])
+        res = extract_new_path(res, endpoint_trees[0])
+        res = extract_new_path(list(reversed(res)), endpoint_trees[1])
         
-        # create line tree from results
+        # create line tree from result
         path = list(map(to_scene_point, res))
         l_tree = logicitems.LineTree(path)
         
-        # merge start end end lines
+        # merge start and end lines
         merged_trees = []
-        for tree in endpoint_tree:
+        for tree in endpoint_trees:
             if tree is not None:
                 l_tree.merge_tree(tree)
                 merged_trees.append(tree)

@@ -18,7 +18,7 @@ from PySide import QtGui, QtCore
 class LineTree(QtGui.QGraphicsItem):
     """ A tree of connected lines """
     
-    _debug_painting = True
+    _debug_painting = False
     
     def __init__(self, path):
         """
@@ -247,7 +247,7 @@ class LineTree(QtGui.QGraphicsItem):
         painter.setPen(QtGui.QPen(QtCore.Qt.red))
         for line in self._lines:
             painter.drawLine(line)
-            
+        
         # draw edge indicators
         painter.setBrush(QtGui.QBrush(QtCore.Qt.red))
         for edge in self._edge_indicators:
