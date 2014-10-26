@@ -207,17 +207,27 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             """
             Returns new path branching from existing line_tree.
             
-            It is assumed that the path starts from the line_tree.
+            Go through the path from the beginning and removes segments
+            until they are not anymore part of the line tree
             """
             res = path[:]
             if line_tree is not None:
                 last_index = 0
                 last_point = path[0]
-                for i, line in enumerate(zip(path, path[1:])):
-                    for point in iter_line(line):
-                        if line_tree.contains(to_scene_point(point)):
-                            last_index = i
-                            last_point = point
+                def helper():
+                    nonlocal last_index, last_point
+                    for i, line in enumerate(zip(path, path[1:])):
+                        points = list(iter_line(line))
+                        for segment in zip(points, points[1:]):
+                            segment_line = QtCore.QLineF(
+                                    to_scene_point(segment[0]),
+                                    to_scene_point(segment[1]))
+                            if line_tree.contains_line(segment_line):
+                                last_index = i
+                                last_point = segment[1]
+                            else:
+                                return
+                helper()
                 res[last_index] = last_point
                 del res[:last_index]
             return res

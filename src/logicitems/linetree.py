@@ -81,6 +81,12 @@ class LineTree(QtGui.QGraphicsItem):
         # update shape
         self._update_shape()
     
+    def _line_to_rect(self, line):
+        """ converts QLineF to its collision area """
+        radius = 25 # TODO: derive from: self.scene().get_grid_spacing() / 4
+        return QtCore.QRectF(line.p1(), line.p2()).\
+                    normalized().adjusted(-radius, -radius, radius, radius)
+    
     def _update_shape(self):
         """
         Updates the geometry of the line tree graphics items.
@@ -92,8 +98,7 @@ class LineTree(QtGui.QGraphicsItem):
         shape_path = QtGui.QPainterPath()
         shape_path.setFillRule(QtCore.Qt.WindingFill)
         for line in self._lines:
-            l_bounding_rect = QtCore.QRectF(line.p1(), line.p2()).\
-                    normalized().adjusted(-25, -25, 25, 25)
+            l_bounding_rect = self._line_to_rect(line)
             shape_path.addRect(l_bounding_rect)
             if bounding_rect is None:
                 bounding_rect = l_bounding_rect
@@ -139,8 +144,7 @@ class LineTree(QtGui.QGraphicsItem):
             raise Exception("new_root not found in tree")
         return res[-1]
     
-    @staticmethod
-    def _split_line_of_tree(tree, point):
+    def _split_line_of_tree(self, tree, point):
         """ split line in tree into two lines at given point (as tuple) """
         tree = copy.deepcopy(tree)
         class ItemFound(Exception):
@@ -148,9 +152,9 @@ class LineTree(QtGui.QGraphicsItem):
         def helper(tree):
             for node, children in tree.items():
                 for child in children:
-                    rect = QtCore.QRectF(QtCore.QPointF(*node), 
-                                         QtCore.QPointF(*child)).\
-                            normalized().adjusted(-25, -25, 25, 25)
+                    line = QtCore.QLineF(QtCore.QPointF(*node), 
+                                         QtCore.QPointF(*child))
+                    rect = self._line_to_rect(line)
                     if rect.contains(QtCore.QPointF(*point)):
                         children[point] = {child: children[child]}
                         del children[child]
@@ -237,6 +241,13 @@ class LineTree(QtGui.QGraphicsItem):
                 p_nearest = p
         return p_nearest
     
+    def contains_line(self, line):
+        """ Returns true if QLineF a full part of this line tree """
+        margin = 1e-3 # TODO: derive from scene grid spacing
+        l_bounding_rect = self._line_to_rect(line).\
+                adjusted(margin, margin, -margin, -margin)
+        return self._shape.contains(l_bounding_rect)
+    
     def boundingRect(self):
         return self._rect
     
@@ -258,8 +269,7 @@ class LineTree(QtGui.QGraphicsItem):
             painter.setPen(QtCore.Qt.NoPen)
             painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 128)))
             for line in self._lines:
-                rect = QtCore.QRectF(line.p1(), line.p2()).\
-                        normalized().adjusted(-25, -25, 25, 25)
+                rect = self._line_to_rect(line)
                 painter.drawRect(rect)
             for edge in self._edge_indicators:
                 painter.drawEllipse(edge, 50, 50)
