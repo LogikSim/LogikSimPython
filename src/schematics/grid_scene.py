@@ -38,6 +38,14 @@ class GridScene(QtGui.QGraphicsScene):
     def get_grid_spacing_from_scale(self, scale):
         return 100 if scale > 0.033 else 500
     
+    def get_lod_from_painter(self, painter):
+        return QtGui.QStyleOptionGraphicsItem.levelOfDetailFromTransform(
+                painter.worldTransform())
+    
+    def get_grid_spacing_from_painter(self, painter):
+        lod = self.get_lod_from_painter(painter)
+        return self.get_grid_spacing_from_scale(lod)
+    
     #@timeit
     def drawBackground(self, painter, rect):
         if self._is_grid_enabled:
@@ -48,9 +56,8 @@ class GridScene(QtGui.QGraphicsScene):
     
     def _draw_grid(self, painter, rect):
         # calculate step
-        lod = QtGui.QStyleOptionGraphicsItem.levelOfDetailFromTransform(
-                painter.worldTransform())
-        step = self.get_grid_spacing_from_scale(lod)
+        lod = self.get_lod_from_painter(painter)
+        step = self.get_grid_spacing_from_painter(painter)
         # estimate area to redraw (limit background to sceneRect)
         step_round = lambda x, n=0: int(x / step + n) * step
         crect = rect.intersected(self.sceneRect())

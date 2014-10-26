@@ -255,16 +255,24 @@ class LineTree(QtGui.QGraphicsItem):
         return self._shape
     
     def paint(self, painter, option, widget=None):
+        # draw lines
         painter.setPen(QtGui.QPen(QtCore.Qt.red))
         for line in self._lines:
             painter.drawLine(line)
         
         # draw edge indicators
         painter.setBrush(QtGui.QBrush(QtCore.Qt.red))
+        target_size = self.scene().get_grid_spacing() / 40
+        # draw edge indicators always with the same size on screen, except
+        #   when zooming in very closely (in this case draw them bigger)
+        lod = min(self.scene().get_lod_from_painter(painter), 0.1)
+        ei_size = target_size / lod
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
         for edge in self._edge_indicators:
-            painter.drawEllipse(edge, 20, 20)
+            painter.drawEllipse(edge, ei_size, ei_size)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing, False)
         
-        # paint all lines - debuging
+        # debugging
         if self._debug_painting:
             painter.setPen(QtCore.Qt.NoPen)
             painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 128)))
