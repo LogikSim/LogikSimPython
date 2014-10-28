@@ -152,6 +152,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
             items = self.scene().items(scene_point)
             found_passable_line = False
             found_line_edge = False
+            self_line_edge = False
             for item in items:
                 if item is self._line_anchor_indicator:
                     continue
@@ -160,6 +161,15 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                     continue
                 if isinstance(item, logicitems.LineTree):
                     if item in endpoint_trees:
+                        if item in tree_start and point != p_start and item.is_edge(scene_point):
+                            # Must not have cycles so we can not allow overlapping the edges
+                            # of the tree the line we are drawing belongs to.
+                            if tree_start[0].contains_line(QtCore.QLineF(to_scene_point(p_start),
+                                                                         to_scene_point(point))):
+                                # Line we are drawing is fully contained in tree. That's fine.
+                                continue
+
+                            self_line_edge = True
                         continue
                     if item.is_edge(scene_point):
                         found_line_edge = True
@@ -167,8 +177,10 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                         found_passable_line = True
                     continue
                 return hightower.Solid
-            
-            if found_line_edge:
+
+            if self_line_edge:
+                return hightower.Solid
+            elif found_line_edge:
                 return hightower.LineEdge
             elif found_passable_line:
                 return hightower.PassableLine
