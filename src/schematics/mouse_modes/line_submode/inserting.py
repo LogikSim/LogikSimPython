@@ -161,18 +161,26 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                     continue
                 if isinstance(item, logicitems.LineTree):
                     if item in endpoint_trees:
-                        if item in tree_start and point != p_start and \
-                                item.is_edge(scene_point):
-                            # Must not have cycles so we can not allow 
-                            # overlapping the edges of the tree the line we 
-                            # are drawing belongs to.
-                            if tree_start[0].contains_line(QtCore.QLineF(
-                                        to_scene_point(p_start),
-                                        to_scene_point(point))):
-                                # Line we are drawing is fully contained in 
-                                # tree. That's fine.
-                                continue
-                            self_line_edge = True
+                        if item.is_edge(scene_point):
+                            # Must not have cycles so we can not allow overlapping the edges
+                            # of the trees the line we are drawing belongs to. A special case
+                            # is if what we are drawing is fully contained in the tree in which
+                            # case overlapping edges is just fine.
+
+                            if item in tree_start and point != p_start:
+                                if tree_start[0].contains_line(QtCore.QLineF(to_scene_point(p_start),
+                                                                             to_scene_point(point))):
+                                    continue
+
+                                self_line_edge = True
+
+                            if item in tree_end and point != p_end:
+                                if tree_end[0].contains_line(QtCore.QLineF(to_scene_point(p_end),
+                                                                           to_scene_point(point))):
+                                    continue
+
+                                self_line_edge = True
+
                         continue
                     if item.is_edge(scene_point):
                         found_line_edge = True
