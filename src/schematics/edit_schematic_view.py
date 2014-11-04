@@ -24,6 +24,13 @@ class EditSchematicView(
         super().__init__(*args, **kargs)
         self.setScene(grid_scene.GridScene(self))
         self.setMouseMode(mouse_modes.SelectItemsMode)
+        
+        self.scene().actions.aboutToUndo.connect(self.onAboutToUndoRedo)
+        self.scene().actions.aboutToRedo.connect(self.onAboutToUndoRedo)
+
+    @QtCore.Slot()
+    def onAboutToUndoRedo(self):
+        self.abort_line_inserting()
     
 #    @timeit
     def mouseMoveEvent(self, event):

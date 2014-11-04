@@ -7,6 +7,7 @@
 #
 from PySide import QtCore, QtGui
 from actions.action_stack import ActionStack
+from actions.action import Action
 
 class TemplateTextSlotAction(QtGui.QAction):
     """
@@ -197,6 +198,8 @@ class ActionStackModel(QtCore.QAbstractListModel):
     @QtCore.Slot()
     def undo(self):
         if self.action_stack.canUndo():
+            self.aboutToUndo.emit()
+
             last_command_model_index = self.index(self.action_stack.index())
             self.action_stack.undo()
             new_last_command_model_index = self.index(self.action_stack.index())
@@ -208,6 +211,8 @@ class ActionStackModel(QtCore.QAbstractListModel):
     @QtCore.Slot()
     def redo(self):
         if self.action_stack.canRedo():
+            self.aboutToRedo.emit()
+
             last_undone_command_model_index = self.index(self.action_stack.index() + 1)
             self.action_stack.redo()
             new_last_undone_command_model_index = self.index(self.action_stack.index() + 1)
@@ -247,6 +252,11 @@ class ActionStackModel(QtCore.QAbstractListModel):
         if currentIndex == targetStackIndex:
             return True
 
+        if targetStackIndex > self.action_stack.index():
+            self.aboutToRedo.emit()
+        else:
+            self.aboutToUndo.emit()
+
         self.action_stack.setIndex(targetStackIndex)
         newIndex = self.action_stack.index()
 
@@ -285,8 +295,14 @@ class ActionStackModel(QtCore.QAbstractListModel):
     redoText.__doc__ = ActionStack.redoText.__doc__
 
     currentModelIndexChanged = QtCore.Signal(QtCore.QModelIndex)
+
     canRedoChanged = QtCore.Signal(bool)
     canUndoChanged = QtCore.Signal(bool)
+
     cleanChanged = QtCore.Signal(bool)
+
     redoTextChanged = QtCore.Signal(str)
-    undoTextChanged= QtCore.Signal(str)
+    undoTextChanged = QtCore.Signal(str)
+
+    aboutToUndo = QtCore.Signal() # Emitted before undoing one or more actions
+    aboutToRedo = QtCore.Signal() # Emitted before redoing one or more actions
