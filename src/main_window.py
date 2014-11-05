@@ -65,7 +65,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.menu_edit.insertAction(first_menu_edit_qaction, redo_qaction)
 
         # Add toggle view actions for dockwidgets
-        self.menu_view.addAction(self.history_dock_widget.toggleViewAction())
+        self.toggle_history_dock_widget_view_qaction = self.history_dock_widget.toggleViewAction()
+        self.menu_view.addAction(self.toggle_history_dock_widget_view_qaction)
 
         s = settings()
         # Restore layout

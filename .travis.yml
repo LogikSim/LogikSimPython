@@ -4,9 +4,9 @@ python:
 before_install:
     - "sudo apt-get update"
 install:
-    - "sudo apt-get install -y python3-pyside"
+    - "sudo apt-get install -y python3-pyside xfvb"
     - pip install coveralls
 script:
-    - "coverage run --source=src -m unittest discover -s src/tests/ -t src"
+    - "xvfb-run --server-args="-screen 0 1280x1024x16" coverage run --source=src -m unittest discover -s src/tests/ -t src"
 after_success:
     coveralls
