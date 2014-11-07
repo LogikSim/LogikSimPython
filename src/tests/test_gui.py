@@ -11,31 +11,17 @@ from PySide import QtCore, QtGui
 from PySide.QtTest import QTest
 import main_window
 from settings import setup_settings
-import time
-
-class SettingsMock:
-    def __init__(self, values = {}):
-        self.values = values
-
-    def status(self):
-        return QtCore.QSettings.NoError
-
-    def value(self, name, default):
-        return self.values.get(name, default)
-
-    def setValue(self, name, value):
-        self.values[name] = value
-
-    def sync(self):
-        pass
-
+from mocks import SettingsMock
 
 class MainWindowTest(unittest.TestCase):
     def setUp(self):
+        self.app = QtGui.QApplication.instance()
+        if not self.app:
+            self.app = QtGui.QApplication([])
+
         settings_mock = SettingsMock()
         setup_settings(settings_mock)
 
-        self.app = QtGui.QApplication([])
         self.mw = main_window.MainWindow()
         self.mw.show()
 
