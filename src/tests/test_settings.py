@@ -28,8 +28,8 @@ class SettingsTest(unittest.TestCase):
         """
         s = settings.settings()
 
-        self.assertEquals(s.main_window_geometry, QtCore.QByteArray())
-        self.assertEquals(s.main_window_state, QtCore.QByteArray())
+        self.assertEqual(s.main_window_geometry, QtCore.QByteArray())
+        self.assertEqual(s.main_window_state, QtCore.QByteArray())
 
     def test_setters_and_signals(self):
         """
@@ -49,15 +49,15 @@ class SettingsTest(unittest.TestCase):
 
         s.main_window_geometry = QtCore.QByteArray("hi")
         self.assertTrue(changed["main_window_geometry"])
-        self.assertEquals(s2.main_window_geometry, QtCore.QByteArray("hi"))
+        self.assertEqual(s2.main_window_geometry, QtCore.QByteArray("hi"))
 
         s.main_window_state = QtCore.QByteArray("there")
         self.assertTrue(changed["main_window_state"])
-        self.assertEquals(s2.main_window_state, QtCore.QByteArray("there"))
+        self.assertEqual(s2.main_window_state, QtCore.QByteArray("there"))
 
         s.save()
-        self.assertEquals(self.settings_mock.values["main_window_geometry"], QtCore.QByteArray("hi"))
-        self.assertEquals(self.settings_mock.values["main_window_state"], QtCore.QByteArray("there"))
+        self.assertEqual(self.settings_mock.values["main_window_geometry"], QtCore.QByteArray("hi"))
+        self.assertEqual(self.settings_mock.values["main_window_state"], QtCore.QByteArray("there"))
 
     def test_existing_settings(self):
         """
@@ -66,10 +66,11 @@ class SettingsTest(unittest.TestCase):
         my_settings_mock = SettingsMock({"main_window_geometry" : QtCore.QByteArray("foo")})
         settings.setup_settings(my_settings_mock)
 
-        self.assertEquals(settings.settings().main_window_geometry, QtCore.QByteArray("foo"))
-        self.assertEquals(settings.settings().main_window_state, QtCore.QByteArray())
+        self.assertEqual(settings.settings().main_window_geometry, QtCore.QByteArray("foo"))
+        self.assertEqual(settings.settings().main_window_state, QtCore.QByteArray())
 
         settings.settings().save()
 
-        self.assertEquals(my_settings_mock.values["main_window_geometry"], QtCore.QByteArray("foo"))
-        self.assertEquals(my_settings_mock.values["main_window_state"], QtCore.QByteArray())
+        self.assertEqual(my_settings_mock.values["main_window_geometry"], QtCore.QByteArray("foo"))
+        self.assertEqual(my_settings_mock.values["main_window_state"], QtCore.QByteArray())
+
