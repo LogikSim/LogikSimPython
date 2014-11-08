@@ -31,8 +31,8 @@ def Setting(settings_type, name, doc = None):
         setattr(cls, name, QtCore.Property(type = settings_type,
                                            fget = lambda self: getattr(self, variable_name),
                                            fset = lambda self, value: (setattr(self, variable_name, value), getattr(self, signal_name).emit()),
-                                           #notify = getattr(cls, signal_name), #FIXME: Doesn't seem to work. Manually emit in setter for now
-                                           #doc = doc)) #FIXME: If I set a docstring here the application crashes on shutdown
+                                           #notify = getattr(cls, signal_name), #FIXME: Doesn't seem to work. Manually emit in setter for now (PYSIDE-261)
+                                           #doc = doc)) #FIXME: If I set a docstring here the application crashes on shutdown (PYSIDE-135)
                                             ))
 
         cls._settings_list.append((name, settings_type))
