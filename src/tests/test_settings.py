@@ -6,7 +6,7 @@
 # be found in the LICENSE.txt file.
 
 import unittest
-from mocks import SettingsMock
+from tests.mocks import SettingsMock
 from PySide import QtCore, QtGui
 from collections import defaultdict
 import settings

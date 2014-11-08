@@ -11,7 +11,7 @@ from PySide import QtCore, QtGui
 from PySide.QtTest import QTest
 import main_window
 from settings import setup_settings
-from mocks import SettingsMock
+from tests.mocks import SettingsMock
 
 class MainWindowTest(unittest.TestCase):
     def setUp(self):
