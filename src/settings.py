@@ -78,7 +78,7 @@ class Settings(QtCore.QObject):
         what = self._settings.status()
         if self._settings.status() is QtCore.QSettings.AccessError:
             what = "An access error occurred (e.g. trying to write to a read-only file)"
-        elif self._settings.status() is QtCore.QSettings.AccessError:
+        elif self._settings.status() is QtCore.QSettings.FormatError:
             what = "A format error occurred (e.g. loading a malformed INI file)."
 
         raise Exception("{1} when {0}".format(action, what))
@@ -132,11 +132,3 @@ def setup_settings(qsettingsObject = None, parent = None):
     global _settings
     _settings = Settings(qsettingsObject, parent)
     return settings()
-
-
-if __name__ == "__main__":
-    # When imported directly setup basic global settings configuration
-    # to make sure the class can properly initialize.
-    QtCore.QCoreApplication.setOrganizationName("logiksim.org")
-    QtCore.QCoreApplication.setOrganizationDomain("logiksim.org")
-    QtCore.QCoreApplication.setApplicationName("LogikSim")

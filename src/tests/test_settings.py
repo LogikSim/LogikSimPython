@@ -74,3 +74,12 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(my_settings_mock.values["main_window_geometry"], QtCore.QByteArray("foo"))
         self.assertEqual(my_settings_mock.values["main_window_state"], QtCore.QByteArray())
 
+    def test_error_handling(self):
+        s = SettingsMock()
+        s.status_value = QtCore.QSettings.FormatError
+        self.assertRaises(Exception, settings.setup_settings, s)
+
+        s = SettingsMock()
+        settings.setup_settings(s)
+        s.status_value = QtCore.QSettings.AccessError
+        self.assertRaises(Exception, settings.settings().save)

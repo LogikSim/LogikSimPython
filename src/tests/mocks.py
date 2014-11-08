@@ -13,9 +13,10 @@ class SettingsMock:
     """
     def __init__(self, values = {}):
         self.values = values
+        self.status_value = QtCore.QSettings.NoError
 
     def status(self):
-        return QtCore.QSettings.NoError
+        return self.status_value
 
     def value(self, name, default):
         return self.values.get(name, default)
