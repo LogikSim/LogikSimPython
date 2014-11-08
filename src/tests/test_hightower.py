@@ -126,7 +126,7 @@ class HightowerSpec(unittest.TestCase):
         
         res = hightower_line_search(point_a, point_b, get_obj_at_point, 
                                     search_rect)
-        print(res)
+
         self.assertTrue(res == [(10, 5), (15, 5), (15, 10)] or
                         res == [(10, 5), (10, 10), (15, 10)], res)
     
@@ -248,7 +248,7 @@ class HightowerSpec(unittest.TestCase):
         self.assertListEqual(res, exp_res)
     
     
-    @unittest.skip("Check if escape point 2 helps here")
+    @unittest.expectedFailure # Check if escape point 2 helps here
     def test_escape_point_loop_solid(self):
         area = """
                                  
@@ -268,9 +268,9 @@ class HightowerSpec(unittest.TestCase):
         res = hightower_line_search(*high_input)
         
         self.assertListEqual(res, exp_res)
-    
-    
-    @unittest.skip("Probably unsolvable by Hightower")
+
+
+    @unittest.expectedFailure # Probably unsolvable by Hightower
     def test_escape_zigzag_valley(self):
         area = """
                   # 1 A # 
