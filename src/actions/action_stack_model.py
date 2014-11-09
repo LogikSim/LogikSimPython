@@ -7,7 +7,6 @@
 #
 from PySide import QtCore, QtGui
 from actions.action_stack import ActionStack
-from actions.action import Action
 
 class TemplateTextSlotAction(QtGui.QAction):
     """
@@ -30,6 +29,13 @@ class ActionStackModel(QtCore.QAbstractListModel):
     to UI components in a consistent way.
     """
     def __init__(self, base_action, action_stack = None, parent = None):
+        """
+        Creates a new model to represent and ActionStack.
+
+        :param base_action: Text of the first virtual action always present in the model.
+        :param action_stack: Action stack used to back the model.
+        :param parent: Parent QObject to set.
+        """
         super().__init__(parent)
 
         self.action_stack = action_stack or ActionStack(self)
@@ -51,9 +57,18 @@ class ActionStackModel(QtCore.QAbstractListModel):
         self.action_stack.redoTextChanged.connect(self.redoTextChanged)
         self.action_stack.undoTextChanged.connect(self.undoTextChanged)
 
-    def reset(self, base_action):
+
+    def reset(self, base_action = None):
+        """
+        Resets the underlying action stack and the model to its initial state.
+
+        :param base_action: If given sets a new text for the first virtual action.
+        """
         self.beginResetModel()
-        self.base_action = base_action
+
+        if base_action is not None:
+            self.base_action = base_action
+
         self.action_stack.clear()
         self.endResetModel()
 
@@ -66,7 +81,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
         return self.action_stack.count() + 1
 
-    def data(self, index, role):
+    def data(self, index, role = QtCore.Qt.DisplayRole):
         if not index.isValid() or index.column() != 0:
             return None
 
@@ -78,7 +93,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
             if role != QtCore.Qt.DisplayRole:
                 return None
 
-            return self.base_action
+            return self.base_action.capitalize()
 
         stack_index = index.row() - 1
         action = self.action_stack.command(stack_index)
@@ -98,7 +113,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
         return None
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section, orientation, role = QtCore.Qt.DisplayRole):
         if section != 0 or orientation != QtCore.Qt.Horizontal:
             return None
 
@@ -121,7 +136,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
         return action
 
-    def createUndoAction(self, parent, prefix = None):
+    def createUndoAction(self, parent = None, prefix = None):
         return self._create_undoredo_action(parent,
                                             self.tr("Undo") if prefix is None else prefix,
                                             self.undoText(),
@@ -132,7 +147,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
     createUndoAction.__doc__ = ActionStack.createUndoAction.__doc__
 
-    def createRedoAction(self, parent, prefix = None):
+    def createRedoAction(self, parent = None, prefix = None):
         return self._create_undoredo_action(parent,
                                             self.tr("Redo") if prefix is None else prefix,
                                             self.redoText(),
@@ -283,6 +298,12 @@ class ActionStackModel(QtCore.QAbstractListModel):
         self.action_stack.setClean()
 
     setClean.__doc__ = ActionStack.setClean.__doc__
+
+
+    def isClean(self):
+        return self.action_stack.isClean()
+
+    isClean.__doc__ = ActionStack.isClean.__doc__
 
     def undoText(self):
         return self.action_stack.undoText()
