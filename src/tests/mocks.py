@@ -5,6 +5,11 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
+
+'''
+Contains mocks helpful for creating unit tests.
+'''
+
 from PySide import QtCore
 
 class SettingsMock:
@@ -26,3 +31,23 @@ class SettingsMock:
 
     def sync(self):
         pass
+
+
+class ModelIndexMock:
+    """
+    Mocks a QtCore.QModelIndex in very basic ways.
+    """
+    def __init__(self, row, column, valid = True):
+        self._row = row
+        self._column = column
+        self._valid = valid
+
+    def row(self):
+        return self._row
+
+    def column(self):
+        return self._column
+
+    def isValid(self):
+        return self._valid
+
