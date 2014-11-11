@@ -6,7 +6,9 @@
 # be found in the LICENSE.txt file.
 #
 from PySide import QtCore, QtGui
+
 from actions.action_stack import ActionStack
+
 
 class TemplateTextSlotAction(QtGui.QAction):
     """
@@ -14,7 +16,8 @@ class TemplateTextSlotAction(QtGui.QAction):
     with a variable offers a slot to change the action
     text based on the template. {0} is the template variable.
     """
-    def __init__(self, template = "{0}", *args, **kwargs):
+
+    def __init__(self, template="{0}", *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._template = template
@@ -23,12 +26,14 @@ class TemplateTextSlotAction(QtGui.QAction):
     def on_text_changed(self, text):
         self.setText(self._template.format(text))
 
+
 class ActionStackModel(QtCore.QAbstractListModel):
     """
     Takes ownership of the given action stack and exposes it
     to UI components in a consistent way.
     """
-    def __init__(self, base_action, action_stack = None, parent = None):
+
+    def __init__(self, base_action, action_stack=None, parent=None):
         """
         Creates a new model to represent and ActionStack.
 
@@ -57,8 +62,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
         self.action_stack.redoTextChanged.connect(self.redoTextChanged)
         self.action_stack.undoTextChanged.connect(self.undoTextChanged)
 
-
-    def reset(self, base_action = None):
+    def reset(self, base_action=None):
         """
         Resets the underlying action stack and the model to its initial state.
 
@@ -72,7 +76,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
         self.action_stack.clear()
         self.endResetModel()
 
-    def rowCount(self, parent = QtCore.QModelIndex()):
+    def rowCount(self, parent=QtCore.QModelIndex()):
         if parent.isValid():
             return 0
 
@@ -81,7 +85,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
         return self.action_stack.count() + 1
 
-    def data(self, index, role = QtCore.Qt.DisplayRole):
+    def data(self, index, role=QtCore.Qt.DisplayRole):
         if not index.isValid() or index.column() != 0:
             return None
 
@@ -105,7 +109,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
             # The other option would be to de-capitalize where needed (menu entries etc.)
             return action.actionText().capitalize()
         elif role == QtCore.Qt.ForegroundRole:
-            #FIXME: Should probably use system palette derived color, a delegate or a user defined role for this
+            # FIXME: Should probably use system palette derived color, a delegate or a user defined role for this
             if has_been_undone:
                 return QtGui.QBrush(QtCore.Qt.lightGray)
             else:
@@ -113,7 +117,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
         return None
 
-    def headerData(self, section, orientation, role = QtCore.Qt.DisplayRole):
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if section != 0 or orientation != QtCore.Qt.Horizontal:
             return None
 
@@ -126,7 +130,8 @@ class ActionStackModel(QtCore.QAbstractListModel):
     # with big parts of QUndoStack wrapper but there's not really a
     # cleaner way
 
-    def _create_undoredo_action(self, parent, prefix, initialText, initialCanDo, canDoChangedSignal, textChangedSignal, triggered):
+    def _create_undoredo_action(self, parent, prefix, initialText, initialCanDo, canDoChangedSignal, textChangedSignal,
+                                triggered):
         template = prefix + " {0}"
         action = TemplateTextSlotAction(template, template.format(initialText), parent)
         action.setEnabled(initialCanDo)
@@ -136,7 +141,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
         return action
 
-    def createUndoAction(self, parent = None, prefix = None):
+    def createUndoAction(self, parent=None, prefix=None):
         return self._create_undoredo_action(parent,
                                             self.tr("Undo") if prefix is None else prefix,
                                             self.undoText(),
@@ -147,7 +152,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
     createUndoAction.__doc__ = ActionStack.createUndoAction.__doc__
 
-    def createRedoAction(self, parent = None, prefix = None):
+    def createRedoAction(self, parent=None, prefix=None):
         return self._create_undoredo_action(parent,
                                             self.tr("Redo") if prefix is None else prefix,
                                             self.redoText(),
@@ -173,6 +178,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
         :param fun: Function executing push to wrap
         :return: Wrapped fun
         """
+
         def model_push(self, *args, **kwargs):
             stack_insertion_index = self.action_stack.index()
 
@@ -181,7 +187,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
             if will_drop_undone_actions:
                 stack_first_undone = self.action_stack.index()
                 stack_last_undone = self.action_stack.count() - 1
-                self.beginRemoveRows(QtCore.QModelIndex(), stack_first_undone + 1, stack_last_undone+ 1)
+                self.beginRemoveRows(QtCore.QModelIndex(), stack_first_undone + 1, stack_last_undone + 1)
 
                 self.temporary_row_count_limit = stack_insertion_index + 1
 
@@ -200,7 +206,7 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
     @_push_action_wrap
     def executed(self, redo, undo, description):
-        return self.action_stack.executed(redo, undo ,description)
+        return self.action_stack.executed(redo, undo, description)
 
     executed.__doc__ = ActionStack.executed.__doc__
 
@@ -243,7 +249,6 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
     def canRedo(self):
         return self.action_stack.canRedo()
-
 
     canRedo.__doc__ = ActionStack.canRedo.__doc__
 
@@ -299,7 +304,6 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
     setClean.__doc__ = ActionStack.setClean.__doc__
 
-
     def isClean(self):
         return self.action_stack.isClean()
 
@@ -325,5 +329,5 @@ class ActionStackModel(QtCore.QAbstractListModel):
     redoTextChanged = QtCore.Signal(str)
     undoTextChanged = QtCore.Signal(str)
 
-    aboutToUndo = QtCore.Signal() # Emitted before undoing one or more actions
-    aboutToRedo = QtCore.Signal() # Emitted before redoing one or more actions
+    aboutToUndo = QtCore.Signal()  # Emitted before undoing one or more actions
+    aboutToRedo = QtCore.Signal()  # Emitted before redoing one or more actions

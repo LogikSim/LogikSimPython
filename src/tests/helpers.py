@@ -10,6 +10,7 @@
 Contains helper functions that are helpful for creating unit-tests.
 '''
 
+
 class CallTrack:
     """
     Class for tracking calls to its slot function.
@@ -20,6 +21,7 @@ class CallTrack:
     >>> # Do sth. to trigger signal
     >>> log() # Returns list of call tuple arguments (unpacked for 1 argument)
     """
+
     def __init__(self):
         self.calls = []
 

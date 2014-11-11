@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2011-2014 The LogikSim Authors. All rights reserved.
-# Use of this source code is governed by the GNU GPL license that can 
+# Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
 '''
@@ -11,15 +11,15 @@ Creates the inserting lines submode and its baseclass.
 
 import functools
 
+from PySide import QtGui, QtCore
+
 from ..modes_base import (GridViewMouseModeBase, mouse_mode_filtered)
 import modes
 import logicitems
 
-from PySide import QtGui, QtCore
-
 
 LineSubModeBase, line_submode_filtered = modes.generate_mode_base(
-        GridViewMouseModeBase, 'linesub')
+    GridViewMouseModeBase, 'linesub')
 
 
 class InsertLineSubModeBase(LineSubModeBase):
@@ -29,31 +29,33 @@ class InsertLineSubModeBase(LineSubModeBase):
         self._insert_line_start = None
         self._inserted_lines = None
         self._line_anchor_indicator = None
-        # shape used for mouse collision tests while searching for 
+        # shape used for mouse collision tests while searching for
         # line anchors (must be float!)
         self._mouse_collision_line_radius = 5.
         self._mouse_collision_connector_radius = 10.
         # used to store anchor in mouseMoveEvent
         self._mouse_move_anchor = None
-    
+
     def find_nearest_item_at_pos(self, pos, radius, filter_func=None):
         """
         returns nearest item in circle defined by x, y and diameter regarding
         it's origin using binary search
-        
+
         bool filter(item, path) - function used to exclude items from search
             all valid positions should be contained in path, a QPainterPath
             in scene coordiantes
         """
+
         def get_items(radius):
             path = QtGui.QPainterPath()
             path.addEllipse(pos, radius, radius)
             items = self.items(path)
             if filter_func is not None:
-                return list(filter(functools.partial(filter_func, 
-                        path=self.mapToScene(path)), items))
+                return list(filter(functools.partial(filter_func,
+                                                     path=self.mapToScene(path)), items))
             else:
                 return items
+
         r_min, r_max = 0, radius
         max_resolution = 0.5
         items, pivot = get_items(r_max), r_max
@@ -68,13 +70,14 @@ class InsertLineSubModeBase(LineSubModeBase):
             items = get_items(r_max)
         if len(items) > 0:
             return items[0]
-    
+
     def find_line_anchor_at_view_pos(self, pos, y=None):
         """
         returns nearest anchor to pos in scene coordinates or None
-        
+
         pos - coordinate in view coordinates
         """
+
         def anchor_filter(item, path, radius):
             # line items
             if radius <= self._mouse_collision_line_radius and \
@@ -86,18 +89,18 @@ class InsertLineSubModeBase(LineSubModeBase):
                     isinstance(item, logicitems.ConnectorItem) and \
                     item is not self._inserted_connector:
                 return path.contains(item.mapToScene(item.anchorPoint()))
-        
+
         if y is not None:
             pos = QtCore.QPoint(pos, y)
-        r_min, r_max = sorted((self._mouse_collision_line_radius, \
-                self._mouse_collision_connector_radius))
+        r_min, r_max = sorted((self._mouse_collision_line_radius,
+                               self._mouse_collision_connector_radius))
         # first try to find item on smaller radius
-        item = self.find_nearest_item_at_pos(pos, r_min, 
-                functools.partial(anchor_filter, radius=r_min))
+        item = self.find_nearest_item_at_pos(pos, r_min,
+                                             functools.partial(anchor_filter, radius=r_min))
         # if nothing found, try to find item on larger radius
         if item is None:
-            item = self.find_nearest_item_at_pos(pos, r_max, 
-                    functools.partial(anchor_filter, radius=r_max))
+            item = self.find_nearest_item_at_pos(pos, r_max,
+                                                 functools.partial(anchor_filter, radius=r_max))
         # find nearest point on line (in scene coordinates)
         if isinstance(item, logicitems.LineTree):
             scene_pos = self.mapToScene(pos)
@@ -105,7 +108,7 @@ class InsertLineSubModeBase(LineSubModeBase):
         # return anchor point for connectors
         if isinstance(item, logicitems.ConnectorItem):
             return item.mapToScene(item.anchorPoint())
-    
+
     def setLineAnchorIndicator(self, pos):
         """ pos - scene pos or None """
         if pos is None:
@@ -115,7 +118,7 @@ class InsertLineSubModeBase(LineSubModeBase):
         else:
             scale = self.getScale()
             size = max(1 / scale * 10, 70)
-            rect = QtCore.QRectF(pos.x() - size/2, pos.y() - size/2, size, size)
+            rect = QtCore.QRectF(pos.x() - size / 2, pos.y() - size / 2, size, size)
             pen_width = max(1 / scale, 8)
             if self._line_anchor_indicator is None:
                 # create new
@@ -127,7 +130,7 @@ class InsertLineSubModeBase(LineSubModeBase):
                 # resize existing
                 self._line_anchor_indicator.setRect(rect)
                 self._line_anchor_indicator.setWidthF(pen_width)
-    
+
     def _do_start_insert_lines(self, view_pos, anchor=None):
         # find anchor
         if anchor is None:
@@ -135,10 +138,10 @@ class InsertLineSubModeBase(LineSubModeBase):
         start = self.mapToSceneGrid(view_pos) if anchor is None else anchor
         # store start position
         self._insert_line_start = start
-    
+
     @mouse_mode_filtered
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
-        
+
         self._mouse_move_anchor = self.find_line_anchor_at_view_pos(event.pos())
         self.setLineAnchorIndicator(self._mouse_move_anchor)

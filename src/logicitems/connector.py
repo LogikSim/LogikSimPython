@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2011-2014 The LogikSim Authors. All rights reserved.
-# Use of this source code is governed by the GNU GPL license that can 
+# Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
 '''
@@ -22,14 +22,14 @@ class SmoothGrahpicsLineItem(QtGui.QGraphicsLineItem):
             return not straight
         else:
             return True
-    
+
     def isHorizontalOrVertical(self):
         vline = self.line().p2() - self.line().p1()
         return vline.x() == 0 or vline.y() == 0
-    
+
     def paint(self, painter, options, widget):
-        painter.setRenderHint(QtGui.QPainter.Antialiasing, 
-                self.shouldAntialias(painter))
+        painter.setRenderHint(QtGui.QPainter.Antialiasing,
+                              self.shouldAntialias(painter))
         QtGui.QGraphicsLineItem.paint(self, painter, options, widget)
         painter.setRenderHint(QtGui.QPainter.Antialiasing, False)
 
@@ -38,13 +38,13 @@ class ConnectorItem(SmoothGrahpicsLineItem):
     def __init__(self, *args, **kargs):
         SmoothGrahpicsLineItem.__init__(self, *args, **kargs)
         self.setPen(QtGui.QPen(QtCore.Qt.black))
-    
+
     def anchorPoint(self):
         """
         returns position where lines can connect to
         """
         return self.line().p2()
-    
+
     def setLine(self, line):
         """
         line defines: start, anchor

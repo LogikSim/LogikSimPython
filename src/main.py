@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2011-2014 The LogikSim Authors. All rights reserved.
-# Use of this source code is governed by the GNU GPL license that can 
+# Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
 '''
@@ -12,10 +12,11 @@ Entry script to start the LogikSim GUI.
 import sys
 
 from PySide import QtGui, QtCore
-from settings import setup_settings
 
+from settings import setup_settings
 import main_window
 import symbols
+
 
 def main():
     symbols.load_all_symbols()

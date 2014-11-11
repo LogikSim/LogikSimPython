@@ -7,8 +7,9 @@
 #
 from PySide import QtGui, QtCore
 
+
 class ActionStackView(QtGui.QListView):
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super().__init__(parent)
 
     def setModel(self, model):

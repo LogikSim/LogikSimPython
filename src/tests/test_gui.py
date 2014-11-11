@@ -7,11 +7,14 @@
 #
 
 import unittest
+
 from PySide import QtCore, QtGui
 from PySide.QtTest import QTest
+
 import main_window
 from settings import setup_settings
 from tests.mocks import SettingsMock
+
 
 class MainWindowTest(unittest.TestCase):
     def setUp(self):
@@ -34,16 +37,16 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos = self.mw.menu_bar.actionGeometry(self.mw.menu_view.menuAction()).center(),
-            delay = 200)
+            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_view.menuAction()).center(),
+            delay=200)
         self.assertTrue(self.mw.menu_view.isVisible())
 
         # Toggle visibility action to hide it
         QTest.mouseClick(
             self.mw.menu_view,
             QtCore.Qt.LeftButton,
-            pos = self.mw.menu_view.actionGeometry(self.mw.toggle_history_dock_widget_view_qaction).center(),
-            delay = 200)
+            pos=self.mw.menu_view.actionGeometry(self.mw.toggle_history_dock_widget_view_qaction).center(),
+            delay=200)
 
         self.assertFalse(self.mw.history_dock_widget.isVisible())
 
@@ -51,16 +54,16 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos = self.mw.menu_bar.actionGeometry(self.mw.menu_view.menuAction()).center(),
-            delay = 200)
+            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_view.menuAction()).center(),
+            delay=200)
         self.assertTrue(self.mw.menu_view.isVisible())
 
         # Toggle visibility action to show it again
         QTest.mouseClick(
             self.mw.menu_view,
             QtCore.Qt.LeftButton,
-            pos = self.mw.menu_view.actionGeometry(self.mw.toggle_history_dock_widget_view_qaction).center(),
-            delay = 200)
+            pos=self.mw.menu_view.actionGeometry(self.mw.toggle_history_dock_widget_view_qaction).center(),
+            delay=200)
 
         self.assertTrue(self.mw.history_dock_widget.isVisible())
 

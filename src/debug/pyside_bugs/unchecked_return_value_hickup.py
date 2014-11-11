@@ -43,21 +43,21 @@ class TestRect(QtGui.QGraphicsRectItem, QtGui.QGraphicsLayoutItem):
         QtGui.QGraphicsRectItem.__init__(self, *args, **kargs)
         QtGui.QGraphicsLayoutItem.__init__(self, *args, **kargs)
         self.setRect(0, 0, 200, 100)
-    
+
     def setGeometry(self, rect):
         self.setRect(rect)
-    
+
     def sizeHint(self, *args):
-        return self.rect()#.size()
+        return self.rect()  # .size()
 
 
 def add_rect_with_layout(scene):
     item = TestRect()
     scene.addItem(item)
-    
+
     layout = QtGui.QGraphicsGridLayout()
     layout.addItem(item, 0, 0)
-    
+
     form = QtGui.QGraphicsWidget()
     form.setLayout(layout)
     scene.addItem(form)
@@ -66,9 +66,9 @@ def add_rect_with_layout(scene):
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     scene = QtGui.QGraphicsScene()
-    
+
     add_rect_with_layout(scene)
-    
+
     view = QtGui.QGraphicsView()
     view.setScene(scene)
     view.show()

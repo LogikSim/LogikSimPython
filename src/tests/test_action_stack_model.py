@@ -6,9 +6,11 @@
 # be found in the LICENSE.txt file.
 
 import unittest
+
+from PySide import QtCore, QtGui
+
 from actions.action_stack import ActionStack
 from actions.action_stack_model import ActionStackModel
-from PySide import QtCore, QtGui
 from tests.helpers import CallTrack
 from tests.mocks import ModelIndexMock
 
@@ -18,16 +20,17 @@ class DoUndoLog:
     Helper class to keep track of undo/redo calls during testing.
     """
     DEFAULT_WHAT = "Thing"
-    def __init__(self, log = None):
+
+    def __init__(self, log=None):
         self.log = log if log is not None else []
 
-    def execute_args(self, what = DEFAULT_WHAT):
+    def execute_args(self, what=DEFAULT_WHAT):
         """
         :return: execute(d) compatible tuple of do,undo,what
         """
         return (self.do_gen(what), self.undo_gen(what), what)
 
-    def __call__(self, s = None, what = DEFAULT_WHAT):
+    def __call__(self, s=None, what=DEFAULT_WHAT):
         """
         Returns a real or virtual do/undo log for use in validation.
 
@@ -50,11 +53,13 @@ class DoUndoLog:
     def do_gen(self, what):
         def do():
             self.log.append((True, what))
+
         return do
 
     def undo_gen(self, what):
         def undo():
             self.log.append((False, what))
+
         return undo
 
 
@@ -62,10 +67,11 @@ class ActionStackModelTest(unittest.TestCase):
     """
     Tests actions.action_stack_model.ActionStackModel class with dependencies.
     """
+
     def setUp(self):
         self.app = QtCore.QCoreApplication.instance()
         if not self.app:
-            #FIXME: Want to use self.app = QtCore.QCoreApplication([]) but can't because tearDown can't really clean up the singleton
+            # FIXME: Want to use self.app = QtCore.QCoreApplication([]) but can't because tearDown can't really clean up the singleton
             self.app = QtGui.QApplication([])
 
         self.model = ActionStackModel("first")
@@ -92,7 +98,7 @@ class ActionStackModelTest(unittest.TestCase):
         self.model.executed(*log.execute_args())
         self.assertEqual(log(""), log())
         self.model.undo()
-        self.assertEqual(log("-"),log())
+        self.assertEqual(log("-"), log())
         self.assertEqual(2, self.model.rowCount())
         self.model.redo()
         self.assertEqual(log("-+"), log())
@@ -116,7 +122,7 @@ class ActionStackModelTest(unittest.TestCase):
         self.model.reset("bernd")
         self.assertEqual(log("+"), log())  # Mustn't be undone
         self.assertEqual(1, self.model.rowCount())  # Other actions must be gone
-        self.assertEqual("Bernd", self.model.data(self.model.index(0,0)))  # New base_action text should be applied
+        self.assertEqual("Bernd", self.model.data(self.model.index(0, 0)))  # New base_action text should be applied
 
     def test_undo_redo(self):
         """
@@ -336,6 +342,7 @@ class ActionStackModelTest(unittest.TestCase):
         log = DoUndoLog()
 
         about_to_undo_log_length = -1
+
         def about_to_undo_slot():
             nonlocal about_to_undo_log_length
             # As the aboutTo* slots should be called before the actual action
@@ -344,6 +351,7 @@ class ActionStackModelTest(unittest.TestCase):
             about_to_undo_log_length = len(log())
 
         about_to_redo_log_length = -1
+
         def about_to_redo_slot():
             nonlocal about_to_redo_log_length
             about_to_redo_log_length = len(log())

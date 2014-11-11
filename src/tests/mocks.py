@@ -12,11 +12,13 @@ Contains mocks helpful for creating unit tests.
 
 from PySide import QtCore
 
+
 class SettingsMock:
     """
     Mocks QSettings for
     """
-    def __init__(self, values = {}):
+
+    def __init__(self, values={}):
         self.values = values
         self.status_value = QtCore.QSettings.NoError
 
@@ -37,7 +39,8 @@ class ModelIndexMock:
     """
     Mocks a QtCore.QModelIndex in very basic ways.
     """
-    def __init__(self, row, column, valid = True):
+
+    def __init__(self, row, column, valid=True):
         self._row = row
         self._column = column
         self._valid = valid

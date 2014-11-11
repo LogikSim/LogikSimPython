@@ -6,14 +6,16 @@
 # be found in the LICENSE.txt file.
 
 from PySide import QtGui
+
 from actions.action import Action
+
 
 class ActionStack(QtGui.QUndoStack):
     """
     Small wrapper around QtGui.UndoStack with some convenience functions.
     """
-    
-    def __init__(self, parent = None):
+
+    def __init__(self, parent=None):
         super().__init__(parent)
 
     def executed(self, redo, undo, description):
@@ -35,7 +37,7 @@ class ActionStack(QtGui.QUndoStack):
                 return
             redo()
 
-        action = Action(redoButIgnoreFirstCall,undo, description)
+        action = Action(redoButIgnoreFirstCall, undo, description)
         self.push(action)
 
         return action
@@ -53,4 +55,3 @@ class ActionStack(QtGui.QUndoStack):
         self.push(action)
 
         return action
-

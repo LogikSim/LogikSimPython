@@ -12,7 +12,8 @@ Contains configuration storage and loaded related functionality
 
 from PySide import QtCore
 
-def Setting(settings_type, name, doc = None):
+
+def Setting(settings_type, name, doc=None):
     """
     Class decorator for adding one setting to the Settings class.
     A setting consists of a underlying variable "_<name>" holding the value,
@@ -24,22 +25,25 @@ def Setting(settings_type, name, doc = None):
     :param doc: Optional docstring for the property
     :return: Decorated Settings class
     """
+
     def decorator(cls):
         variable_name = "_" + name
         signal_name = name + "_changed"
         setattr(cls, signal_name, QtCore.Signal())
-        setattr(cls, name, QtCore.Property(type = settings_type,
-                                           fget = lambda self: getattr(self, variable_name),
-                                           fset = lambda self, value: (setattr(self, variable_name, value), getattr(self, signal_name).emit()),
-                                           #notify = getattr(cls, signal_name), #FIXME: Doesn't seem to work. Manually emit in setter for now (PYSIDE-261)
-                                           #doc = doc)) #FIXME: If I set a docstring here the application crashes on shutdown (PYSIDE-135)
-                                            ))
+        setattr(cls, name, QtCore.Property(type=settings_type,
+                                           fget=lambda self: getattr(self, variable_name),
+                                           fset=lambda self, value: (
+                                               setattr(self, variable_name, value), getattr(self, signal_name).emit())))
+        # notify = getattr(cls, signal_name), #FIXME: Doesn't seem to work. Manually emit in setter for now (PYSIDE-261)
+        # doc = doc)) #FIXME: If I set a docstring here the application crashes on shutdown (PYSIDE-135)
 
         cls._settings_list.append((name, settings_type))
-        cls.__doc__ += "    {0:10s} {1:15s} {2}\n".format(name, str(type), doc) #FIXME: For some reason this won't chain properly
+        cls.__doc__ += "    {0:10s} {1:15s} {2}\n".format(name, str(type),
+                                                          doc)  # FIXME: For some reason this won't chain properly
         return cls
 
     return decorator
+
 
 @Setting(QtCore.QByteArray, "main_window_geometry", "Stores main window geometry")
 @Setting(QtCore.QByteArray, "main_window_state", "Stores main window state")
@@ -54,7 +58,8 @@ class Settings(QtCore.QObject):
 
     For adding settings use the "Settings" decorator (see prior uses).
     """
-    def __init__(self, settings = None, parent = None):
+
+    def __init__(self, settings=None, parent=None):
         super().__init__(parent)
 
         self._settings = QtCore.QSettings(self) if settings is None else settings
@@ -110,7 +115,8 @@ class Settings(QtCore.QObject):
     _settings_list = []
 
 
-_settings = None # Settings singleton stored here
+_settings = None  # Settings singleton stored here
+
 
 def settings():
     """
@@ -122,7 +128,8 @@ def settings():
     assert _settings is not None, "setup_settings not yet called"
     return _settings
 
-def setup_settings(qsettingsObject = None, parent = None):
+
+def setup_settings(qsettingsObject=None, parent=None):
     """
     Initializes the global settings singleton.
 

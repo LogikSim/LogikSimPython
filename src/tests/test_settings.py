@@ -6,9 +6,11 @@
 # be found in the LICENSE.txt file.
 
 import unittest
-from tests.mocks import SettingsMock
-from PySide import QtCore, QtGui
 from collections import defaultdict
+
+from PySide import QtCore, QtGui
+
+from tests.mocks import SettingsMock
 import settings
 
 
@@ -16,7 +18,7 @@ class SettingsTest(unittest.TestCase):
     def setUp(self):
         self.app = QtCore.QCoreApplication.instance()
         if not self.app:
-            #FIXME: Want to use self.app = QtCore.QCoreApplication([]) but can't because tearDown can't really clean up the singleton
+            # FIXME: Want to use self.app = QtCore.QCoreApplication([]) but can't because tearDown can't really clean up the singleton
             self.app = QtGui.QApplication([])
 
         self.settings_mock = SettingsMock()
@@ -39,9 +41,11 @@ class SettingsTest(unittest.TestCase):
         s2 = settings.settings()
 
         changed = defaultdict(lambda: False)
+
         def track_changed(onwhat, name):
             def slot():
                 changed[name] = True
+
             getattr(onwhat, name + "_changed").connect(slot)
 
         track_changed(s, "main_window_geometry")
@@ -63,7 +67,7 @@ class SettingsTest(unittest.TestCase):
         """
         Tests whether existing settings are picked up but the Settings class.
         """
-        my_settings_mock = SettingsMock({"main_window_geometry" : QtCore.QByteArray("foo")})
+        my_settings_mock = SettingsMock({"main_window_geometry": QtCore.QByteArray("foo")})
         settings.setup_settings(my_settings_mock)
 
         self.assertEqual(settings.settings().main_window_geometry, QtCore.QByteArray("foo"))
