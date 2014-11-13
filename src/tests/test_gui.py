@@ -14,6 +14,7 @@ from PySide.QtTest import QTest
 import main_window
 from settings import setup_settings
 from tests.mocks import SettingsMock
+import logicitems
 
 
 class MainWindowTest(unittest.TestCase):
@@ -31,6 +32,9 @@ class MainWindowTest(unittest.TestCase):
         QTest.qWaitForWindowShown(self.mw)
 
     def test_hiding_history_widget_from_menu(self):
+        """
+        Tests hiding and showing the history widget from the view menu.
+        """
         self.assertTrue(self.mw.history_dock_widget.isVisible())
 
         # Open view menu
@@ -66,6 +70,54 @@ class MainWindowTest(unittest.TestCase):
             delay=200)
 
         self.assertTrue(self.mw.history_dock_widget.isVisible())
+
+    def test_exit(self):
+        """
+        Tests exiting the application via File->Exit
+        """
+
+        # Open file menu
+        QTest.mouseClick(
+            self.mw.menu_bar,
+            QtCore.Qt.LeftButton,
+            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_file.menuAction()).center(),
+            delay=200)
+        self.assertTrue(self.mw.menu_file.isVisible())
+
+        # Click exit
+        QTest.mouseClick(
+            self.mw.menu_file,
+            QtCore.Qt.LeftButton,
+            pos=self.mw.menu_view.actionGeometry(self.mw.action_exit).center(),
+            delay=200)
+
+        self.app.processEvents()
+        self.assertFalse(self.mw.isVisible())
+
+    def test_place_item(self):
+        """
+        Tests the workflow of placing an item
+        """
+        self.mw.history_dock_widget.hide() # Make sure the dockwidget is out of the way
+
+        # Select insertion mode
+        QTest.keyClick(self.mw,
+                        QtCore.Qt.Key_F2,
+                        delay=200)
+
+        self.app.processEvents()
+
+        # Place item
+        QTest.mouseClick(
+            self.mw._view.viewport(),
+            QtCore.Qt.LeftButton,
+            pos=self.mw._view.geometry().center(),
+            delay = 200
+        )
+        self.app.processEvents()
+
+        self.assertEqual(1, len(self.mw._view.scene().items()))
+        self.assertIsInstance(self.mw._view.scene().items()[0], logicitems.LogicItem)
 
     def tearDown(self):
         self.mw.close()

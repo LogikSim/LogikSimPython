@@ -107,15 +107,11 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
     def _on_tool_action_triggered(self, action):
         if action == self.tool_selection:
             self._view.setMouseMode(schematics.mouse_modes.SelectItemsMode)
-            print('selection mode')
         elif action == self.tool_logic:
             self._view.setMouseMode(schematics.mouse_modes.InsertItemMode)
-            print('insert logic element')
         elif action == self.tool_connector:
             self._view.setMouseMode(schematics.mouse_modes.InsertConnectorMode)
-            print('insert connector')
         elif action == self.tool_lines:
             self._view.setMouseMode(schematics.mouse_modes.InsertLineMode)
-            print('insert lines')
         else:
             assert False, "Unexpected action {0} triggered".format(action)
