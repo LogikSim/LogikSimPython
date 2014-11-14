@@ -24,7 +24,7 @@ depth and quality of courses covering digital circuits.
 ### Why we create LogikSim ###
 
 We have always been fascinated by the huge levels of abstraction that 
-makes it possible to build processors from simple two input logic 
+make it possible to build processors from simple two input logic 
 functions like AND. With LogikSim we are sharing our fascination. 
 Through LogikSim you will be able to see these abstraction layer for 
 yourself, one by one. At first you will start with simple digital elements. 
