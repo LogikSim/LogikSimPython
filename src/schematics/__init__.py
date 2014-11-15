@@ -16,3 +16,5 @@ from .edit_schematic_view import EditSchematicView
 from .edit_symbol_view import EditSymbolView
 from .grid_view import GridView
 from .grid_scene import GridScene
+
+__all__ = ('EditSchematicView', 'EditSymbolView', 'GridView', 'GridScene')
