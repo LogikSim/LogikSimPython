@@ -1,1 +1,3 @@
 PySide>=1.2.2
+pylama
+cx_Freeze
