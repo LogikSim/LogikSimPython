@@ -26,6 +26,8 @@ if sys.platform == "win32":
 exe = Executable(
     script="main.py",
     targetName="LogikSim.exe",
+    shortcutName="LogikSim",
+    shortcutDir="DesktopFolder",
     icon="resources/LogikSim.ico",
     base=base,
 )
@@ -84,13 +86,15 @@ class GenerateCommand(Command):
 
 
 setup(
-    name="QCanvasTest",
+    name="LogikSim",
     version="0.0.1",
-    description="Test QCanvas Capabilities",
+    description="A logic simulator that makes it easy to understand digital circuits",
     options={"build_exe": {"compressed": True,
                            "includes": ["PySide.QtXml"],
                            "include_files": ["../LICENSE.txt",
-                                             "../AUTHORS.txt"]}},
+                                             "../AUTHORS.txt"]},
+             "bdist_msi": {"upgrade_code": "{4EC6F5B7-4C87-47D4-9AA4-6EA26F10B321}",
+                           "add_to_path": False}},
     cmdclass={"generate": GenerateCommand},
     executables=[exe]
 )
