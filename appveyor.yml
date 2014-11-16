@@ -51,6 +51,17 @@ artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
   - path: src\dist\*
 
+deploy:
+  - provider: FTP
+    server:
+      secure: lh1QRsHboH+mTln670DZGn6xA6sWt7dp8mXJ3PkxyXw=
+    username:
+      secure: psWUoZx6Hwp/CcJAfRZv0w==
+    password:
+      secure: cAnSDQc8GMceRZmTPc4pJAvaQPiXdTNorjMvLt4H4TQ=
+    folder: httpdocs/ci/
+    enable_ssl: true
+
 #on_success:
 #  - TODO: upload the content of dist/*.whl to a public wheelhouse
 #
