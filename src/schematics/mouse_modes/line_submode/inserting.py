@@ -5,17 +5,17 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
-'''
+"""
 Defines submode functionality when inserting lines
-'''
-
-import time
+"""
 
 from PySide import QtCore
+import functools
 
 from .submode_base import InsertLineSubModeBase, line_submode_filtered
 import logicitems
 from helper.timeit_mod import timeit
+from helper.time_limited import time_limited, TimeReached
 import algorithms.hightower as hightower
 
 
@@ -77,6 +77,87 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         return [item for item in self.scene().items(scene_point)
                 if isinstance(item, logicitems.LineTree)]
 
+    def to_scene_point(self, grid_point):
+        """
+        Converts grid tuple to QPointF in scene coordinates.
+
+        :param grid_point: Point in grid coordinates
+        :return: Point in scene coordinates
+        """
+        spacing = self.scene().get_grid_spacing()
+
+        def to_scene(grid_coordinate):
+            """ Converts grid coordinate to self.scene coordinates """
+            return grid_coordinate * spacing
+
+        return QtCore.QPointF(*map(to_scene, grid_point))
+
+    def get_obj_at_point(self, point, p_start, p_end, tree_start, tree_end, endpoint_trees):
+        """
+        Returns which kind of hightower object can be found at the given point.
+        Meant to be used while inserting a line.
+
+        :param point: Point to check
+        :param p_start: Starting point of the line segment being inserted
+        :param p_end: Ending point of the line segment being inserted
+        :param tree_start: Line-trees at p_start location (if any)
+        :param tree_end: Line-trees at p_end location (if any)
+        :param endpoint_trees: Unique line-trees at p_start and p_end
+        :return: hightower object found at position.
+        """
+        def is_self_line_edge(item):
+            """
+            Must not have cycles so we can not allow overlapping the edges
+            of the trees the line we are drawing belongs to. A special case
+            is if what we are drawing is fully contained in the tree in which
+            case overlapping edges is just fine.
+
+            :param item: Item to check for
+            :return: True if self line-edge we want to filter. False otherwise.
+            """
+            if item in tree_start and point != p_start:
+                start_to_point_line = QtCore.QLineF(self.to_scene_point(p_start),
+                                                    self.to_scene_point(point))
+
+                return not tree_start[0].contains_line(start_to_point_line)
+
+            if item in tree_end and point != p_end:
+                point_to_end_line = QtCore.QLineF(self.to_scene_point(point),
+                                                  self.to_scene_point(p_end))
+
+                return not tree_end[0].contains_line(point_to_end_line)
+
+            return False
+
+        scene_point = self.to_scene_point(point)
+        items = self.scene().items(scene_point)
+        found_passable_line = False
+        found_line_edge = False
+
+        for item in items:
+            if item is self._line_anchor_indicator:
+                continue
+            elif isinstance(item, logicitems.ConnectorItem) and point in (p_start, p_end):
+                continue
+            elif isinstance(item, logicitems.LineTree):
+                if item in endpoint_trees:
+                    if is_self_line_edge(item):
+                        return hightower.Solid
+                elif item.is_edge(scene_point):
+                    found_line_edge = True
+                else:
+                    found_passable_line = True
+                continue
+
+            return hightower.Solid
+
+        if found_line_edge:
+            return hightower.LineEdge
+        elif found_passable_line:
+            return hightower.PassableLine
+
+        return None
+
     @line_submode_filtered
     @timeit
     def do_update_line(self):
@@ -85,7 +166,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         #
         # new graph based search
         #
-
         spacing = self.scene().get_grid_spacing()
 
         def to_grid(scene_point):
@@ -93,14 +173,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
 
             The functions always rounds down """
             return int(scene_point / spacing)
-
-        def to_scene(grid_point):
-            """ Converts grid points used here to points in self.scene """
-            return grid_point * spacing
-
-        def to_scene_point(grid_point):
-            """ Converts grid tuple to QPointF in scene coordinates """
-            return QtCore.QPointF(*map(to_scene, grid_point))
 
         p_start = to_grid(start.x()), to_grid(start.y())
         p_end = to_grid(end.x()), to_grid(end.y())
@@ -126,7 +198,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         tree_end = self._get_linetrees_at_point(end)
 
         # can only merge two trees if start == end
-        if (len(tree_start) > 1 or len(tree_end) > 1):
+        if len(tree_start) > 1 or len(tree_end) > 1:
             if (p_start == p_end):
                 # pick one, as they are the same
                 endpoint_trees = tree_start
@@ -142,69 +214,21 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         if endpoint_trees[0] is endpoint_trees[1] is not None:
             return
 
-        # only try to find path for only specific time
-        max_time = time.time() + self._max_line_search_time
+        # We only want to search for a limited amount of time
+        time_limited_get_obj_at_point = time_limited(self.get_obj_at_point, self._max_line_search_time)
 
-        class TimeReached(Exception):
-            pass
-
-        def get_obj_at_point(point):
-            if time.time() > max_time:
-                raise TimeReached()
-
-            scene_point = to_scene_point(point)
-            items = self.scene().items(scene_point)
-            found_passable_line = False
-            found_line_edge = False
-            self_line_edge = False
-            for item in items:
-                if item is self._line_anchor_indicator:
-                    continue
-                if isinstance(item, logicitems.ConnectorItem) and \
-                   point in (p_start, p_end):
-                    continue
-                if isinstance(item, logicitems.LineTree):
-                    if item in endpoint_trees:
-                        if item.is_edge(scene_point):
-                            # Must not have cycles so we can not allow overlapping the edges
-                            # of the trees the line we are drawing belongs to. A special case
-                            # is if what we are drawing is fully contained in the tree in which
-                            # case overlapping edges is just fine.
-
-                            if item in tree_start and point != p_start:
-                                if tree_start[0].contains_line(QtCore.QLineF(to_scene_point(p_start),
-                                                                             to_scene_point(point))):
-                                    continue
-
-                                self_line_edge = True
-
-                            if item in tree_end and point != p_end:
-                                if tree_end[0].contains_line(QtCore.QLineF(to_scene_point(p_end),
-                                                                           to_scene_point(point))):
-                                    continue
-
-                                self_line_edge = True
-
-                        continue
-                    if item.is_edge(scene_point):
-                        found_line_edge = True
-                    else:
-                        found_passable_line = True
-                    continue
-                return hightower.Solid
-
-            if self_line_edge:
-                return hightower.Solid
-            elif found_line_edge:
-                return hightower.LineEdge
-            elif found_passable_line:
-                return hightower.PassableLine
+        my_get_obj_at_point = functools.partial(time_limited_get_obj_at_point,
+                                                tree_start=tree_start,
+                                                tree_end=tree_end,
+                                                p_start=p_start,
+                                                p_end=p_end,
+                                                endpoint_trees=endpoint_trees)
 
         search_rect = ((r_left, r_top), (r_right, r_bottom))
 
         try:
             res = hightower.hightower_line_search(p_start, p_end,
-                                                  get_obj_at_point,
+                                                  my_get_obj_at_point,
                                                   search_rect,
                                                   do_second_refinement=False)
         except TimeReached:
@@ -249,8 +273,8 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                         points = list(iter_line(line))
                         for segment in zip(points, points[1:]):
                             segment_line = QtCore.QLineF(
-                                to_scene_point(segment[0]),
-                                to_scene_point(segment[1]))
+                                self.to_scene_point(segment[0]),
+                                self.to_scene_point(segment[1]))
                             if line_tree.contains_line(segment_line):
                                 last_index = i
                                 last_point = segment[1]
@@ -266,7 +290,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         res = extract_new_path(list(reversed(res)), endpoint_trees[1])
 
         # create line tree from result
-        path = list(map(to_scene_point, res))
+        path = list(map(self.to_scene_point, res))
         l_tree = logicitems.LineTree(path)
 
         # merge start and end lines
