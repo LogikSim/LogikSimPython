@@ -46,6 +46,28 @@ class GridScene(QtGui.QGraphicsScene):
         lod = self.get_lod_from_painter(painter)
         return self.get_grid_spacing_from_scale(lod)
 
+    def to_scene_point(self, grid_point):
+        """
+        Converts grid tuple to QPointF in scene coordinates.
+
+        :param grid_point: Point in grid coordinates
+        :return: Point in scene coordinates
+        """
+        spacing = self.get_grid_spacing()
+
+        def to_scene(grid_coordinate):
+            """ Converts grid coordinate to self.scene coordinates """
+            return grid_coordinate * spacing
+
+        return QtCore.QPointF(*map(to_scene, grid_point))
+
+    def to_grid(self, scene_point):
+        """ Converts points in self.scene to grid points used here.
+
+        The functions always rounds down """
+        spacing = self.get_grid_spacing()
+        return int(scene_point / spacing)
+
     # @timeit
     def drawBackground(self, painter, rect):
         if self._is_grid_enabled:
