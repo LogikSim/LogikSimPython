@@ -1,6 +1,6 @@
 LogikSim
 ========
-[![Build Status](https://travis-ci.org/LogikSim/LogikSim.svg?branch=master)](https://travis-ci.org/LogikSim/LogikSim) [![Build status](https://ci.appveyor.com/api/projects/status/psrhi7mj71kfsec0?svg=true)](https://ci.appveyor.com/project/hacst/logiksim) [![Coverage Status](https://coveralls.io/repos/LogikSim/LogikSim/badge.png)](https://coveralls.io/r/LogikSim/LogikSim)
+[![Build Status](https://travis-ci.org/LogikSim/LogikSim.svg?branch=master)](https://travis-ci.org/LogikSim/LogikSim) [![Build status](https://ci.appveyor.com/api/projects/status/psrhi7mj71kfsec0/branch/master?svg=true)](https://ci.appveyor.com/project/hacst/logiksim/branch/master) [![Coverage Status](https://coveralls.io/repos/LogikSim/LogikSim/badge.png)](https://coveralls.io/r/LogikSim/LogikSim)
 
 ### Our Vision ###
 
