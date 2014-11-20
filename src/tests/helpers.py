@@ -10,6 +10,8 @@
 Contains helper functions that are helpful for creating unit-tests.
 '''
 
+from PySide import QtGui, QtCore
+from PySide.QtTest import QTest
 
 class CallTrack:
     """
@@ -34,3 +36,33 @@ class CallTrack:
 
     def __call__(self):
         return self.calls
+
+def delayed_perform_on_active_window(what, delay=100):
+    """
+    Meant to be used for interacting with modal dialogs during testing.
+
+    Can be used to queue a call of the given what function before the dialog
+    opens. After the given time expires that what function will be called
+    with the currently active window.
+
+    :param what: Function handed the active window
+    :param delay: Delay before calling what with active window in ms
+    :return Created single shot timer
+    """
+    return QtCore.QTimer.singleShot(delay, lambda: perform_on_active_window(what))
+
+def perform_on_active_window(what):
+    """
+    Meant to be used for interacting with modal dialogs during testing.
+
+    If queued via QTimer.singleShot's before the dialog opens will
+    pass the active window to the given "what" function. E.g. this
+    allows dismissing a modal dialog even though it blocks normal
+    test execution with it's own event loop.
+
+    :param what: Function handed the active window
+    """
+    app = QtGui.QApplication.instance()
+    active = app.activeWindow()
+    if active:
+        what(active)
