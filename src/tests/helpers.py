@@ -37,7 +37,7 @@ class CallTrack:
     def __call__(self):
         return self.calls
 
-def delayed_perform_on_modal(what, delay=100):
+def delayed_perform_on_modal(what, delay=50):
     """
     Meant to be used for interacting with modal dialogs during testing.
 

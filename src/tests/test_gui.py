@@ -43,16 +43,14 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_view.menuAction()).center(),
-            delay=200)
+            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_view.menuAction()).center())
         self.assertTrue(self.mw.menu_view.isVisible())
 
         # Toggle visibility action to hide it
         QTest.mouseClick(
             self.mw.menu_view,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_view.actionGeometry(self.mw.toggle_history_dock_widget_view_qaction).center(),
-            delay=200)
+            pos=self.mw.menu_view.actionGeometry(self.mw.toggle_history_dock_widget_view_qaction).center())
 
         self.assertFalse(self.mw.history_dock_widget.isVisible())
 
@@ -60,16 +58,14 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_view.menuAction()).center(),
-            delay=200)
+            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_view.menuAction()).center())
         self.assertTrue(self.mw.menu_view.isVisible())
 
         # Toggle visibility action to show it again
         QTest.mouseClick(
             self.mw.menu_view,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_view.actionGeometry(self.mw.toggle_history_dock_widget_view_qaction).center(),
-            delay=200)
+            pos=self.mw.menu_view.actionGeometry(self.mw.toggle_history_dock_widget_view_qaction).center())
 
         self.assertTrue(self.mw.history_dock_widget.isVisible())
 
@@ -82,16 +78,14 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_file.menuAction()).center(),
-            delay=200)
+            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_file.menuAction()).center())
         self.assertTrue(self.mw.menu_file.isVisible())
 
         # Click exit
         QTest.mouseClick(
             self.mw.menu_file,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_view.actionGeometry(self.mw.action_exit).center(),
-            delay=200)
+            pos=self.mw.menu_view.actionGeometry(self.mw.action_exit).center())
 
         self.app.processEvents()
         self.assertFalse(self.mw.isVisible())
@@ -104,8 +98,7 @@ class MainWindowTest(unittest.TestCase):
 
         # Select insertion mode
         QTest.keyClick(self.mw,
-                        QtCore.Qt.Key_F2,
-                        delay=200)
+                        QtCore.Qt.Key_F2)
 
         self.app.processEvents()
 
@@ -113,8 +106,7 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw._view.viewport(),
             QtCore.Qt.LeftButton,
-            pos=self.mw._view.geometry().center(),
-            delay = 200
+            pos=self.mw._view.geometry().center()
         )
         self.app.processEvents()
 
@@ -131,8 +123,7 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_help.menuAction()).center(),
-            delay=50)
+            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_help.menuAction()).center())
 
         self.assertTrue(self.mw.menu_help.isVisible())
 
@@ -143,8 +134,7 @@ class MainWindowTest(unittest.TestCase):
             nonlocal called
             self.assertIsInstance(window, QtGui.QMessageBox)
             QTest.keyClick(window,
-                           QtCore.Qt.Key_Escape,
-                           delay=50)
+                           QtCore.Qt.Key_Escape)
             called = True
 
         delayed_perform_on_modal(check_open_and_dismiss)
@@ -153,8 +143,7 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_help,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_help.actionGeometry(self.mw.action_about).center(),
-            delay=50)
+            pos=self.mw.menu_help.actionGeometry(self.mw.action_about).center())
 
         #
         # Modal event queue running here until dialog is dismissed
@@ -173,8 +162,7 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_help.menuAction()).center(),
-            delay=50)
+            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_help.menuAction()).center())
 
         self.assertTrue(self.mw.menu_help.isVisible())
 
@@ -185,8 +173,7 @@ class MainWindowTest(unittest.TestCase):
             nonlocal called
             self.assertIsInstance(window, QtGui.QMessageBox)
             QTest.keyClick(window,
-                           QtCore.Qt.Key_Escape,
-                           delay=50)
+                           QtCore.Qt.Key_Escape)
             called = True
 
         delayed_perform_on_modal(check_open_and_dismiss)
@@ -195,8 +182,7 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_help,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_help.actionGeometry(self.mw.action_about_qt).center(),
-            delay=50)
+            pos=self.mw.menu_help.actionGeometry(self.mw.action_about_qt).center())
 
         #
         # Modal event queue running here until dialog is dismissed
