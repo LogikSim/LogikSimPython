@@ -37,7 +37,7 @@ class CallTrack:
     def __call__(self):
         return self.calls
 
-def delayed_perform_on_active_window(what, delay=100):
+def delayed_perform_on_modal(what, delay=100):
     """
     Meant to be used for interacting with modal dialogs during testing.
 
@@ -46,12 +46,12 @@ def delayed_perform_on_active_window(what, delay=100):
     with the currently active window.
 
     :param what: Function handed the active window
-    :param delay: Delay before calling what with active window in ms
+    :param delay: Delay before calling what with active modal widget in ms
     :return Created single shot timer
     """
-    return QtCore.QTimer.singleShot(delay, lambda: perform_on_active_window(what))
+    return QtCore.QTimer.singleShot(delay, lambda: perform_on_modal(what))
 
-def perform_on_active_window(what):
+def perform_on_modal(what):
     """
     Meant to be used for interacting with modal dialogs during testing.
 
@@ -60,9 +60,9 @@ def perform_on_active_window(what):
     allows dismissing a modal dialog even though it blocks normal
     test execution with it's own event loop.
 
-    :param what: Function handed the active window
+    :param what: Function handed the active modal widget
     """
     app = QtGui.QApplication.instance()
-    active = app.activeWindow()
+    active = app.activeModalWidget()
     if active:
         what(active)

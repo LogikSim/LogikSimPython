@@ -7,6 +7,7 @@
 #
 
 import unittest
+import time
 
 from PySide import QtCore, QtGui
 from PySide.QtTest import QTest
@@ -14,7 +15,7 @@ from PySide.QtTest import QTest
 import main_window
 from settings import setup_settings
 from tests.mocks import SettingsMock
-from tests.helpers import delayed_perform_on_active_window
+from tests.helpers import delayed_perform_on_modal
 import logicitems
 
 
@@ -124,7 +125,7 @@ class MainWindowTest(unittest.TestCase):
         """
         Tests whether the about dialog opens correctly via the menu
         """
-        self.mw.history_dock_widget.hide() # Make sure the dockwidget is out of the way
+        self.mw.history_dock_widget.hide()  # Make sure the dock widget is out of the way
 
         # Open file menu
         QTest.mouseClick(
@@ -136,13 +137,17 @@ class MainWindowTest(unittest.TestCase):
         self.assertTrue(self.mw.menu_help.isVisible())
 
         # As the modal about dialog will block in it's event queue, queue the check itself.
+        called = False
+
         def check_open_and_dismiss(window):
+            nonlocal called
             self.assertIsInstance(window, QtGui.QMessageBox)
             QTest.keyClick(window,
                            QtCore.Qt.Key_Escape,
                            delay=50)
+            called = True
 
-        delayed_perform_on_active_window(check_open_and_dismiss)
+        delayed_perform_on_modal(check_open_and_dismiss)
 
         # Click about
         QTest.mouseClick(
@@ -155,10 +160,50 @@ class MainWindowTest(unittest.TestCase):
         # Modal event queue running here until dialog is dismissed
         #
 
+        self.assertTrue(called)
         self.assertEqual(self.app.activeWindow(), self.mw)
 
+    def test_lulu_about_qt_box(self):
+        """
+        Tests whether the about Qt dialog opens correctly via the menu
+        """
+        self.mw.history_dock_widget.hide()  # Make sure the dock widget is out of the way
+
+        # Open file menu
+        QTest.mouseClick(
+            self.mw.menu_bar,
+            QtCore.Qt.LeftButton,
+            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_help.menuAction()).center(),
+            delay=50)
+
+        self.assertTrue(self.mw.menu_help.isVisible())
+
+        # As the modal about dialog will block in it's event queue, queue the check itself.
+        called = False
+
+        def check_open_and_dismiss(window):
+            nonlocal called
+            self.assertIsInstance(window, QtGui.QMessageBox)
+            QTest.keyClick(window,
+                           QtCore.Qt.Key_Escape,
+                           delay=50)
+            called = True
+
+        delayed_perform_on_modal(check_open_and_dismiss)
+
+        # Click about
+        QTest.mouseClick(
+            self.mw.menu_help,
+            QtCore.Qt.LeftButton,
+            pos=self.mw.menu_help.actionGeometry(self.mw.action_about_qt).center(),
+            delay=50)
+
+        #
+        # Modal event queue running here until dialog is dismissed
+        #
+
+        self.assertTrue(called)
+        self.assertEqual(self.app.activeWindow(), self.mw)
 
     def tearDown(self):
         self.mw.close()
-        self.app.exit()
-
