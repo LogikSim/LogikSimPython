@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2011-2014 The LogikSim Authors. All rights reserved.
-# Use of this source code is governed by the GNU GPL license that can 
+# Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
 '''
@@ -19,7 +19,7 @@ LV_0, LV_1, LV_X = list(map(LogicValue, '01X'))
 
 
 class ParserTest(unittest.TestCase):
-    def test_LV_values(self):
+    def test_lv_values(self):
         self.assertListEqual([LV_0, LV_1, LV_X], list(map(LogicValue, '01X')))
 
     def test_str_representations(self):

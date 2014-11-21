@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2011-2014 The LogikSim Authors. All rights reserved.
-# Use of this source code is governed by the GNU GPL license that can 
+# Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
 '''
@@ -100,4 +100,3 @@ class JsonObjectSpec(unittest.TestCase):
         obj = Test()
         self.assertDictEqual(obj.save(), {'type': 'Test'})
         JsonMeta.validate_data(obj.save())
-

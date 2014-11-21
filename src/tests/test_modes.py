@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2011-2014 The LogikSim Authors. All rights reserved.
-# Use of this source code is governed by the GNU GPL license that can 
+# Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
 '''
@@ -16,11 +16,13 @@ from modes import generate_mode_base
 
 class TestSubclassing(unittest.TestCase):
     def test_mode_name(self):
-        class Base(object): pass
+        class Base(object):
+            pass
 
         BaseMode, _ = generate_mode_base(Base, 'Mouse')
 
-        class User(BaseMode, Base): pass
+        class User(BaseMode, Base):
+            pass
 
         self.assertTrue(hasattr(User, 'setMouseMode'))
 
@@ -169,7 +171,8 @@ class TestSubclassing(unittest.TestCase):
         self.assertEqual(u.foo(), 7)
 
     def test_filtered_return_value(self):
-        class Base(object): pass
+        class Base(object):
+            pass
 
         BaseMode, mode_filtered = generate_mode_base(Base, '')
 
@@ -178,7 +181,8 @@ class TestSubclassing(unittest.TestCase):
             def foo(self):
                 return 1
 
-        class User(A, Base): pass
+        class User(A, Base):
+            pass
 
         # None
         u = User()
@@ -187,18 +191,20 @@ class TestSubclassing(unittest.TestCase):
         u.setMode(A)
         self.assertEqual(u.foo(), 1)
 
-
     def test_base_class_with_metaclass(self):
-        class BaseMeta(type): pass
+        class BaseMeta(type):
+            pass
 
         class Base(object, metaclass=BaseMeta):
             pass
 
         BaseMode, _ = generate_mode_base(Base, '')
 
-        class A(BaseMode): pass
+        class A(BaseMode):
+            pass
 
-        class User(A, Base): pass
+        class User(A, Base):
+            pass
 
         u = User()
         self.assertIsInstance(u, A)
@@ -208,7 +214,8 @@ class TestSubclassing(unittest.TestCase):
     def test_unfiltered_methods(self):
         calls = []
 
-        class Base(object): pass
+        class Base(object):
+            pass
 
         BaseMode, _ = generate_mode_base(Base, '')
 
@@ -216,7 +223,8 @@ class TestSubclassing(unittest.TestCase):
             def foo(self):
                 calls.append('A.foo')
 
-        class User(A, Base): pass
+        class User(A, Base):
+            pass
 
         u = User()
         u.setMode(None)
@@ -224,7 +232,8 @@ class TestSubclassing(unittest.TestCase):
         self.assertListEqual(calls, ['A.foo'])
 
     def test_attributes(self):
-        class Base(object): pass
+        class Base(object):
+            pass
 
         BaseMode, _ = generate_mode_base(Base, '')
 
@@ -235,7 +244,8 @@ class TestSubclassing(unittest.TestCase):
                 super(A, self).__init__(*args, **kargs)
                 self.inst_attr = 'test_inst'
 
-        class User(A, Base): pass
+        class User(A, Base):
+            pass
 
         u = User()
         u.setMode(None)
@@ -243,7 +253,8 @@ class TestSubclassing(unittest.TestCase):
         self.assertEqual(u.cls_attr, 'test_cls')
 
     def test_classmethods(self):
-        class Base(object): pass
+        class Base(object):
+            pass
 
         BaseMode, _ = generate_mode_base(Base, '')
 
@@ -252,7 +263,8 @@ class TestSubclassing(unittest.TestCase):
             def foo(cls):
                 return 1
 
-        class User(A, Base): pass
+        class User(A, Base):
+            pass
 
         u = User()
         u.setMode(None)
@@ -261,7 +273,8 @@ class TestSubclassing(unittest.TestCase):
     def test_mouse_mode_sub_classing(self):
         calls = []
 
-        class Base(object): pass
+        class Base(object):
+            pass
 
         BaseMode, mode_filtered = generate_mode_base(Base, '')
 
@@ -276,7 +289,8 @@ class TestSubclassing(unittest.TestCase):
                 super(AA, self).foo()
                 calls.append('AA.foo')
 
-        class User(AA, Base): pass
+        class User(AA, Base):
+            pass
 
         # None
         u = User()
@@ -293,7 +307,8 @@ class TestSubclassing(unittest.TestCase):
         self.assertListEqual(calls, ['A.foo'])
 
     def test_filter_multiple_methods(self):
-        class Base(object): pass
+        class Base(object):
+            pass
 
         BaseMode, mode_filtered = generate_mode_base(Base, '')
 
@@ -306,7 +321,8 @@ class TestSubclassing(unittest.TestCase):
             def bar(self):
                 return 'bar'
 
-        class User(A, Base): pass
+        class User(A, Base):
+            pass
 
         # A
         u = User()
@@ -333,7 +349,8 @@ class TestSubclassing(unittest.TestCase):
             def foo(self):
                 return super(Beta, self).foo() + 4
 
-        class UserMeta(type(Alpha), type(Beta)): pass
+        class UserMeta(type(Alpha), type(Beta)):
+            pass
 
         class User(Alpha, Beta, metaclass=UserMeta):
             def foo(self):
@@ -426,4 +443,3 @@ class TestSubclassing(unittest.TestCase):
         u.setLangMode(Latin)
         u.foo()
         self.assertListEqual(calls, ['Base.foo', 'Latin.foo', 'User.foo'])
-

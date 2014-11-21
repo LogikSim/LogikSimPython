@@ -112,13 +112,13 @@ class InsertingLineSubMode(InsertLineSubModeBase):
 
         # can only merge two trees if start == end
         if len(tree_start) > 1 or len(tree_end) > 1:
-            if (p_start == p_end):
+            if p_start == p_end:
                 # pick one, as they are the same
                 endpoint_trees = tree_start
             else:
                 return
         else:
-            if (p_start == p_end):
+            if p_start == p_end:
                 return
             endpoint_trees = [tree_start[0] if len(tree_start) > 0 else None,
                               tree_end[0] if len(tree_end) > 0 else None]

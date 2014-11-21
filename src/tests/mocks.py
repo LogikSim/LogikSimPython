@@ -53,4 +53,3 @@ class ModelIndexMock:
 
     def isValid(self):
         return self._valid
-

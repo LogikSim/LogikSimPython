@@ -18,7 +18,7 @@ class SettingsTest(unittest.TestCase):
     def setUp(self):
         self.app = QtCore.QCoreApplication.instance()
         if not self.app:
-            # FIXME: Want to use self.app = QtCore.QCoreApplication([]) but can't because tearDown can't really clean up the singleton
+            # FIXME: Want self.app = QtCore.QCoreApplication([]) but tearDown can't really clean up that singleton
             self.app = QtGui.QApplication([])
 
         self.settings_mock = SettingsMock()

@@ -57,4 +57,3 @@ class DelayedConnectorSpec(unittest.TestCase):
 #        self.assertListEqual([dc.int_value, dc.ext_value], [LV_1, LV_0])
 #        dc.on_calculate_next_state(0)
 #        self.assertListEqual([dc.int_value, dc.ext_value], [LV_1, LV_0])
-

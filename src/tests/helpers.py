@@ -11,7 +11,7 @@ Contains helper functions that are helpful for creating unit-tests.
 '''
 
 from PySide import QtGui, QtCore
-from PySide.QtTest import QTest
+
 
 class CallTrack:
     """
@@ -37,6 +37,7 @@ class CallTrack:
     def __call__(self):
         return self.calls
 
+
 def delayed_perform_on_modal(what, delay=50):
     """
     Meant to be used for interacting with modal dialogs during testing.
@@ -50,6 +51,7 @@ def delayed_perform_on_modal(what, delay=50):
     :return Created single shot timer
     """
     return QtCore.QTimer.singleShot(delay, lambda: perform_on_modal(what))
+
 
 def perform_on_modal(what):
     """

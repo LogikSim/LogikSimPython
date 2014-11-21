@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2014 The LogikSim Authors. All rights reserved.
-# Use of this source code is governed by the GNU GPL license that can 
+# Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
 '''
@@ -68,5 +68,3 @@ class LineTreeTest(unittest.TestCase):
                     13: {}}}
         n_tree = LineTree._reroot(tree, 1)
         self.assertEqual(n_tree, tree)
-        
-    

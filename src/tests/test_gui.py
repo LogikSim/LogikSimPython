@@ -7,7 +7,6 @@
 #
 
 import unittest
-import time
 
 from PySide import QtCore, QtGui
 from PySide.QtTest import QTest
@@ -94,11 +93,10 @@ class MainWindowTest(unittest.TestCase):
         """
         Tests the workflow of placing an item
         """
-        self.mw.history_dock_widget.hide() # Make sure the dockwidget is out of the way
+        self.mw.history_dock_widget.hide()  # Make sure the dockwidget is out of the way
 
         # Select insertion mode
-        QTest.keyClick(self.mw,
-                        QtCore.Qt.Key_F2)
+        QTest.keyClick(self.mw, QtCore.Qt.Key_F2)
 
         self.app.processEvents()
 
@@ -133,8 +131,7 @@ class MainWindowTest(unittest.TestCase):
         def check_open_and_dismiss(window):
             nonlocal called
             self.assertIsInstance(window, QtGui.QMessageBox)
-            QTest.keyClick(window,
-                           QtCore.Qt.Key_Escape)
+            QTest.keyClick(window, QtCore.Qt.Key_Escape)
             called = True
 
         delayed_perform_on_modal(check_open_and_dismiss)
@@ -172,8 +169,7 @@ class MainWindowTest(unittest.TestCase):
         def check_open_and_dismiss(window):
             nonlocal called
             self.assertIsInstance(window, QtGui.QMessageBox)
-            QTest.keyClick(window,
-                           QtCore.Qt.Key_Escape)
+            QTest.keyClick(window, QtCore.Qt.Key_Escape)
             called = True
 
         delayed_perform_on_modal(check_open_and_dismiss)

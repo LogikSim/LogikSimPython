@@ -9,7 +9,6 @@ import unittest
 
 from PySide import QtCore, QtGui
 
-from actions.action_stack import ActionStack
 from actions.action_stack_model import ActionStackModel
 from tests.helpers import CallTrack
 from tests.mocks import ModelIndexMock
@@ -71,7 +70,7 @@ class ActionStackModelTest(unittest.TestCase):
     def setUp(self):
         self.app = QtCore.QCoreApplication.instance()
         if not self.app:
-            # FIXME: Want to use self.app = QtCore.QCoreApplication([]) but can't because tearDown can't really clean up the singleton
+            # FIXME: Want self.app = QtCore.QCoreApplication([]) but tearDown can't really clean up that singleton
             self.app = QtGui.QApplication([])
 
         self.model = ActionStackModel("first")
@@ -116,7 +115,6 @@ class ActionStackModelTest(unittest.TestCase):
         """
         After a reset the model shouldn't have any lines and shouldn't be able to undo.
         """
-        my_action_stack = ActionStack()
         log = DoUndoLog()
         self.model.execute(*log.execute_args())
         self.model.reset("bernd")
