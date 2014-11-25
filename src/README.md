@@ -6,6 +6,7 @@ To run LogikSim from source run: ```main.py```
 The test suite can be executed with: ```python3 -m unittest``` on Unix
 and ```py -3 -m unittest``` on Windows.
 
+Run code audit with ```py -3 -m pylama.main``` on Windows.
 
 Dependencies
 ============
@@ -43,6 +44,14 @@ On Windows install with: ```py -3 -m pip install cx_Freeze```
 *(tested with version 4.3.3 from
 http://www.lfd.uci.edu/~gohlke/pythonlibs/#cx_freeze as 
 version on PyPI is broken)*
+
+#### pylama (optional) ####
+
+Python extension for code audit.
+
+On Windows install with ```py -3 -m pip install pylama```
+
+*(tested with version 6.1.1)*
 
 
 Installer
