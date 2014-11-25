@@ -76,7 +76,8 @@ def is_point_on_line(point, line):
 
 def distance(point_a, point_b):
     """ Euclidean distance between point A and B. """
-    return ((point_a[0] - point_b[0]) ** 2 + (point_a[1] - point_b[1]) ** 2) ** 0.5
+    return ((point_a[0] - point_b[0]) ** 2 +
+            (point_a[1] - point_b[1]) ** 2) ** 0.5
 
 
 class CollisionObject():

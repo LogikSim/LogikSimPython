@@ -37,7 +37,8 @@ class ActionStackModel(QtCore.QAbstractListModel):
         """
         Creates a new model to represent and ActionStack.
 
-        :param base_action: Text of the first virtual action always present in the model.
+        :param base_action: Text of the first virtual action always present in
+            the model.
         :param action_stack: Action stack used to back the model.
         :param parent: Parent QObject to set.
         """
@@ -51,10 +52,12 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
         self.base_action = base_action
 
-        # React to index changes on the action stack triggered by our actions. Has to be queued as
-        # we mustn't handle this immediately on when we might still be fiddling around with the model
-        # state. If we queue the signal we know it will be deferred until our functions complete.
-        self.action_stack.indexChanged.connect(self._stackIndexChanged, QtCore.Qt.QueuedConnection)
+        # React to index changes on the action stack triggered by our actions.
+        # Has to be queued as we mustn't handle this immediately on when we
+        # might still be fiddling around with the model state. If we queue
+        # the signal we know it will be deferred until our functions complete.
+        self.action_stack.indexChanged.connect(self._stackIndexChanged,
+                                               QtCore.Qt.QueuedConnection)
 
         self.action_stack.canUndoChanged.connect(self.canUndoChanged)
         self.action_stack.canRedoChanged.connect(self.canRedoChanged)
@@ -66,7 +69,8 @@ class ActionStackModel(QtCore.QAbstractListModel):
         """
         Resets the underlying action stack and the model to its initial state.
 
-        :param base_action: If given sets a new text for the first virtual action.
+        :param base_action: If given sets a new text for the first virtual
+            action.
         """
         self.beginResetModel()
 
@@ -104,12 +108,14 @@ class ActionStackModel(QtCore.QAbstractListModel):
         has_been_undone = stack_index >= self.action_stack.index()
 
         if role == QtCore.Qt.DisplayRole:
-            # Capitalize action text here so the view entries look like sentences.
-            # Wanted to use a QIdentityProxyModel for capitalization per view but PySide doesn't have it yet
-            # The other option would be to de-capitalize where needed (menu entries etc.)
+            # Capitalize action text here so the view entries look like
+            # sentences. Wanted to use a QIdentityProxyModel for capitalization
+            # per view but PySide doesn't have it yet. The other option would
+            # be to de-capitalize where needed (menu entries etc.)
             return action.actionText().capitalize()
         elif role == QtCore.Qt.ForegroundRole:
-            # FIXME: Should probably use system palette derived color, a delegate or a user defined role for this
+            # FIXME: Should probably use system palette derived color, a
+            #        delegate or a user defined role for this
             if has_been_undone:
                 return QtGui.QBrush(QtCore.Qt.lightGray)
             else:
@@ -130,10 +136,12 @@ class ActionStackModel(QtCore.QAbstractListModel):
     # with big parts of QUndoStack wrapper but there's not really a
     # cleaner way
 
-    def _create_undoredo_action(self, parent, prefix, initialText, initialCanDo, canDoChangedSignal, textChangedSignal,
-                                triggered):
+    def _create_undoredo_action(self, parent, prefix, initialText,
+                                initialCanDo, canDoChangedSignal,
+                                textChangedSignal, triggered):
         template = prefix + " {0}"
-        action = TemplateTextSlotAction(template, template.format(initialText), parent)
+        action = TemplateTextSlotAction(template, template.format(initialText),
+                                        parent)
         action.setEnabled(initialCanDo)
         canDoChangedSignal.connect(action.setEnabled)
         textChangedSignal.connect(action.on_text_changed)
@@ -143,7 +151,8 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
     def createUndoAction(self, parent=None, prefix=None):
         return self._create_undoredo_action(parent,
-                                            self.tr("Undo") if prefix is None else prefix,
+                                            (self.tr("Undo") if prefix is None
+                                             else prefix),
                                             self.undoText(),
                                             self.canUndo(),
                                             self.canUndoChanged,
@@ -154,7 +163,8 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
     def createRedoAction(self, parent=None, prefix=None):
         return self._create_undoredo_action(parent,
-                                            self.tr("Redo") if prefix is None else prefix,
+                                            (self.tr("Redo") if prefix is None
+                                             else prefix),
                                             self.redoText(),
                                             self.canRedo(),
                                             self.canRedoChanged,
@@ -182,12 +192,15 @@ class ActionStackModel(QtCore.QAbstractListModel):
         def model_push(self, *args, **kwargs):
             stack_insertion_index = self.action_stack.index()
 
-            will_drop_undone_actions = stack_insertion_index < self.action_stack.count()
+            will_drop_undone_actions = (stack_insertion_index <
+                                        self.action_stack.count())
 
             if will_drop_undone_actions:
                 stack_first_undone = self.action_stack.index()
                 stack_last_undone = self.action_stack.count() - 1
-                self.beginRemoveRows(QtCore.QModelIndex(), stack_first_undone + 1, stack_last_undone + 1)
+                self.beginRemoveRows(QtCore.QModelIndex(),
+                                     stack_first_undone + 1,
+                                     stack_last_undone + 1)
 
                 self.temporary_row_count_limit = stack_insertion_index + 1
 
@@ -196,7 +209,9 @@ class ActionStackModel(QtCore.QAbstractListModel):
             if will_drop_undone_actions:
                 self.endRemoveRows()
 
-            self.beginInsertRows(QtCore.QModelIndex(), stack_insertion_index + 1, stack_insertion_index + 1)
+            self.beginInsertRows(QtCore.QModelIndex(),
+                                 stack_insertion_index + 1,
+                                 stack_insertion_index + 1)
             self.temporary_row_count_limit = None
             self.endInsertRows()
 
@@ -223,9 +238,11 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
             last_command_model_index = self.index(self.action_stack.index())
             self.action_stack.undo()
-            new_last_command_model_index = self.index(self.action_stack.index())
+            new_last_command_model_index = self.index(
+                self.action_stack.index())
 
-            self.dataChanged.emit(new_last_command_model_index, last_command_model_index)
+            self.dataChanged.emit(new_last_command_model_index,
+                                  last_command_model_index)
 
     undo.__doc__ = ActionStack.undo.__doc__
 
@@ -234,11 +251,14 @@ class ActionStackModel(QtCore.QAbstractListModel):
         if self.action_stack.canRedo():
             self.aboutToRedo.emit()
 
-            last_undone_command_model_index = self.index(self.action_stack.index() + 1)
+            last_undone_command_model_index = self.index(
+                self.action_stack.index() + 1)
             self.action_stack.redo()
-            new_last_undone_command_model_index = self.index(self.action_stack.index() + 1)
+            new_last_undone_command_model_index = self.index(
+                self.action_stack.index() + 1)
 
-            self.dataChanged.emit(last_undone_command_model_index, new_last_undone_command_model_index)
+            self.dataChanged.emit(last_undone_command_model_index,
+                                  new_last_undone_command_model_index)
 
     redo.__doc__ = ActionStack.redo.__doc__
 
@@ -254,9 +274,9 @@ class ActionStackModel(QtCore.QAbstractListModel):
 
     def undoRedoToIndex(self, modelIndex):
         """
-        Given a model index attempts to undo or redo the stack to the given index
-        so that index is the last executed operation. Similar to QUndoStack::setIndex
-        but using model indexes and offset by + 1.
+        Given a model index attempts to undo or redo the stack to the given
+        index so that index is the last executed operation. Similar to
+        QUndoStack::setIndex but using model indexes and offset by + 1.
 
         :param modelIndex: QModelIndex to undo or redo to
         :return: True if the index could be reached.
@@ -280,7 +300,8 @@ class ActionStackModel(QtCore.QAbstractListModel):
         self.action_stack.setIndex(targetStackIndex)
         newIndex = self.action_stack.index()
 
-        (first, last) = (newIndex, currentIndex) if newIndex <= currentIndex else (currentIndex, newIndex)
+        (first, last) = ((newIndex, currentIndex) if newIndex <= currentIndex
+                         else (currentIndex, newIndex))
 
         self.dataChanged.emit(first, last)
 
@@ -295,7 +316,8 @@ class ActionStackModel(QtCore.QAbstractListModel):
         a model index change other parts of the application might want
         to react to.
         """
-        # As index always point to last done + 1 it maps one to one to our model rows.
+        # As index always point to last done + 1 it maps one to one to our
+        # model rows.
         self.currentModelIndexChanged.emit(self.index(index))
 
     @QtCore.Slot()

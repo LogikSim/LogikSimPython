@@ -127,22 +127,20 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         if endpoint_trees[0] is endpoint_trees[1] is not None:
             return
 
-        get_obj_at_point = GetHightowerObjectAtPoint(self.scene(),
-                                                     p_start, p_end,
-                                                     tree_start, tree_end,
-                                                     endpoint_trees,
-                                                     self._line_anchor_indicator)
+        get_obj_at_point = GetHightowerObjectAtPoint(
+            self.scene(), p_start, p_end, tree_start, tree_end, endpoint_trees,
+            self._line_anchor_indicator)
 
         # We only want to search for a limited amount of time
-        time_limited_get_obj_at_point = time_limited(get_obj_at_point, self._max_line_search_time)
+        time_limited_get_obj_at_point = time_limited(
+            get_obj_at_point, self._max_line_search_time)
 
         search_rect = ((r_left, r_top), (r_right, r_bottom))
 
         try:
-            res = hightower.hightower_line_search(p_start, p_end,
-                                                  time_limited_get_obj_at_point,
-                                                  search_rect,
-                                                  do_second_refinement=False)
+            res = hightower.hightower_line_search(
+                p_start, p_end, time_limited_get_obj_at_point,
+                search_rect, do_second_refinement=False)
         except TimeReached:
             res = None
 
@@ -269,16 +267,19 @@ class InsertingLineSubMode(InsertLineSubModeBase):
 
 class GetHightowerObjectAtPoint:
     """
-    Function object which returns which kind of hightower object can be found at the given point.
-    Meant to be used while inserting a line.
+    Function object which returns which kind of hightower object can be found
+    at the given point. Meant to be used while inserting a line.
     """
-    def __init__(self, scene, p_start, p_end, tree_start, tree_end, endpoint_trees, line_anchor_indicator):
+    def __init__(self, scene, p_start, p_end, tree_start, tree_end,
+                 endpoint_trees, line_anchor_indicator):
         """
         Creates a new callable function object.
 
         :param scene: Scene operation is taking place in
-        :param p_start: Starting point of the line segment being inserted in grid coordinates
-        :param p_end: Ending point of the line segment being inserted in grid coordinates
+        :param p_start: Starting point of the line segment being inserted in
+            grid coordinates
+        :param p_end: Ending point of the line segment being inserted in
+            grid coordinates
         :param tree_start: Line-trees at p_start location (if any)
         :param tree_end: Line-trees at p_end location (if any)
         :param endpoint_trees: Unique line-trees at p_start and p_end
@@ -304,14 +305,16 @@ class GetHightowerObjectAtPoint:
         :return: True if self line-edge we want to filter. False otherwise.
         """
         if item in self.tree_start and point != self.p_start:
-            start_to_point_line = QtCore.QLineF(self.scene.to_scene_point(self.p_start),
-                                                self.scene.to_scene_point(point))
+            start_to_point_line = QtCore.QLineF(
+                self.scene.to_scene_point(self.p_start),
+                self.scene.to_scene_point(point))
 
             return not self.tree_start[0].contains_line(start_to_point_line)
 
         if item in self.tree_end and point != self.p_end:
-            point_to_end_line = QtCore.QLineF(self.scene.to_scene_point(point),
-                                              self.scene.to_scene_point(self.p_end))
+            point_to_end_line = QtCore.QLineF(
+                self.scene.to_scene_point(point),
+                self.scene.to_scene_point(self.p_end))
 
             return not self.tree_end[0].contains_line(point_to_end_line)
 
@@ -334,7 +337,8 @@ class GetHightowerObjectAtPoint:
         for item in items:
             if item is self.line_anchor_indicator:
                 continue
-            elif isinstance(item, logicitems.ConnectorItem) and point in (self.p_start, self.p_end):
+            elif isinstance(item, logicitems.ConnectorItem) and \
+                    point in (self.p_start, self.p_end):
                 continue
             elif isinstance(item, logicitems.LineTree):
                 if item in self.endpoint_trees:

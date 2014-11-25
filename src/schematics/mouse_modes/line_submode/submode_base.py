@@ -51,8 +51,9 @@ class InsertLineSubModeBase(LineSubModeBase):
             path.addEllipse(pos, radius, radius)
             items = self.items(path)
             if filter_func is not None:
-                return list(filter(functools.partial(filter_func,
-                                                     path=self.mapToScene(path)), items))
+                return list(filter(
+                    functools.partial(filter_func,
+                                      path=self.mapToScene(path)), items))
             else:
                 return items
 
@@ -95,12 +96,12 @@ class InsertLineSubModeBase(LineSubModeBase):
         r_min, r_max = sorted((self._mouse_collision_line_radius,
                                self._mouse_collision_connector_radius))
         # first try to find item on smaller radius
-        item = self.find_nearest_item_at_pos(pos, r_min,
-                                             functools.partial(anchor_filter, radius=r_min))
+        item = self.find_nearest_item_at_pos(
+            pos, r_min, functools.partial(anchor_filter, radius=r_min))
         # if nothing found, try to find item on larger radius
         if item is None:
-            item = self.find_nearest_item_at_pos(pos, r_max,
-                                                 functools.partial(anchor_filter, radius=r_max))
+            item = self.find_nearest_item_at_pos(
+                pos, r_max, functools.partial(anchor_filter, radius=r_max))
         # find nearest point on line (in scene coordinates)
         if isinstance(item, logicitems.LineTree):
             scene_pos = self.mapToScene(pos)
@@ -118,7 +119,8 @@ class InsertLineSubModeBase(LineSubModeBase):
         else:
             scale = self.getScale()
             size = max(1 / scale * 10, 70)
-            rect = QtCore.QRectF(pos.x() - size / 2, pos.y() - size / 2, size, size)
+            rect = QtCore.QRectF(pos.x() - size / 2, pos.y() - size / 2,
+                                 size, size)
             pen_width = max(1 / scale, 8)
             if self._line_anchor_indicator is None:
                 # create new
@@ -143,5 +145,6 @@ class InsertLineSubModeBase(LineSubModeBase):
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
 
-        self._mouse_move_anchor = self.find_line_anchor_at_view_pos(event.pos())
+        self._mouse_move_anchor = \
+            self.find_line_anchor_at_view_pos(event.pos())
         self.setLineAnchorIndicator(self._mouse_move_anchor)

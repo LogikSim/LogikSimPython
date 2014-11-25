@@ -165,7 +165,7 @@ class GridScene(QtGui.QGraphicsScene):
         # the right mouse button
         #
         # original implementation has something like:
-        # if qobject_cast<QGraphicsView *>(mouseEvent->widget()->parentWidget())
+        # if qobject_cast<QGraphicsView*>(mouseEvent->widget()->parentWidget())
         #    view = mouseEvent->widget()
         #    dontClearSelection = view && view->dragMode() ==
         #         QGraphicsView::ScrollHandDrag

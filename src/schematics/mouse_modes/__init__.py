@@ -14,4 +14,5 @@ from .insert_item import InsertItemMode
 from .insert_line import InsertLineMode
 from .select_items import SelectItemsMode
 
-__all__ = ('InsertConnectorMode', 'InsertItemMode', 'InsertLineMode', 'SelectItemsMode')
+__all__ = ('InsertConnectorMode', 'InsertItemMode', 'InsertLineMode',
+           'SelectItemsMode')

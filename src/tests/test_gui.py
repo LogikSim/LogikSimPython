@@ -42,14 +42,16 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_view.menuAction()).center())
+            pos=self.mw.menu_bar.actionGeometry(
+                self.mw.menu_view.menuAction()).center())
         self.assertTrue(self.mw.menu_view.isVisible())
 
         # Toggle visibility action to hide it
         QTest.mouseClick(
             self.mw.menu_view,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_view.actionGeometry(self.mw.toggle_history_dock_widget_view_qaction).center())
+            pos=self.mw.menu_view.actionGeometry(
+                self.mw.toggle_history_dock_widget_view_qaction).center())
 
         self.assertFalse(self.mw.history_dock_widget.isVisible())
 
@@ -57,14 +59,16 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_view.menuAction()).center())
+            pos=self.mw.menu_bar.actionGeometry(
+                self.mw.menu_view.menuAction()).center())
         self.assertTrue(self.mw.menu_view.isVisible())
 
         # Toggle visibility action to show it again
         QTest.mouseClick(
             self.mw.menu_view,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_view.actionGeometry(self.mw.toggle_history_dock_widget_view_qaction).center())
+            pos=self.mw.menu_view.actionGeometry(
+                self.mw.toggle_history_dock_widget_view_qaction).center())
 
         self.assertTrue(self.mw.history_dock_widget.isVisible())
 
@@ -77,7 +81,8 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_file.menuAction()).center())
+            pos=self.mw.menu_bar.actionGeometry(
+                self.mw.menu_file.menuAction()).center())
         self.assertTrue(self.mw.menu_file.isVisible())
 
         # Click exit
@@ -93,7 +98,8 @@ class MainWindowTest(unittest.TestCase):
         """
         Tests the workflow of placing an item
         """
-        self.mw.history_dock_widget.hide()  # Make sure the dockwidget is out of the way
+        # Make sure the dockwidget is out of the way
+        self.mw.history_dock_widget.hide()
 
         # Select insertion mode
         QTest.keyClick(self.mw, QtCore.Qt.Key_F2)
@@ -109,23 +115,27 @@ class MainWindowTest(unittest.TestCase):
         self.app.processEvents()
 
         self.assertEqual(1, len(self.mw._view.scene().items()))
-        self.assertIsInstance(self.mw._view.scene().items()[0], logicitems.LogicItem)
+        self.assertIsInstance(self.mw._view.scene().items()[0],
+                              logicitems.LogicItem)
 
     def test_about_box(self):
         """
         Tests whether the about dialog opens correctly via the menu
         """
-        self.mw.history_dock_widget.hide()  # Make sure the dock widget is out of the way
+        # Make sure the dock widget is out of the way
+        self.mw.history_dock_widget.hide()
 
         # Open file menu
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_help.menuAction()).center())
+            pos=self.mw.menu_bar.actionGeometry(
+                self.mw.menu_help.menuAction()).center())
 
         self.assertTrue(self.mw.menu_help.isVisible())
 
-        # As the modal about dialog will block in it's event queue, queue the check itself.
+        # As the modal about dialog will block in it's event queue,
+        # queue the check itself.
         called = False
 
         def check_open_and_dismiss(window):
@@ -140,7 +150,8 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_help,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_help.actionGeometry(self.mw.action_about).center())
+            pos=self.mw.menu_help.actionGeometry(
+                self.mw.action_about).center())
 
         #
         # Modal event queue running here until dialog is dismissed
@@ -153,17 +164,20 @@ class MainWindowTest(unittest.TestCase):
         """
         Tests whether the about Qt dialog opens correctly via the menu
         """
-        self.mw.history_dock_widget.hide()  # Make sure the dock widget is out of the way
+        # Make sure the dock widget is out of the way
+        self.mw.history_dock_widget.hide()
 
         # Open file menu
         QTest.mouseClick(
             self.mw.menu_bar,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_bar.actionGeometry(self.mw.menu_help.menuAction()).center())
+            pos=self.mw.menu_bar.actionGeometry(
+                self.mw.menu_help.menuAction()).center())
 
         self.assertTrue(self.mw.menu_help.isVisible())
 
-        # As the modal about dialog will block in it's event queue, queue the check itself.
+        # As the modal about dialog will block in it's event queue,
+        # queue the check itself.
         called = False
 
         def check_open_and_dismiss(window):
@@ -178,7 +192,8 @@ class MainWindowTest(unittest.TestCase):
         QTest.mouseClick(
             self.mw.menu_help,
             QtCore.Qt.LeftButton,
-            pos=self.mw.menu_help.actionGeometry(self.mw.action_about_qt).center())
+            pos=self.mw.menu_help.actionGeometry(
+                self.mw.action_about_qt).center())
 
         #
         # Modal event queue running here until dialog is dismissed

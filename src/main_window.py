@@ -12,7 +12,7 @@ Define the main window of the LogikSim GUI.
 from PySide import QtGui, QtCore
 
 # import item_list_widget
-import schematics
+import schematics.mouse_modes
 from ui_main_window import Ui_MainWindow
 from settings import settings
 
@@ -23,7 +23,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
 
-        # FIXME: Only a test setup, replace it by proper circuit instance handling
+        # FIXME: Only a test setup, replace it by proper circuit
+        #        instance handling
         self._view = schematics.EditSchematicView(self)
         self.tab_widget.addTab(self._view, self.tr("New circuit"))
         self.tab_widget.tabBar().hide()  # For now we only have one so hide
@@ -32,16 +33,21 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.tool_actions = QtGui.QActionGroup(self)
         self.tool_actions.triggered.connect(self._on_tool_action_triggered)
 
-        self.tool_selection = self.tool_actions.addAction(QtGui.QIcon(":/resources/connection.png"),
-                                                          self.tr("Selection (F1)"))
+        self.tool_selection = self.tool_actions.addAction(
+            QtGui.QIcon(":/resources/connection.png"),
+            self.tr("Selection (F1)"))
         self.tool_selection.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F1))
-        self.tool_logic = self.tool_actions.addAction(QtGui.QIcon(":/resources/and.png"),
-                                                      self.tr("Insert Logic Items (F2)"))
+        self.tool_logic = self.tool_actions.addAction(
+            QtGui.QIcon(":/resources/and.png"),
+            self.tr("Insert Logic Items (F2)"))
         self.tool_logic.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F2))
-        self.tool_connector = self.tool_actions.addAction(QtGui.QIcon(":/resources/or.png"),
-                                                          self.tr("Insert Connectors (F3)"))
+        self.tool_connector = self.tool_actions.addAction(
+            QtGui.QIcon(":/resources/or.png"),
+            self.tr("Insert Connectors (F3)"))
         self.tool_connector.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F3))
-        self.tool_lines = self.tool_actions.addAction(QtGui.QIcon(":/resources/xor.png"), self.tr("Insert Lines (F4)"))
+        self.tool_lines = self.tool_actions.addAction(
+            QtGui.QIcon(":/resources/xor.png"),
+            self.tr("Insert Lines (F4)"))
         self.tool_lines.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F4))
 
         for action in self.tool_actions.actions():
@@ -57,7 +63,9 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.action_stack_view.setModel(actions)
 
         # Prepend undo/redo QActions to menu_edit
-        first_menu_edit_qaction = self.menu_edit.actions()[0] if len(self.menu_edit.actions()) > 0 else None
+        first_menu_edit_qaction = (
+            self.menu_edit.actions()[0]
+            if len(self.menu_edit.actions()) > 0 else None)
 
         undo_qaction = actions.createUndoAction(self)
         undo_qaction.setShortcut(QtGui.QKeySequence.Undo)
@@ -68,7 +76,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.menu_edit.insertAction(first_menu_edit_qaction, redo_qaction)
 
         # Add toggle view actions for dockwidgets
-        self.toggle_history_dock_widget_view_qaction = self.history_dock_widget.toggleViewAction()
+        self.toggle_history_dock_widget_view_qaction = \
+            self.history_dock_widget.toggleViewAction()
         self.menu_view.addAction(self.toggle_history_dock_widget_view_qaction)
 
         s = settings()
@@ -88,12 +97,15 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
     @QtCore.Slot()
     def on_action_about_triggered(self):
         content = self.tr(
-            "<p>A logic simulator that makes it easy and fun to explore and design digital circuits "
-            "starting from simple AND gates, up to complex computing systems as we use them today.</b></p>"
+            "<p>A logic simulator that makes it easy and fun to explore and "
+            "design digital circuits starting from simple AND gates, up to "
+            "complex computing systems as we use them today.</b></p>"
             "<p>Copyright (C) 2011-2014 The LogikSim Authors</p>"
-            "<p>Distribution of this application and its source is governed by the GNU GPLv3 license that can "
-            "be found in the LICENSE.txt file.</p>"
-            "<p>For more information visit <a href=\"http://www.logiksim.org\">www.logiksim.org</a></p>")
+            "<p>Distribution of this application and its source is governed "
+            "by the GNU GPLv3 license that can be found in the LICENSE.txt "
+            "file.</p><p>For more information visit "
+            "<a href=\"http://www.logiksim.org\">"
+            "www.logiksim.org</a></p>")
 
         QtGui.QMessageBox.about(self,
                                 self.tr("About LogikSim"),

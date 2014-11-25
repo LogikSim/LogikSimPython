@@ -20,7 +20,8 @@ class ActionStack(QtGui.QUndoStack):
 
     def executed(self, redo, undo, description):
         """
-        Creates an already performed Action from parameters and puts it onto the action stack.
+        Creates an already performed Action from parameters and puts it onto
+        the action stack.
 
         :param redo: Function called to redo the action if undone
         :param undo: Function called to undo the action

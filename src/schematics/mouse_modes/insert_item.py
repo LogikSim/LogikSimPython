@@ -60,7 +60,8 @@ class InsertItemMode(GridViewMouseModeBase):
         super().mouseReleaseEvent(event)
 
         # left button
-        if event.button() is QtCore.Qt.LeftButton and self._inserted_item is not None:
+        if event.button() is QtCore.Qt.LeftButton and \
+                self._inserted_item is not None:
             # Add undo/redo action
             scene = self.scene()
             gpos = self._inserted_item.pos()

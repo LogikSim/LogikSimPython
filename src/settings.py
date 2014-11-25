@@ -30,22 +30,27 @@ def Setting(settings_type, name, doc=None):
         variable_name = "_" + name
         signal_name = name + "_changed"
         setattr(cls, signal_name, QtCore.Signal())
-        setattr(cls, name, QtCore.Property(type=settings_type,
-                                           fget=lambda self: getattr(self, variable_name),
-                                           fset=lambda self, value: (
-                                               setattr(self, variable_name, value), getattr(self, signal_name).emit())))
-        # notify = getattr(cls, signal_name), #FIXME: Doesn't seem to work. Manually emit in setter for now (PYSIDE-261)
-        # doc = doc)) #FIXME: If I set a docstring here the application crashes on shutdown (PYSIDE-135)
+        setattr(cls, name, QtCore.Property(
+            type=settings_type,
+            fget=lambda self: getattr(self, variable_name),
+            fset=lambda self, value: (setattr(self, variable_name, value),
+                                      getattr(self, signal_name).emit())))
+        # notify = getattr(cls, signal_name), #FIXME: Doesn't seem to work.
+        # Manually emit in setter for now (PYSIDE-261) doc = doc)) #FIXME:
+        # If I set a docstring here the application crashes on
+        # shutdown (PYSIDE-135)
 
         cls._settings_list.append((name, settings_type))
+        # FIXME: For some reason this won't chain properly
         cls.__doc__ += "    {0:10s} {1:15s} {2}\n".format(name, str(type),
-                                                          doc)  # FIXME: For some reason this won't chain properly
+                                                          doc)
         return cls
 
     return decorator
 
 
-@Setting(QtCore.QByteArray, "main_window_geometry", "Stores main window geometry")
+@Setting(QtCore.QByteArray, "main_window_geometry",
+         "Stores main window geometry")
 @Setting(QtCore.QByteArray, "main_window_state", "Stores main window state")
 class Settings(QtCore.QObject):
     """
@@ -62,7 +67,8 @@ class Settings(QtCore.QObject):
     def __init__(self, settings=None, parent=None):
         super().__init__(parent)
 
-        self._settings = QtCore.QSettings(self) if settings is None else settings
+        self._settings = (QtCore.QSettings(self)
+                          if settings is None else settings)
         self._raise_on_error("initializing settings")
 
         # Set default values, we initialize those explicitly here so
@@ -82,9 +88,11 @@ class Settings(QtCore.QObject):
 
         what = self._settings.status()
         if self._settings.status() is QtCore.QSettings.AccessError:
-            what = "An access error occurred (e.g. trying to write to a read-only file)"
+            what = ("An access error occurred (e.g. trying to write to a "
+                    "read-only file)")
         elif self._settings.status() is QtCore.QSettings.FormatError:
-            what = "A format error occurred (e.g. loading a malformed INI file)."
+            what = ("A format error occurred (e.g. loading a malformed "
+                    "INI file).")
 
         raise Exception("{1} when {0}".format(action, what))
 
@@ -96,7 +104,8 @@ class Settings(QtCore.QObject):
         self._raise_on_error("loading settings")
 
         for (name, settingsType) in self._settings_list:
-            setattr(self, name, self._settings.value(name, getattr(self, name)))
+            setattr(self, name, self._settings.value(name,
+                                                     getattr(self, name)))
             self._raise_on_error("loading {0} setting".format(name))
 
     def save(self):

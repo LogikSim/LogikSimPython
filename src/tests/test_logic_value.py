@@ -23,9 +23,11 @@ class ParserTest(unittest.TestCase):
         self.assertListEqual([LV_0, LV_1, LV_X], list(map(LogicValue, '01X')))
 
     def test_str_representations(self):
-        self.assertListEqual(list(map(str, [LV_0, LV_1, LV_X])), list('01X'))
+        self.assertListEqual(list(map(str, [LV_0, LV_1, LV_X])),
+                             list('01X'))
         self.assertListEqual(list(map(repr, [LV_0, LV_1, LV_X])),
-                             ["LogicValue('0')", "LogicValue('1')", "LogicValue('X')"])
+                             ["LogicValue('0')", "LogicValue('1')",
+                              "LogicValue('X')"])
 
     def test_constructor(self):
         self.assertRaises(ValueError, LogicValue, 'b')
@@ -37,13 +39,17 @@ class ParserTest(unittest.TestCase):
     def test_eq(self):
         """ == """
         self.assertListEqual(list(map(operator.eq,
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [True] * 3)
 
         self.assertListEqual(list(map(operator.eq,
-                                      [LogicValue('0'), LogicValue('0'), LogicValue('1')],
-                                      [LogicValue('1'), LogicValue('X'), LogicValue('X')])),
+                                      [LogicValue('0'), LogicValue('0'),
+                                       LogicValue('1')],
+                                      [LogicValue('1'), LogicValue('X'),
+                                       LogicValue('X')])),
                              [False] * 3)
 
         self.assertFalse(LogicValue('0') == '0')
@@ -51,13 +57,17 @@ class ParserTest(unittest.TestCase):
     def test_neq(self):
         """ != """
         self.assertListEqual(list(map(operator.ne,
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [False] * 3)
 
         self.assertListEqual(list(map(operator.ne,
-                                      [LogicValue('0'), LogicValue('0'), LogicValue('1')],
-                                      [LogicValue('1'), LogicValue('X'), LogicValue('X')])),
+                                      [LogicValue('0'), LogicValue('0'),
+                                       LogicValue('1')],
+                                      [LogicValue('1'), LogicValue('X'),
+                                       LogicValue('X')])),
                              [True] * 3)
 
         self.assertTrue(LogicValue('0') != '0')
@@ -65,23 +75,30 @@ class ParserTest(unittest.TestCase):
     def test_hash(self):
         self.assertSetEqual({LV_0, LV_1, LV_X},
                             {LogicValue('0'), LogicValue('1'), LogicValue('X'),
-                             LogicValue('0'), LogicValue('1'), LogicValue('X')})
+                             LogicValue('0'), LogicValue('1'),
+                             LogicValue('X')})
 
     def test_and(self):
         """ & """
         self.assertListEqual(list(map(operator.and_,
-                                      [LogicValue('0'), LogicValue('0'), LogicValue('0')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('0'), LogicValue('0'),
+                                       LogicValue('0')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_0, LV_0, LV_0])
 
         self.assertListEqual(list(map(operator.and_,
-                                      [LogicValue('1'), LogicValue('1'), LogicValue('1')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('1'), LogicValue('1'),
+                                       LogicValue('1')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_0, LV_1, LV_X])
 
         self.assertListEqual(list(map(operator.and_,
-                                      [LogicValue('X'), LogicValue('X'), LogicValue('X')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('X'), LogicValue('X'),
+                                       LogicValue('X')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_0, LV_X, LV_X])
 
         lv1, lv2 = LogicValue('0'), LogicValue('1')
@@ -98,18 +115,24 @@ class ParserTest(unittest.TestCase):
     def test_or(self):
         """ | """
         self.assertListEqual(list(map(operator.or_,
-                                      [LogicValue('0'), LogicValue('0'), LogicValue('0')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('0'), LogicValue('0'),
+                                       LogicValue('0')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_0, LV_1, LV_X])
 
         self.assertListEqual(list(map(operator.or_,
-                                      [LogicValue('1'), LogicValue('1'), LogicValue('1')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('1'), LogicValue('1'),
+                                       LogicValue('1')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_1, LV_1, LV_1])
 
         self.assertListEqual(list(map(operator.or_,
-                                      [LogicValue('X'), LogicValue('X'), LogicValue('X')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('X'), LogicValue('X'),
+                                       LogicValue('X')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_X, LV_1, LV_X])
 
         lv1, lv2 = LogicValue('0'), LogicValue('1')
@@ -119,18 +142,24 @@ class ParserTest(unittest.TestCase):
     def test_xor(self):
         """ ^ """
         self.assertListEqual(list(map(operator.xor,
-                                      [LogicValue('0'), LogicValue('0'), LogicValue('0')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('0'), LogicValue('0'),
+                                       LogicValue('0')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_0, LV_1, LV_X])
 
         self.assertListEqual(list(map(operator.xor,
-                                      [LogicValue('1'), LogicValue('1'), LogicValue('1')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('1'), LogicValue('1'),
+                                       LogicValue('1')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_1, LV_0, LV_X])
 
         self.assertListEqual(list(map(operator.xor,
-                                      [LogicValue('X'), LogicValue('X'), LogicValue('X')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('X'), LogicValue('X'),
+                                       LogicValue('X')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_X, LV_X, LV_X])
 
         lv1, lv2 = LogicValue('0'), LogicValue('1')
@@ -140,18 +169,24 @@ class ParserTest(unittest.TestCase):
     def test_add(self):
         """ + """
         self.assertListEqual(list(map(operator.add,
-                                      [LogicValue('0'), LogicValue('0'), LogicValue('0')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('0'), LogicValue('0'),
+                                       LogicValue('0')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_0, LV_X, LV_X])
 
         self.assertListEqual(list(map(operator.add,
-                                      [LogicValue('1'), LogicValue('1'), LogicValue('1')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('1'), LogicValue('1'),
+                                       LogicValue('1')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_X, LV_1, LV_X])
 
         self.assertListEqual(list(map(operator.add,
-                                      [LogicValue('X'), LogicValue('X'), LogicValue('X')],
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('X'), LogicValue('X'),
+                                       LogicValue('X')],
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_X, LV_X, LV_X])
 
         lv1, lv2 = LogicValue('0'), LogicValue('1')
@@ -161,7 +196,8 @@ class ParserTest(unittest.TestCase):
     def test_invert(self):
         """ ~ """
         self.assertListEqual(list(map(operator.inv,
-                                      [LogicValue('0'), LogicValue('1'), LogicValue('X')])),
+                                      [LogicValue('0'), LogicValue('1'),
+                                       LogicValue('X')])),
                              [LV_1, LV_0, LV_X])
 
         lv1 = LogicValue('0')
@@ -210,9 +246,12 @@ class ParserTest(unittest.TestCase):
             value = LogicValue('X')
 
         # class level
-        self.assertListEqual([getattr(o, 'value') for o in [Test_0, Test_1, Test_X]], [LV_0, LV_1, LV_X])
+        self.assertListEqual([getattr(o, 'value') for o in
+                              [Test_0, Test_1, Test_X]], [LV_0, LV_1, LV_X])
         # instance level
-        self.assertListEqual([getattr(o, 'value') for o in [Test_0(), Test_1(), Test_X()]], [LV_0, LV_1, LV_X])
+        self.assertListEqual([getattr(o, 'value') for o in
+                              [Test_0(), Test_1(), Test_X()]],
+                             [LV_0, LV_1, LV_X])
 
     def test_descriptor_instance_level_set(self):
         class Test(object):

@@ -33,7 +33,8 @@ class DoUndoLog:
         """
         Returns a real or virtual do/undo log for use in validation.
 
-        :param s: If none returns the do/undo log. Otherwise creates one from the given string.
+        :param s: If none returns the do/undo log. Otherwise creates one from
+            the given string.
         :param what: If s is given determines the what used in log creation
         :return: Virtual or real do/undo log depending on parameters.
         """
@@ -70,7 +71,8 @@ class ActionStackModelTest(unittest.TestCase):
     def setUp(self):
         self.app = QtCore.QCoreApplication.instance()
         if not self.app:
-            # FIXME: Want self.app = QtCore.QCoreApplication([]) but tearDown can't really clean up that singleton
+            # FIXME: Want self.app = QtCore.QCoreApplication([]) but tearDown
+            #        can't really clean up that singleton
             self.app = QtGui.QApplication([])
 
         self.model = ActionStackModel("first")
@@ -108,23 +110,29 @@ class ActionStackModelTest(unittest.TestCase):
         Check we have the virtual first row with correct contents
         """
         self.assertEqual(1, self.model.rowCount())
-        self.assertEqual(0, self.model.rowCount(self.model.index(0, 0)))  # Make sure we don't signal unexpected rows
-        self.assertEqual("First", self.model.data(self.model.index(0, 0)))  # note the capital f
+        # Make sure we don't signal unexpected rows
+        self.assertEqual(0, self.model.rowCount(self.model.index(0, 0)))
+        # note the capital f
+        self.assertEqual("First", self.model.data(self.model.index(0, 0)))
 
     def test_reset_model(self):
         """
-        After a reset the model shouldn't have any lines and shouldn't be able to undo.
+        After a reset the model shouldn't have any lines and shouldn't be able
+        to undo.
         """
         log = DoUndoLog()
         self.model.execute(*log.execute_args())
         self.model.reset("bernd")
         self.assertEqual(log("+"), log())  # Mustn't be undone
-        self.assertEqual(1, self.model.rowCount())  # Other actions must be gone
-        self.assertEqual("Bernd", self.model.data(self.model.index(0, 0)))  # New base_action text should be applied
+        # Other actions must be gone
+        self.assertEqual(1, self.model.rowCount())
+        # New base_action text should be applied
+        self.assertEqual("Bernd", self.model.data(self.model.index(0, 0)))
 
     def test_undo_redo(self):
         """
-        Checks if redo and undo works as expected and triggers the right signals.
+        Checks if redo and undo works as expected and triggers the right
+        signals.
         """
         log = DoUndoLog()
         self.model.execute(*log.execute_args())
@@ -168,11 +176,13 @@ class ActionStackModelTest(unittest.TestCase):
         self.assertFalse(self.model.isClean())
         self.assertEqual([False, True, False], clean_log())
 
-        # If we save the model we will manually declare it clean, check that behaves correctly
+        # If we save the model we will manually declare it clean, check that
+        # behaves correctly
         self.model.setClean()
         self.assertTrue(self.model.isClean())
         self.assertEqual([False, True, False, True], clean_log())
-        self.assertTrue(self.model.canUndo())  # This shouldn't affect the content of the stack
+        # This shouldn't affect the content of the stack
+        self.assertTrue(self.model.canUndo())
 
     def test_undo_redo_actions(self):
         """
@@ -238,10 +248,16 @@ class ActionStackModelTest(unittest.TestCase):
         """
 
         # Test header data usual and error cases
-        self.assertEqual("Action", self.model.headerData(0, QtCore.Qt.Horizontal))  # Base case
-        self.assertIsNone(self.model.headerData(1, QtCore.Qt.Horizontal))  # Invalid section
-        self.assertIsNone(self.model.headerData(0, QtCore.Qt.Vertical))  # Invalid orientation
-        self.assertIsNone(self.model.headerData(0, QtCore.Qt.Horizontal, QtCore.Qt.UserRole))  # Invalid role
+        # Base case
+        self.assertEqual("Action", self.model.headerData(0,
+                                                         QtCore.Qt.Horizontal))
+        # Invalid section
+        self.assertIsNone(self.model.headerData(1, QtCore.Qt.Horizontal))
+        # Invalid orientation
+        self.assertIsNone(self.model.headerData(0, QtCore.Qt.Vertical))
+        # Invalid role
+        self.assertIsNone(self.model.headerData(0, QtCore.Qt.Horizontal,
+                                                QtCore.Qt.UserRole))
 
         # Test data function in usual and error cases
         log = DoUndoLog()
@@ -260,22 +276,34 @@ class ActionStackModelTest(unittest.TestCase):
         self.assertEqual("Bar", self.model.data(self.model.index(4, 0)))
         self.assertIsNone(self.model.data(ModelIndexMock(5, 0)))  # OOB
         self.assertIsNone(self.model.data(ModelIndexMock(0, 1)))  # OOB
-        self.assertIsNone(self.model.data(ModelIndexMock(0, 0, False)))  # Invalid
+        # Invalid
+        self.assertIsNone(self.model.data(ModelIndexMock(0, 0, False)))
 
         # Data foreground role (used for undo indication)
         undone = QtGui.QBrush(QtCore.Qt.lightGray)
-        self.assertIsNone(self.model.data(self.model.index(0, 0), QtCore.Qt.ForegroundRole))
-        self.assertIsNone(self.model.data(self.model.index(1, 0), QtCore.Qt.ForegroundRole))
-        self.assertIsNone(self.model.data(self.model.index(2, 0), QtCore.Qt.ForegroundRole))
-        self.assertEqual(undone, self.model.data(self.model.index(3, 0), QtCore.Qt.ForegroundRole))
-        self.assertEqual(undone, self.model.data(self.model.index(4, 0), QtCore.Qt.ForegroundRole))
-        self.assertIsNone(self.model.data(ModelIndexMock(5, 0), QtCore.Qt.ForegroundRole))  # OOB
-        self.assertIsNone(self.model.data(ModelIndexMock(0, 1), QtCore.Qt.ForegroundRole))  # OOB
-        self.assertIsNone(self.model.data(ModelIndexMock(0, 0, False), QtCore.Qt.ForegroundRole))  # Invalid
+        self.assertIsNone(self.model.data(self.model.index(0, 0),
+                                          QtCore.Qt.ForegroundRole))
+        self.assertIsNone(self.model.data(self.model.index(1, 0),
+                                          QtCore.Qt.ForegroundRole))
+        self.assertIsNone(self.model.data(self.model.index(2, 0),
+                                          QtCore.Qt.ForegroundRole))
+        self.assertEqual(undone, self.model.data(self.model.index(3, 0),
+                                                 QtCore.Qt.ForegroundRole))
+        self.assertEqual(undone, self.model.data(self.model.index(4, 0),
+                                                 QtCore.Qt.ForegroundRole))
+        self.assertIsNone(self.model.data(ModelIndexMock(5, 0),
+                                          QtCore.Qt.ForegroundRole))  # OOB
+        self.assertIsNone(self.model.data(ModelIndexMock(0, 1),
+                                          QtCore.Qt.ForegroundRole))  # OOB
+        self.assertIsNone(self.model.data(ModelIndexMock(0, 0, False),
+                                          QtCore.Qt.ForegroundRole))  # Invalid
 
         # Other roles and invalid inputs should return None
-        self.assertIsNone(self.model.data(self.model.index(0, 0), QtCore.Qt.UserRole))  # First row is special cased
-        self.assertIsNone(self.model.data(self.model.index(1, 0), QtCore.Qt.UserRole))
+        # First row is special cased
+        self.assertIsNone(self.model.data(self.model.index(0, 0),
+                                          QtCore.Qt.UserRole))
+        self.assertIsNone(self.model.data(self.model.index(1, 0),
+                                          QtCore.Qt.UserRole))
 
     def test_undo_redo_to_index(self):
         """
@@ -293,7 +321,7 @@ class ActionStackModelTest(unittest.TestCase):
         # Undo all
         idx = self.model.index(0, 0)
         self.assertTrue(self.model.undoRedoToIndex(idx))
-        self.app.processEvents()  # currentModelIndexChanged is queued. Process.
+        self.app.processEvents()  # currentModelIndexChanged is queued. Process
         self.assertEqual(log("++++----"), log())
         self.assertEqual(idx, index_changes()[-1])
 
@@ -311,19 +339,25 @@ class ActionStackModelTest(unittest.TestCase):
         self.assertEqual(log("++++----++++"), log())
         self.assertEqual(idx, index_changes()[-1])
 
-        self.assertTrue(self.model.undoRedoToIndex(idx))  # Shouldn't do anything
+        # Shouldn't do anything
+        self.assertTrue(self.model.undoRedoToIndex(idx))
         self.assertEqual(log("++++----++++"), log())
         self.assertEqual(idx, index_changes()[-1])
 
         # Check failure conditions
-        self.assertFalse(self.model.undoRedoToIndex(ModelIndexMock(0, 0, False)))
-        self.assertFalse(self.model.undoRedoToIndex(ModelIndexMock(0, 1, True)))
-        self.assertFalse(self.model.undoRedoToIndex(ModelIndexMock(5, 0, True)))
-        self.assertFalse(self.model.undoRedoToIndex(ModelIndexMock(-1, 0, True)))
+        self.assertFalse(self.model.undoRedoToIndex(ModelIndexMock(0, 0,
+                                                                   False)))
+        self.assertFalse(self.model.undoRedoToIndex(ModelIndexMock(0, 1,
+                                                                   True)))
+        self.assertFalse(self.model.undoRedoToIndex(ModelIndexMock(5, 0,
+                                                                   True)))
+        self.assertFalse(self.model.undoRedoToIndex(ModelIndexMock(-1, 0,
+                                                                   True)))
 
     def test_redo_undo_signals(self):
         """
-        There are various signals associated with undoing and redoing actions which are tested here.
+        There are various signals associated with undoing and redoing actions
+        which are tested here.
         """
         can_redo_changed = CallTrack()
         redo_text_changed = CallTrack()
@@ -344,8 +378,9 @@ class ActionStackModelTest(unittest.TestCase):
         def about_to_undo_slot():
             nonlocal about_to_undo_log_length
             # As the aboutTo* slots should be called before the actual action
-            # we persist the length of our undo/redo log. If this functions were
-            # called beforehand they should have the length before the undo/redo.
+            # we persist the length of our undo/redo log. If this functions
+            # were called beforehand they should have the length before the
+            # undo/redo.
             about_to_undo_log_length = len(log())
 
         about_to_redo_log_length = -1

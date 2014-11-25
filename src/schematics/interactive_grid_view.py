@@ -48,10 +48,10 @@ class InteractiveGridView(grid_view.GridView):
            event.modifiers() != QtCore.Qt.NoModifier:
 
             # scroll
-            fake_evt = QtGui.QWheelEvent(event.pos(),
-                                         event.globalPos(), event.delta(), event.buttons(),
-                                         event.modifiers() & ~(QtCore.Qt.ControlModifier),
-                                         event.orientation())
+            fake_evt = QtGui.QWheelEvent(
+                event.pos(), event.globalPos(), event.delta(), event.buttons(),
+                event.modifiers() & ~(QtCore.Qt.ControlModifier),
+                event.orientation())
             QtGui.QAbstractScrollArea.wheelEvent(self, fake_evt)
         else:
             # scale
@@ -63,7 +63,8 @@ class InteractiveGridView(grid_view.GridView):
         # generate mouse move event
         # workaround to update AnchorUnderMouse
         move_event = QtGui.QMouseEvent(QtCore.QEvent.MouseMove, event.pos(),
-                                       event.globalPos(), QtCore.Qt.NoButton, event.buttons(),
+                                       event.globalPos(), QtCore.Qt.NoButton,
+                                       event.buttons(),
                                        event.modifiers())
         self.mouseMoveEvent(move_event)
 
@@ -106,7 +107,8 @@ class InteractiveGridView(grid_view.GridView):
             top_left = QtCore.QPointF(self.horizontalScrollBar().value(),
                                       self.verticalScrollBar().value())
             desired_slider_pos = top_left - delta * self.getScale()
-            self.horizontalScrollBar().setSliderPosition(desired_slider_pos.x())
+            self.horizontalScrollBar().setSliderPosition(
+                desired_slider_pos.x())
             self.verticalScrollBar().setSliderPosition(desired_slider_pos.y())
 
     def mouseReleaseEvent(self, event):

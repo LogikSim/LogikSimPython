@@ -10,8 +10,9 @@ from PySide import QtGui
 
 class Action(QtGui.QUndoCommand):
     """
-    Small wrapper around QtGui.QUndoCommand which takes lambdas for redo and undo.
-    Also sets given description as doc string for the class for easier debugging.
+    Small wrapper around QtGui.QUndoCommand which takes lambdas for redo and
+    undo. Also sets given description as doc string for the class for easier
+    debugging.
     """
 
     def __init__(self, redo, undo, description=None):

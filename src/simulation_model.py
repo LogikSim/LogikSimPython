@@ -422,8 +422,8 @@ class JsonMeta(type):
 
         raises Exceptions when validation failed.
 
-        Checks if all keys are present in data and if the specified type matches.
-        Use the following translation to specify json types:
+        Checks if all keys are present in data and if the specified type
+        matches.Use the following translation to specify json types:
 
         JSON          Python
         ----------------------------
@@ -476,12 +476,13 @@ class JsonMeta(type):
                             break
                     if not valid:
                         raise TypeError("Item has wrong type, expected "
-                                        "'%s' but got '%s'." % (spec, type(item)))
+                                        "'%s' but got '%s'." %
+                                        (spec, type(item)))
             elif isinstance(spec, tuple):
                 assert len(spec) > 0
                 if len(spec) != len(data):
-                    raise ValueError("Invalid data length, expected '%s' but got "
-                                     "'%s'." % (len(spec), len(data)))
+                    raise ValueError("Invalid data length, expected '%s' "
+                                     "but got '%s'." % (len(spec), len(data)))
                 for sub_spec, item in zip(spec, data):
                     cls.validate_data_from_spec(sub_spec, item)
 
@@ -588,7 +589,8 @@ class Interconnect(JsonObject):
     @classmethod
     def validate_data(cls, data):
         super(Interconnect, cls).validate_data(data)
-        cls.validate_data_from_spec({'pos': ((float, float), (float, float))}, data)
+        cls.validate_data_from_spec({'pos': ((float, float), (float, float))},
+                                    data)
 
 
 class SignalConnection(JsonObject):
@@ -624,7 +626,8 @@ class BaseIC(JsonObject):
         super(BaseIC, cls).validate_data(data)
         cls.validate_data_from_spec({'id': str,  # TODO: check hex form
                                      'author': str,
-                                     'date': str,  # TODO: check format '%Y-%m-%dT%H:%M:%SZ'
+                                     # TODO: check format '%Y-%m-%dT%H:%M:%SZ'
+                                     'date': str,
                                      'description': str,
                                      'symbol': Symbol}, data)
 
@@ -645,7 +648,8 @@ class ComputationIC(BaseIC):
     @classmethod
     def validate_data(cls, data):
         super(ComputationIC, cls).validate_data(data)
-        cls.validate_data_from_spec({'connectors': [InputConnector, OutputConnector],
+        cls.validate_data_from_spec({'connectors': [InputConnector,
+                                                    OutputConnector],
                                      'code': str}, data)
 
 

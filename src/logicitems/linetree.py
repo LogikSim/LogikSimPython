@@ -235,8 +235,10 @@ class LineTree(QtGui.QGraphicsItem):
             return QtCore.QPointF(line.p1().x(), constrain_to_range(
                 grid_point.y(), line.p1().y(), line.p2().y()))
         elif vline.y() == 0:  # horizontal
-            return QtCore.QPointF(constrain_to_range(grid_point.x(),
-                                                     line.p1().x(), line.p2().x()), line.p1().y())
+            return QtCore.QPointF(
+                constrain_to_range(grid_point.x(),
+                                   line.p1().x(), line.p2().x()),
+                line.p1().y())
         else:  # somehow tilted
             raise Exception("Found tilted line")
 
@@ -245,8 +247,9 @@ class LineTree(QtGui.QGraphicsItem):
         p_nearest = None
         for line in self._lines:
             p = self._get_nearest_point_of_line(scene_point, line)
-            if p_nearest is None or ((scene_point - p).manhattanLength() <
-                                     (scene_point - p_nearest).manhattanLength()):
+            if p_nearest is None or \
+                    ((scene_point - p).manhattanLength() <
+                     (scene_point - p_nearest).manhattanLength()):
                 p_nearest = p
         return p_nearest
 

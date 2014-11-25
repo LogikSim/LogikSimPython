@@ -71,7 +71,8 @@ class GenerateCommand(Command):
         if not self.no_uic:
             print("Running uic...")
             for (root, source_file) in self.recursive_search("*.ui"):
-                target_file = "ui_{0}.py".format(os.path.splitext(source_file)[0])
+                target_file = "ui_{0}.py".format(
+                    os.path.splitext(source_file)[0])
                 print("  " + os.path.join(root, source_file))
                 call(["pyside-uic", source_file, "-o", target_file], cwd=root)
             print("Done")
@@ -79,21 +80,25 @@ class GenerateCommand(Command):
         if not self.no_rcc:
             print("Running rcc...")
             for (root, source_file) in self.recursive_search("*.qrc"):
-                target_file = "{0}_rc.py".format(os.path.splitext(source_file)[0])
+                target_file = "{0}_rc.py".format(
+                    os.path.splitext(source_file)[0])
                 print("  " + os.path.join(root, source_file))
-                call(["pyside-rcc", "-py3", source_file, "-o", target_file], cwd=root)
+                call(["pyside-rcc", "-py3", source_file, "-o", target_file],
+                     cwd=root)
             print("Done")
 
 
 setup(
     name="LogikSim",
     version="0.0.1",
-    description="A logic simulator that makes it easy to understand digital circuits",
+    description="A logic simulator that makes it easy to understand digital "
+                "circuits",
     options={"build_exe": {"compressed": True,
                            "includes": ["PySide.QtXml"],
                            "include_files": ["../LICENSE.txt",
                                              "../AUTHORS.txt"]},
-             "bdist_msi": {"upgrade_code": "{4EC6F5B7-4C87-47D4-9AA4-6EA26F10B321}",
+             "bdist_msi": {"upgrade_code":
+                           "{4EC6F5B7-4C87-47D4-9AA4-6EA26F10B321}",
                            "add_to_path": False}},
     cmdclass={"generate": GenerateCommand},
     executables=[exe]

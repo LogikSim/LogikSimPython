@@ -17,13 +17,15 @@ class TimeReached(Exception):
 
 def time_limited(fun, lifetime):
     """
-    Decorator checking a time limit condition before calling the given function.
-    Throws TimeReached exception after lifetime seconds. Note that this doesn't limit
-    the actual execution time of fun but instead is meant to be used to wrap
-    repeatedly called functions handed as callbacks to e.g. algorithms.
+    Decorator checking a time limit condition before calling the given
+    function. Throws TimeReached exception after lifetime seconds. Note that
+    this doesn't limit the actual execution time of fun but instead is meant
+    to be used to wrap repeatedly called functions handed as callbacks to
+    e.g. algorithms.
 
     :param fun: Function to decorate
-    :param lifetime: Number of seconds after which calls to this function should throw.
+    :param lifetime: Number of seconds after which calls to this function
+        should throw.
     :return: decorated fun
     """
     max_time = time.time() + lifetime
