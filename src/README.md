@@ -6,7 +6,7 @@ To run LogikSim from source run: ```main.py```
 The test suite can be executed with: ```python3 -m unittest``` on Unix
 and ```py -3 -m unittest``` on Windows.
 
-Run code audit with ```py -3 -m pylama.main``` on Windows.
+Run code audit with ```py -3 -m pylama.main``` in parent directory on Windows.
 
 Dependencies
 ============
@@ -49,7 +49,7 @@ version on PyPI is broken)*
 
 Python extension for code audit.
 
-On Windows install with ```py -3 -m pip install pylama```
+On Windows install with: ```py -3 -m pip install pylama```
 
 *(tested with version 6.1.1)*
 
