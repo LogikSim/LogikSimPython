@@ -53,13 +53,20 @@ class LogicItem(ItemBase):
                 self._last_position = self.pos()
                 return self.scene().roundToGrid(value)
             elif change == QtGui.QGraphicsItem.ItemPositionHasChanged:
-                if not self._is_current_position_valid():
+                if self._is_current_position_valid():
+                    if self.isSelected():
+                        self.scene().selectedItemPosChanged.emit()
+                else:
                     self.setPos(self._last_position)
+                
             #
             # only selectable when allowed by scene
             elif change == QtGui.QGraphicsItem.ItemSelectedChange:
                 return value and self.scene().selectionAllowed()
-            
+            #
+            # only movable when selected
+            elif change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
+                self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, value)
         if change in (QtGui.QGraphicsItem.ItemChildAddedChange,
                       QtGui.QGraphicsItem.ItemChildRemovedChange):
             self._invalidate_bounding_rect()
@@ -67,8 +74,7 @@ class LogicItem(ItemBase):
 
     def boundingRect(self):
         if not self._bounding_rect_valid:
-            self._bounding_rect = self.ownBoundingRect().united(
-                self.childrenBoundingRect())
+            self._bounding_rect = self.ownBoundingRect()
             self._bounding_rect_valid = True
         return self._bounding_rect
 

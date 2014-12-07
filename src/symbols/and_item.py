@@ -58,10 +58,3 @@ class AndItem(logicitems.LogicItem):
         painter.setBrush(QtGui.QColor(255, 255, 128))
         painter.setPen(QtCore.Qt.black)
         painter.drawRect(self._body_rect)
-    
-    def hoverMoveEvent(self, event):
-        self.unsetCursor()
-        super().hoverMoveEvent(event)
-        if self.isSelected() and \
-                QtCore.QRectF(0, 0, 100, 100).contains(event.pos()):
-            self.setCursor(QtCore.Qt.SizeVerCursor)

@@ -16,6 +16,9 @@ import logicitems
 
 
 class GridScene(QtGui.QGraphicsScene):
+    # signals position change of any selected item
+    selectedItemPosChanged = QtCore.Signal()
+    
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
         # draw grid?
@@ -33,6 +36,8 @@ class GridScene(QtGui.QGraphicsScene):
         self._selection_item = logicitems.SelectionItem()
         self.addItem(self._selection_item)
         self.selectionChanged.connect(self._selection_item.onSelectionChanged)
+        self.selectedItemPosChanged.connect(
+            self._selection_item.onSelectedItemPosChanged)
 
     def setGridEnabled(self, value):
         assert isinstance(value, bool)

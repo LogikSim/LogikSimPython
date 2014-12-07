@@ -28,13 +28,18 @@ class SelectionItem(ItemBase):
         self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemSendsGeometryChanges)
         
+        self.setAcceptHoverEvents(True)
+        
+        self.setCursor(QtCore.Qt.SizeAllCursor)
+        
     def _update_state(self):
         self.prepareGeometryChange()
         sel_items = self.scene().selectedItems()
         # get bounding rect
         self._rect = QtCore.QRectF(0, 0, 0, 0)
         for item in sel_items:
-            scene_poly = item.mapToScene(item.boundingRect())
+            item_rect = item.boundingRect().united(item.childrenBoundingRect())
+            scene_poly = item.mapToScene(item_rect)
             self._rect = self._rect.united(scene_poly.boundingRect())
         # store initial positions
         self._initial_positions = {item: item.pos() for item in sel_items}
@@ -52,13 +57,17 @@ class SelectionItem(ItemBase):
     def boundingRect(self):
         return self._rect
     
+    def hoverMoveEvent(self, event):
+        self.setCursor(QtCore.Qt.SizeAllCursor)
+        super().hoverMoveEvent(event)
+    
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        self.setCursor(QtCore.Qt.SizeAllCursor)
+    
     def itemChange(self, change, value):
         if self.scene() is not None:
-            #
-            # round position to grid point
-            if change == QtGui.QGraphicsItem.ItemPositionChange:
-                return value #self.scene().roundToGrid(value)
-            elif change == QtGui.QGraphicsItem.ItemPositionHasChanged:
+            if change == QtGui.QGraphicsItem.ItemPositionHasChanged:
                 self._move_to(value)
         return super().itemChange(change, value)
 
@@ -69,12 +78,14 @@ class SelectionItem(ItemBase):
         # item selection box
         rect = self.boundingRect()
         painter.setBrush(QtCore.Qt.NoBrush)
-        #painter.setPen(QtCore.Qt.white)
-        #painter.drawRect(rect)
         painter.setPen(QtGui.QPen(self._selection_color, 0,
                                   QtCore.Qt.DashLine))
         painter.drawRect(rect)
     
     @QtCore.Slot()
     def onSelectionChanged(self):
+        self._update_state()
+    
+    @QtCore.Slot()
+    def onSelectedItemPosChanged(self):
         self._update_state()
