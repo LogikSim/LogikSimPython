@@ -58,7 +58,7 @@ class LogicItem(ItemBase):
                         self.scene().selectedItemPosChanged.emit()
                 else:
                     self.setPos(self._last_position)
-                
+            
             #
             # only selectable when allowed by scene
             elif change == QtGui.QGraphicsItem.ItemSelectedChange:

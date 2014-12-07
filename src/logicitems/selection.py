@@ -31,16 +31,25 @@ class SelectionItem(ItemBase):
         self.setAcceptHoverEvents(True)
         
         self.setCursor(QtCore.Qt.SizeAllCursor)
+    
+    def _get_item_rect(self, item):
+        """
+        Get bounding rect of graphics item
+        """
+        return item.boundingRect().united(item.childrenBoundingRect())
         
     def _update_state(self):
         self.prepareGeometryChange()
         sel_items = self.scene().selectedItems()
-        # get bounding rect
+        # get combined bounding rect
         self._rect = QtCore.QRectF(0, 0, 0, 0)
         for item in sel_items:
-            item_rect = item.boundingRect().united(item.childrenBoundingRect())
+            item_rect = self._get_item_rect(item)
             scene_poly = item.mapToScene(item_rect)
             self._rect = self._rect.united(scene_poly.boundingRect())
+        if len(sel_items) > 1:
+            offset = self.scene().get_grid_spacing() / 2
+            self._rect.adjust(-offset, -offset, offset, offset)
         # store initial positions
         self._initial_positions = {item: item.pos() for item in sel_items}
         # set position
@@ -75,12 +84,18 @@ class SelectionItem(ItemBase):
         """
         When overwriting this function, call this partent at the end.
         """
-        # item selection box
-        rect = self.boundingRect()
         painter.setBrush(QtCore.Qt.NoBrush)
         painter.setPen(QtGui.QPen(self._selection_color, 0,
                                   QtCore.Qt.DashLine))
-        painter.drawRect(rect)
+        # detailed selection
+        sel_items = self.scene().selectedItems()
+        if len(sel_items) > 1:
+            for item in sel_items:
+                poly = self.mapFromItem(item, self._get_item_rect(item))
+                painter.drawRect(poly.boundingRect())
+        
+        # combined selection box
+        painter.drawRect(self.boundingRect())
     
     @QtCore.Slot()
     def onSelectionChanged(self):
