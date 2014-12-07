@@ -35,8 +35,8 @@ from PySide import QtGui
 
 
 class TestRect(QtGui.QGraphicsRectItem, QtGui.QGraphicsLayoutItem):
-    # def __init__(self, *args, **kargs):
-    # QtGui.QGraphicsRectItem.__init__(self, *args, **kargs)
+    #def __init__(self, *args, **kargs):
+    #    QtGui.QGraphicsRectItem.__init__(self, *args, **kargs)
     #    QtGui.QGraphicsLayoutItem.__init__(self, *args, **kargs)
 
     def setGeometry(self, rect):

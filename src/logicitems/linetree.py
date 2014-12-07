@@ -13,8 +13,10 @@ import copy
 
 from PySide import QtGui, QtCore
 
+from .itembase import ItemBase
 
-class LineTree(QtGui.QGraphicsItem):
+
+class LineTree(ItemBase):
     """ A tree of connected lines """
 
     _debug_painting = False
@@ -29,7 +31,7 @@ class LineTree(QtGui.QGraphicsItem):
         have one output driving it and arbitrarily many inputs or free ends.
         Unconnected line trees can be driven by mouse interaction.
         """
-        QtGui.QGraphicsItem.__init__(self)
+        super().__init__()
 
         # defines tree as dict of dict, with key being a tuple (x,y) and
         # value being a dict of children or empty dict. Since there is only
@@ -82,12 +84,6 @@ class LineTree(QtGui.QGraphicsItem):
 
         # update shape
         self._update_shape()
-
-    def _line_to_rect(self, line):
-        """ converts QLineF to its collision area """
-        radius = 25  # TODO: derive from: self.scene().get_grid_spacing() / 4
-        return QtCore.QRectF(line.p1(), line.p2()). \
-            normalized().adjusted(-radius, -radius, radius, radius)
 
     def _update_shape(self):
         """

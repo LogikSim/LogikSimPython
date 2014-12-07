@@ -338,6 +338,7 @@ class GetHightowerObjectAtPoint:
             if item is self.line_anchor_indicator:
                 continue
             elif isinstance(item, logicitems.ConnectorItem) and \
+                    item.anchorPoint() == scene_point and \
                     point in (self.p_start, self.p_end):
                 continue
             elif isinstance(item, logicitems.LineTree):

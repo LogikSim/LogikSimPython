@@ -11,10 +11,12 @@ Logic items are all items a logic behavior based on inputs and outputs.
 
 from PySide import QtGui, QtCore
 
+from .itembase import ItemBase
 
-class LogicItem(QtGui.QGraphicsItem):
+
+class LogicItem(ItemBase):
     def __init__(self, *args, **kargs):
-        QtGui.QGraphicsItem.__init__(self, *args, **kargs)
+        super().__init__(*args, **kargs)
         # self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
         self.setFlag(QtGui.QGraphicsItem.ItemSendsGeometryChanges)
