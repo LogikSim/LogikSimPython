@@ -32,16 +32,17 @@ class SelectionItem(ItemBase):
         self.prepareGeometryChange()
         sel_items = self.scene().selectedItems()
         # get bounding rect
-        if len(sel_items) == 0:
-            self._rect = QtCore.QRectF(0, 0, 0, 0)
-        elif len(sel_items) == 1:
-            self.setPos(sel_items[0].pos())
-            self._rect = sel_items[0].boundingRect()
-        else:
-            pass
+        self._rect = QtCore.QRectF(0, 0, 0, 0)
+        for item in sel_items:
+            scene_poly = item.mapToScene(item.boundingRect())
+            self._rect = self._rect.united(scene_poly.boundingRect())
         # store initial positions
         self._initial_positions = {item: item.pos() for item in sel_items}
-        self._start_position = self.pos()
+        # set position
+        pos = self._rect.topLeft()
+        self._start_position = pos
+        self._rect.translate(-pos)
+        self.setPos(pos)
     
     def _move_to(self, pos):
         for item, init_pos in self._initial_positions.items():
