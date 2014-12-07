@@ -20,6 +20,8 @@ class AndItem(logicitems.LogicItem):
         super().__init__()
         self._input_count = input_count
         
+        self.setAcceptHoverEvents(True)
+        
         # internal state
         self._body_rect = None
     
@@ -53,9 +55,13 @@ class AndItem(logicitems.LogicItem):
         return self._body_rect
     
     def paint(self, painter, options, widget):
-        # lod = options.levelOfDetailFromTransform(painter.worldTransform())
         painter.setBrush(QtGui.QColor(255, 255, 128))
         painter.setPen(QtCore.Qt.black)
         painter.drawRect(self._body_rect)
-        # call parent
-        super().paint(painter, options, widget)
+    
+    def hoverMoveEvent(self, event):
+        self.unsetCursor()
+        super().hoverMoveEvent(event)
+        if self.isSelected() and \
+                QtCore.QRectF(0, 0, 100, 100).contains(event.pos()):
+            self.setCursor(QtCore.Qt.SizeVerCursor)

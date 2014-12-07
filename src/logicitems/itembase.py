@@ -18,6 +18,6 @@ class ItemBase(QtGui.QGraphicsItem):
     
     def _line_to_rect(self, line):
         """ converts QLineF to its collision area """
-        radius = 25  # TODO: derive from: self.scene().get_grid_spacing() / 4
-        return QtCore.QRectF(line.p1(), line.p2()). \
-            normalized().adjusted(-radius, -radius, radius, radius)
+        radius = 10**-3  # TODO: derive from: self.scene().get_grid_spacing() / 4
+        rect = QtCore.QRectF(line.p1(), line.p2()).normalized()
+        return rect.normalized().adjusted(-radius, -radius, radius, radius)

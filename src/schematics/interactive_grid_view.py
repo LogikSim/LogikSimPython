@@ -120,7 +120,5 @@ class InteractiveGridView(grid_view.GridView):
             self._mouse_mid_last_pos = None
             self.unsetCursor()
 
-            # @timeit
-
     def paintEvent(self, *args, **kargs):
         super().paintEvent(*args, **kargs)

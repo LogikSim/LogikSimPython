@@ -59,10 +59,7 @@ class LogicItem(ItemBase):
             # only selectable when allowed by scene
             elif change == QtGui.QGraphicsItem.ItemSelectedChange:
                 return value and self.scene().selectionAllowed()
-            #
-            # only movable when selected
-            elif change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
-                self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, value)
+            
         if change in (QtGui.QGraphicsItem.ItemChildAddedChange,
                       QtGui.QGraphicsItem.ItemChildRemovedChange):
             self._invalidate_bounding_rect()
@@ -70,24 +67,10 @@ class LogicItem(ItemBase):
 
     def boundingRect(self):
         if not self._bounding_rect_valid:
-            self._bounding_rect = self.ownBoundingRect().adjusted(-25, -25, 25, 25)
-            #self._bounding_rect = self.ownBoundingRect().united(
-            #    self.childrenBoundingRect()).adjusted(-25, -25, 25, 25)
+            self._bounding_rect = self.ownBoundingRect().united(
+                self.childrenBoundingRect())
             self._bounding_rect_valid = True
         return self._bounding_rect
-
-    def paint(self, painter, options, widget):
-        """
-        When overwriting this function, call this partent at the end.
-        """
-        # item selection box
-        if options.state & QtGui.QStyle.State_Selected:
-            painter.setBrush(QtCore.Qt.NoBrush)
-            painter.setPen(QtCore.Qt.white)
-            painter.drawRect(self.boundingRect())
-            painter.setPen(QtGui.QPen(QtGui.QColor(40, 125, 210), 0,
-                                      QtCore.Qt.DashLine))
-            painter.drawRect(self.boundingRect())
 
     def mouseReleaseEvent(self, event):
         """

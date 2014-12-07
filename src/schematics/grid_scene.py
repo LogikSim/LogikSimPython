@@ -12,6 +12,7 @@ Defines scene that contain all the parts of the schematics.
 from PySide import QtGui, QtCore
 
 from actions.action_stack_model import ActionStackModel
+import logicitems
 
 
 class GridScene(QtGui.QGraphicsScene):
@@ -27,6 +28,11 @@ class GridScene(QtGui.QGraphicsScene):
         # default values for new scene
         height = 100 * 1000  # golden ratio
         self.setSceneRect(0, 0, height * (1 + 5 ** 0.5) / 2, height)
+        
+        # setup selection item
+        self._selection_item = logicitems.SelectionItem()
+        self.addItem(self._selection_item)
+        self.selectionChanged.connect(self._selection_item.onSelectionChanged)
 
     def setGridEnabled(self, value):
         assert isinstance(value, bool)

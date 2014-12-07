@@ -10,5 +10,6 @@ from .anchor import LineAnchorIndicator
 from .connector import ConnectorItem
 from .linetree import LineTree
 from .logicitem import LogicItem
+from .selection import SelectionItem
 
 __all__ = ('LineAnchorIndicator', 'ConnectorItem', 'LineTree', 'LogicItem')
