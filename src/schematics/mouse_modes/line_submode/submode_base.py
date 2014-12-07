@@ -89,7 +89,7 @@ class InsertLineSubModeBase(LineSubModeBase):
             elif radius <= self._mouse_collision_connector_radius and \
                     isinstance(item, logicitems.ConnectorItem) and \
                     item is not self._inserted_connector:
-                return path.contains(item.mapToScene(item.anchorPoint()))
+                return path.contains(item.anchorPoint())
 
         if y is not None:
             pos = QtCore.QPoint(pos, y)
@@ -108,7 +108,7 @@ class InsertLineSubModeBase(LineSubModeBase):
             return item.get_nearest_point(scene_pos)
         # return anchor point for connectors
         if isinstance(item, logicitems.ConnectorItem):
-            return item.mapToScene(item.anchorPoint())
+            return item.anchorPoint()
 
     def setLineAnchorIndicator(self, pos):
         """ pos - scene pos or None """

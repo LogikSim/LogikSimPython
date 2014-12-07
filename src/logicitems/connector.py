@@ -15,11 +15,11 @@ from .itembase import ItemBase
 
 
 class ConnectorItem(ItemBase):
-    def __init__(self, start, anchor):
+    def __init__(self, parent, start, anchor):
         """
         anchor is the position, at which lines can connect to
         """
-        super().__init__()
+        super().__init__(parent)
         
         self._line = QtCore.QLineF(start, anchor)
         
@@ -42,7 +42,7 @@ class ConnectorItem(ItemBase):
         """
         returns position where lines can connect to
         """
-        return self._line.p2()
+        return self.mapToScene(self._line.p2())
 
     def setLine(self, start, anchor):
         self._invalidate_bounding_rect()

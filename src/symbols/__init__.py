@@ -9,6 +9,7 @@
 Auto discovery of symbols, as they might be user defined.
 '''
 
+# TODO: fix dynamic importing
 # dynamic importing of symbols is currently not working with installer,
 # that's why we do it manually until we need the flexibility
 # import symbols.rect
@@ -21,3 +22,7 @@ def load_all_symbols():
     #        os.path.isfile(os.path.join(dirname, file))}
     # for module in modules:
     #    __import__(__name__ + "."+module, globals(), locals())
+
+# until it works we load it manually
+
+from .and_item import AndItem

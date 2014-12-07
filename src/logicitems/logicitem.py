@@ -15,6 +15,11 @@ from .itembase import ItemBase
 
 
 class LogicItem(ItemBase):
+    """
+    Defines logic item base class.
+    
+    All children must implement the methods: ownBoundingRect, paint
+    """
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
         # self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
@@ -24,19 +29,21 @@ class LogicItem(ItemBase):
         # contains last valid position for self.itemChange(...)
         self._last_position = None
         # stores bounding rect
+        self._bounding_rect_valid = False
         self._bounding_rect = None
 
-        self._update_bounding_rect()
-
-    def _update_bounding_rect(self):
+    def _invalidate_bounding_rect(self):
         self.prepareGeometryChange()
-        self._bounding_rect = self.ownBoundingRect().united(
-            self.childrenBoundingRect()).adjusted(-25, -25, 25, 25)
+        self._bounding_rect_valid = False
 
     def _is_current_position_valid(self):
         origin = self.mapToScene(QtCore.QPointF(0, 0))
         bound_rect = self.boundingRect().translated(origin)
         return self.scene().sceneRect().contains(bound_rect)
+
+    def ownBoundingRect(self):
+        """ bounding rect of LogicItem without considering childs """
+        raise NotImplementedError
 
     def itemChange(self, change, value):
         if self.scene() is not None:
@@ -58,21 +65,21 @@ class LogicItem(ItemBase):
                 self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, value)
         if change in (QtGui.QGraphicsItem.ItemChildAddedChange,
                       QtGui.QGraphicsItem.ItemChildRemovedChange):
-            self._update_bounding_rect()
-        return QtGui.QGraphicsItem.itemChange(self, change, value)
-
-    def ownBoundingRect(self):
-        """ bounding rect of LogicItem without considering childs """
-        return QtCore.QRectF(0, 0, 300, 600)
+            self._invalidate_bounding_rect()
+        return super().itemChange(change, value)
 
     def boundingRect(self):
+        if not self._bounding_rect_valid:
+            self._bounding_rect = self.ownBoundingRect().adjusted(-25, -25, 25, 25)
+            #self._bounding_rect = self.ownBoundingRect().united(
+            #    self.childrenBoundingRect()).adjusted(-25, -25, 25, 25)
+            self._bounding_rect_valid = True
         return self._bounding_rect
 
     def paint(self, painter, options, widget):
-        # lod = options.levelOfDetailFromTransform(painter.worldTransform())
-        painter.setBrush(QtCore.Qt.white)
-        painter.setPen(QtCore.Qt.black)
-        painter.drawRect(0, 0, 300, 600)
+        """
+        When overwriting this function, call this partent at the end.
+        """
         # item selection box
         if options.state & QtGui.QStyle.State_Selected:
             painter.setBrush(QtCore.Qt.NoBrush)

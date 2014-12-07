@@ -12,14 +12,14 @@ Defines functionality when inserting logic items.
 from PySide import QtCore
 
 from .modes_base import GridViewMouseModeBase, mouse_mode_filtered
-import logicitems
+import symbols
 
 
 class InsertItemMode(GridViewMouseModeBase):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
         # class used to insert new items
-        self._insert_item_class = logicitems.LogicItem
+        self._insert_item_class = symbols.AndItem
         # reference to currently inserted item (used to move it
         # while the mouse button is still pressed)
         self._inserted_item = None
