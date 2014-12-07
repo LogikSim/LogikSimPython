@@ -16,7 +16,7 @@ import logicitems
 
 
 class GridScene(QtGui.QGraphicsScene):
-    # signals position change of any selected item
+    # signals position or shape change of any selected item
     selectedItemPosChanged = QtCore.Signal()
     
     def __init__(self, *args, **kargs):

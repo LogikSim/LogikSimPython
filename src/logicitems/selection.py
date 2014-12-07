@@ -15,8 +15,6 @@ from .itembase import ItemBase
 
 
 class SelectionItem(ItemBase):
-    _selection_color = QtGui.QColor(40, 125, 210)
-    
     def __init__(self):
         super().__init__()
         
@@ -35,24 +33,21 @@ class SelectionItem(ItemBase):
         self._update_state_timer.timeout.connect(self._do_update_state)
         self._update_state_timer.setSingleShot(True)
     
-    def _get_item_rect(self, item):
-        """
-        Get bounding rect of graphics item
-        """
-        return item.boundingRect().united(item.childrenBoundingRect())
-    
     def _invalidate_state(self):
         self._update_state_timer.start()
     
     def _do_update_state(self):
-        print("update_state")
+        """
+        Updates all internal state.
+        
+        Call _invalidate_state instead of calling this method directly.
+        """
         self.prepareGeometryChange()
         sel_items = self.scene().selectedItems()
         # get combined bounding rect
         self._rect = QtCore.QRectF(0, 0, 0, 0)
         for item in sel_items:
-            item_rect = self._get_item_rect(item)
-            scene_poly = item.mapToScene(item_rect)
+            scene_poly = item.mapToScene(item.selectionRect())
             self._rect = self._rect.united(scene_poly.boundingRect())
         if len(sel_items) > 1:
             offset = self.scene().get_grid_spacing() / 2
@@ -92,13 +87,13 @@ class SelectionItem(ItemBase):
         When overwriting this function, call this partent at the end.
         """
         painter.setBrush(QtCore.Qt.NoBrush)
-        painter.setPen(QtGui.QPen(self._selection_color, 0,
+        painter.setPen(QtGui.QPen(self._selection_color_line, 0,
                                   QtCore.Qt.DashLine))
         # detailed selection
         sel_items = self.scene().selectedItems()
         if len(sel_items) > 1:
             for item in sel_items:
-                poly = self.mapFromItem(item, self._get_item_rect(item))
+                poly = self.mapFromItem(item, item.selectionRect())
                 painter.drawRect(poly.boundingRect())
         
         # combined selection box

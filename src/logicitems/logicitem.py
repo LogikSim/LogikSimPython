@@ -42,8 +42,16 @@ class LogicItem(ItemBase):
         return self.scene().sceneRect().contains(bound_rect)
 
     def ownBoundingRect(self):
-        """ bounding rect of LogicItem without considering childs """
+        """ bounding rect of LogicItem without considering children """
         raise NotImplementedError
+    
+    def selectionRect(self):
+        """
+        return rect used for selection.
+        
+        By default returns own combined with child bounding rects.
+        """
+        return self.boundingRect().united(self.childrenBoundingRect())
 
     def itemChange(self, change, value):
         if self.scene() is not None:
