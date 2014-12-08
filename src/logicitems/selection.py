@@ -17,29 +17,29 @@ from .itembase import ItemBase
 class SelectionItem(ItemBase):
     def __init__(self):
         super().__init__()
-        
+
         self.setZValue(-1)
         self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemSendsGeometryChanges)
         self.setAcceptHoverEvents(True)
         self.setCursor(QtCore.Qt.SizeAllCursor)
-        
+
         self._rect = QtCore.QRectF(0, 0, 0, 0)
         self._initial_positions = {}
         self._start_position = None
-        
+
         # use timer to only process most recent update event
         self._update_state_timer = QtCore.QTimer()
         self._update_state_timer.timeout.connect(self._do_update_state)
         self._update_state_timer.setSingleShot(True)
-    
+
     def _invalidate_state(self):
         self._update_state_timer.start()
-    
+
     def _do_update_state(self):
         """
         Updates all internal state.
-        
+
         Call _invalidate_state instead of calling this method directly.
         """
         self.prepareGeometryChange()
@@ -59,7 +59,7 @@ class SelectionItem(ItemBase):
         self._start_position = pos
         self._rect.translate(-pos)
         self.setPos(pos)
-    
+
     def _move_to(self, pos):
         for item, init_pos in self._initial_positions.items():
             item.setPos(init_pos - self._start_position + pos)
@@ -67,15 +67,15 @@ class SelectionItem(ItemBase):
 
     def boundingRect(self):
         return self._rect
-    
+
     def hoverMoveEvent(self, event):
         self.setCursor(QtCore.Qt.SizeAllCursor)
         super().hoverMoveEvent(event)
-    
+
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
         self.setCursor(QtCore.Qt.SizeAllCursor)
-    
+
     def itemChange(self, change, value):
         if self.scene() is not None:
             if change == QtGui.QGraphicsItem.ItemPositionHasChanged:
@@ -95,14 +95,14 @@ class SelectionItem(ItemBase):
             for item in sel_items:
                 poly = self.mapFromItem(item, item.selectionRect())
                 painter.drawRect(poly.boundingRect())
-        
+
         # combined selection box
         painter.drawRect(self.boundingRect())
-    
+
     @QtCore.Slot()
     def onSelectionChanged(self):
         self._invalidate_state()
-    
+
     @QtCore.Slot()
     def onSelectedItemPosChanged(self):
         self._invalidate_state()

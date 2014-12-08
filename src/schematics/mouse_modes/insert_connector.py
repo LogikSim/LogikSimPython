@@ -30,7 +30,7 @@ class InsertConnectorMode(GridViewMouseModeBase):
         if event.button() is QtCore.Qt.LeftButton:
             gpos = self.mapToSceneGrid(event.pos())
             self._insert_connector_start = gpos
-            self._inserted_connector = logicitems.ConnectorItem(None, gpos, 
+            self._inserted_connector = logicitems.ConnectorItem(None, gpos,
                                                                 gpos)
             self.scene().addItem(self._inserted_connector)
 

@@ -39,8 +39,6 @@ from PySide import QtGui
 #        return self._size
 
 
-
-
 class TestRect(QtGui.QGraphicsRectItem, QtGui.QGraphicsLayoutItem):
     def __init__(self, *args, **kargs):
         QtGui.QGraphicsRectItem.__init__(self, *args, **kargs)

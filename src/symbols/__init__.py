@@ -26,3 +26,5 @@ def load_all_symbols():
 # until it works we load it manually
 
 from .and_item import AndItem
+
+__all__ = ('AndItem')

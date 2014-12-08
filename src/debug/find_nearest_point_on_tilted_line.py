@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 '''
 Copyright 2014 The LogikSim Authors. All rights reserved.
-Use of this source code is governed by the GNU GPL license that can 
+Use of this source code is governed by the GNU GPL license that can
 be found in the LICENSE.txt file.
 '''
 
@@ -26,8 +26,7 @@ def find_nearest_point_on_tilted_line(scene, pos, line_item):
     point_on_straight = spos + distance * nvec
 
     p_on_s_vec = point_on_straight - line.p1()
-    relative_scale = scal_prod(p_on_s_vec, lvec) / \
-                     lvec.manhattanLength() ** 2
+    relative_scale = scal_prod(p_on_s_vec, lvec) / lvec.manhattanLength() ** 2
 
     if relative_scale < 0:
         return line.p1()

@@ -17,7 +17,7 @@ from .itembase import ItemBase
 class LogicItem(ItemBase):
     """
     Defines logic item base class.
-    
+
     All children must implement the methods: ownBoundingRect, paint
     """
     def __init__(self, *args, **kargs):
@@ -44,11 +44,11 @@ class LogicItem(ItemBase):
     def ownBoundingRect(self):
         """ bounding rect of LogicItem without considering children """
         raise NotImplementedError
-    
+
     def selectionRect(self):
         """
         return rect used for selection.
-        
+
         By default returns own combined with child bounding rects.
         """
         return self.boundingRect().united(self.childrenBoundingRect())
@@ -66,7 +66,7 @@ class LogicItem(ItemBase):
                         self.scene().selectedItemPosChanged.emit()
                 else:
                     self.setPos(self._last_position)
-            
+
             #
             # only selectable when allowed by scene
             elif change == QtGui.QGraphicsItem.ItemSelectedChange:

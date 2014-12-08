@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 '''
 Copyright 2014 The LogikSim Authors. All rights reserved.
-Use of this source code is governed by the GNU GPL license that can 
+Use of this source code is governed by the GNU GPL license that can
 be found in the LICENSE.txt file.
 '''
 
@@ -93,12 +93,12 @@ class ScrollSchematicCanvas(QtGui.QAbstractScrollArea):
 
     def wheelEvent(self, event):
         if event.orientation() is QtCore.Qt.Horizontal or \
-                        event.modifiers() != QtCore.Qt.NoModifier:
+                event.modifiers() != QtCore.Qt.NoModifier:
             # scroll
-            fake_evt = QtGui.QWheelEvent(event.pos(),
-                                         event.globalPos(), event.delta(), event.buttons(),
-                                         event.modifiers() & ~(QtCore.Qt.ControlModifier),
-                                         event.orientation())
+            fake_evt = QtGui.QWheelEvent(
+                event.pos(), event.globalPos(), event.delta(), event.buttons(),
+                event.modifiers() & ~(QtCore.Qt.ControlModifier),
+                event.orientation())
             QtGui.QAbstractScrollArea.wheelEvent(self, fake_evt)
         else:
             # scale
@@ -108,7 +108,7 @@ class ScrollSchematicCanvas(QtGui.QAbstractScrollArea):
                 self._scale = new_scale
                 new_pos = self.windowToLogicPos(event.pos())
                 new_topleft = self.getLogicPaintArea().topLeft() - \
-                              (new_pos - old_pos)
+                    (new_pos - old_pos)
                 self.setupBars(new_topleft)
 
     def mousePressEvent(self, event):
@@ -122,8 +122,9 @@ class ScrollSchematicCanvas(QtGui.QAbstractScrollArea):
             # change in discrete steps
             curr_pos = self.windowToLogicPos(event.pos())
             desired_slider_pos = self.getLogicPaintArea().topLeft() - \
-                                 (curr_pos - self._mouse_mid_last_pos)
-            self.horizontalScrollBar().setSliderPosition(desired_slider_pos.x())
+                (curr_pos - self._mouse_mid_last_pos)
+            self.horizontalScrollBar().setSliderPosition(
+                desired_slider_pos.x())
             self.verticalScrollBar().setSliderPosition(desired_slider_pos.y())
 
 

@@ -18,7 +18,7 @@ import logicitems
 class GridScene(QtGui.QGraphicsScene):
     # signals position or shape change of any selected item
     selectedItemPosChanged = QtCore.Signal()
-    
+
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
         # draw grid?
@@ -31,7 +31,7 @@ class GridScene(QtGui.QGraphicsScene):
         # default values for new scene
         height = 100 * 1000  # golden ratio
         self.setSceneRect(0, 0, height * (1 + 5 ** 0.5) / 2, height)
-        
+
         # setup selection item
         self._selection_item = logicitems.SelectionItem()
         self.addItem(self._selection_item)

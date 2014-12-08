@@ -350,7 +350,7 @@ class GetHightowerObjectAtPoint:
                 else:
                     found_passable_line = True
                 continue
-            
+
             return hightower.Solid
 
         if found_line_edge:

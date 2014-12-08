@@ -20,16 +20,16 @@ class ConnectorItem(ItemBase):
         anchor is the position, at which lines can connect to
         """
         super().__init__(parent)
-        
+
         self._line = QtCore.QLineF(start, anchor)
-        
+
         self._bounding_rect_valid = False
         self._bounding_rect = None
 
     def _invalidate_bounding_rect(self):
         self.prepareGeometryChange()
         self._bounding_rect_valid = False
-    
+
     def is_valid(self):
         """
         returns weather the given connector has valid shape.
@@ -53,7 +53,7 @@ class ConnectorItem(ItemBase):
             self._bounding_rect = self._line_to_rect(self._line)
             self._bounding_rect_valid = True
         return self._bounding_rect
-    
+
     def paint(self, painter, option, widget=None):
         # draw line
         if self.is_valid():

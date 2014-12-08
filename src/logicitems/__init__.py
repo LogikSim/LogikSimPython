@@ -13,4 +13,5 @@ from .logicitem import LogicItem
 from .selection import SelectionItem
 from .resizehandle import ResizeHandle
 
-__all__ = ('LineAnchorIndicator', 'ConnectorItem', 'LineTree', 'LogicItem')
+__all__ = ('LineAnchorIndicator', 'ConnectorItem', 'LineTree', 'LogicItem',
+           'SelectionItem', 'ResizeHandle')

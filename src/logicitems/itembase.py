@@ -15,12 +15,12 @@ from PySide import QtGui, QtCore
 class ItemBase(QtGui.QGraphicsItem):
     _selection_color_fill = QtGui.QColor(80, 151, 222)
     _selection_color_line = QtGui.QColor(40, 125, 210)
-    
+
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
-    
+
     def _line_to_rect(self, line):
         """ converts QLineF to its collision area """
-        radius = 10**-3  # TODO: derive from: self.scene().get_grid_spacing() / 4
+        radius = 10**-3
         rect = QtCore.QRectF(line.p1(), line.p2()).normalized()
         return rect.normalized().adjusted(-radius, -radius, radius, radius)

@@ -15,24 +15,23 @@ import logicitems
 
 
 class AndItem(logicitems.LogicItem):
-    
-    def __init__(self, input_count = 3):
+    def __init__(self, input_count=3):
         super().__init__()
         self._input_count = input_count
-        
+
         self.setAcceptHoverEvents(True)
-        
+
         # internal state
         self._body_rect = None
         self._connectors = []
         self._handles = {}
-    
+
     def _update_state(self):
         assert self.scene() is not None
         self._invalidate_bounding_rect()
         scale = self.scene().get_grid_spacing()
         # update body
-        self._body_rect = QtCore.QRectF(0, -scale/2, scale * 2, 
+        self._body_rect = QtCore.QRectF(0, -scale/2, scale * 2,
                                         scale * (self._input_count))
         # update connectors
         for con in self._connectors:
@@ -50,17 +49,17 @@ class AndItem(logicitems.LogicItem):
             self, QtCore.QPointF(2 * scale, scale * (mid_point)),
             QtCore.QPointF(3 * scale, scale * (mid_point)))
         self._connectors.append(con)
-    
+
     def _update_resize_tool_handles(self):
         for handle in self._handles.values():
             handle.setParentItem(None)
         self._handles = {}
         if self.isSelected():
             scale = self.scene().get_grid_spacing()
-            ht = logicitems.ResizeHandle(self, horizontal=False, 
+            ht = logicitems.ResizeHandle(self, horizontal=False,
                                          resize_callback=self.on_handle_resize)
             ht.setPos(scale, -scale/2)
-            hb = logicitems.ResizeHandle(self, horizontal=False, 
+            hb = logicitems.ResizeHandle(self, horizontal=False,
                                          resize_callback=self.on_handle_resize)
             hb.setPos(scale, (self._input_count - 0.5) * scale)
             self._handles = {'top': ht, 'bottom': hb}
@@ -92,17 +91,17 @@ class AndItem(logicitems.LogicItem):
         if change is QtGui.QGraphicsItem.ItemSelectedHasChanged:
             self._update_resize_tool_handles()
         return super().itemChange(change, value)
-    
+
     def ownBoundingRect(self):
         assert self._body_rect is not None
         return self._body_rect
-    
+
     def selectionRect(self):
         rect = self.ownBoundingRect()
         for con in self._connectors:
             rect = rect.united(con.boundingRect())
         return rect
-    
+
     def paint(self, painter, options, widget):
         painter.setBrush(QtGui.QColor(255, 255, 128))
         painter.setPen(QtCore.Qt.black)

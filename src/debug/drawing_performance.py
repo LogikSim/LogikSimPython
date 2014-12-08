@@ -30,7 +30,8 @@ def draw_rects_test(scene):
     for x in range(300):
         for y in range(90):
             scene.addRect(8000 + x * 500, 5000 + y * 1000, 300, 600,
-                          QtGui.QPen(QtCore.Qt.white), QtGui.QBrush(QtCore.Qt.black))
+                          QtGui.QPen(QtCore.Qt.white), 
+                          QtGui.QBrush(QtCore.Qt.black))
 
 
 def draw_items_test(scene):
@@ -154,8 +155,9 @@ def draw_complex_item_test(scene):
 
 def draw_complex_picture_item_test(scene):
     rect = QtCore.QRectF(0, 0, 300, 600)
-    # draw 27k simple items based on QPicture
+    
     def gen_new_picture():
+        # draw 27k simple items based on QPicture
         picture = QtGui.QPicture()
         painter = QtGui.QPainter()
         painter.begin(picture)
@@ -217,15 +219,15 @@ def draw_many_logic_items_test(scene):
 def add_items(scene):
     # draw_one_rect(scene) # 35 ms, 26 MB
     # draw_overlapping_rects(scene)
-    #draw_rects_test(scene) # 185 ms, 51 MB
-    #draw_items_test(scene) # 352 ms, 41 MB
-    #draw_item_DontSavePainterState_test(scene) # 342 ms, 41 MB
-    #draw_item_picture_test(scene) # 720 ms, 250 MB
-    #draw_item_picture_memory_test(scene) # 660 ms, 41 MB
-    #draw_complex_item_test(scene) # 1400 ms, 41 MB
-    #draw_complex_picture_item_test(scene) # 2000 ms, 41 MB
-    #draw_complex_item_open_gl_test(scene) # 2200 ms, 63 MB
-    #draw_complex_item_open_gl_full_update_test(scene) # 2200 ms
+    # draw_rects_test(scene) # 185 ms, 51 MB
+    # draw_items_test(scene) # 352 ms, 41 MB
+    # draw_item_DontSavePainterState_test(scene) # 342 ms, 41 MB
+    # draw_item_picture_test(scene) # 720 ms, 250 MB
+    # draw_item_picture_memory_test(scene) # 660 ms, 41 MB
+    # draw_complex_item_test(scene) # 1400 ms, 41 MB
+    # draw_complex_picture_item_test(scene) # 2000 ms, 41 MB
+    # draw_complex_item_open_gl_test(scene) # 2200 ms, 63 MB
+    # draw_complex_item_open_gl_full_update_test(scene) # 2200 ms
     draw_many_logic_items_test(scene)  # 900 ms, 59 MB
 
 
