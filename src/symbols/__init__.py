@@ -27,4 +27,4 @@ def load_all_symbols():
 
 from .and_item import AndItem
 
-__all__ = ('AndItem')
+__all__ = ('AndItem',)
