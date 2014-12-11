@@ -114,9 +114,12 @@ class MainWindowTest(unittest.TestCase):
         )
         self.app.processEvents()
 
-        self.assertEqual(1, len(self.mw._view.scene().items()))
-        self.assertIsInstance(self.mw._view.scene().items()[0],
-                              logicitems.LogicItem)
+        logic_item_count = 0
+        for item in self.mw._view.scene().items():
+            if isinstance(item, logicitems.LogicItem):
+                logic_item_count += 1
+
+        self.assertEqual(1, logic_item_count)
 
     def test_about_box(self):
         """
