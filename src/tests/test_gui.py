@@ -10,6 +10,7 @@ import unittest
 
 from PySide import QtCore, QtGui
 from PySide.QtTest import QTest
+from time import sleep
 
 import main_window
 from settings import setup_settings
@@ -160,6 +161,9 @@ class MainWindowTest(unittest.TestCase):
         # Modal event queue running here until dialog is dismissed
         #
 
+        sleep(0.2)
+        self.app.processEvents()
+
         self.assertTrue(called)
         self.assertEqual(self.app.activeWindow(), self.mw)
 
@@ -201,6 +205,8 @@ class MainWindowTest(unittest.TestCase):
         #
         # Modal event queue running here until dialog is dismissed
         #
+        sleep(0.2)
+        self.app.processEvents()
 
         self.assertTrue(called)
         self.assertEqual(self.app.activeWindow(), self.mw)
