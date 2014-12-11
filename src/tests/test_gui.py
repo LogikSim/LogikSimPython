@@ -10,12 +10,11 @@ import unittest
 
 from PySide import QtCore, QtGui
 from PySide.QtTest import QTest
-from time import sleep
 
 import main_window
 from settings import setup_settings
 from tests.mocks import SettingsMock
-from tests.helpers import delayed_perform_on_modal
+from tests.helpers import delayed_perform_on_modal, try_repeatedly
 import logicitems
 
 
@@ -146,6 +145,7 @@ class MainWindowTest(unittest.TestCase):
             nonlocal called
             self.assertIsInstance(window, QtGui.QMessageBox)
             QTest.keyClick(window, QtCore.Qt.Key_Escape)
+            QtGui.QApplication.instance().processEvents()
             called = True
 
         delayed_perform_on_modal(check_open_and_dismiss)
@@ -161,10 +161,13 @@ class MainWindowTest(unittest.TestCase):
         # Modal event queue running here until dialog is dismissed
         #
 
-        sleep(0.2)
-        self.app.processEvents()
-
         self.assertTrue(called)
+
+        def is_main_window_active_yet():
+            self.app.processEvents()
+            return self.app.activeWindow() == self.mw
+
+        try_repeatedly(is_main_window_active_yet)
         self.assertEqual(self.app.activeWindow(), self.mw)
 
     def test_lulu_about_qt_box(self):
@@ -191,6 +194,7 @@ class MainWindowTest(unittest.TestCase):
             nonlocal called
             self.assertIsInstance(window, QtGui.QMessageBox)
             QTest.keyClick(window, QtCore.Qt.Key_Escape)
+            QtGui.QApplication.instance().processEvents()
             called = True
 
         delayed_perform_on_modal(check_open_and_dismiss)
@@ -205,10 +209,14 @@ class MainWindowTest(unittest.TestCase):
         #
         # Modal event queue running here until dialog is dismissed
         #
-        sleep(0.2)
-        self.app.processEvents()
 
         self.assertTrue(called)
+
+        def is_main_window_active_yet():
+            self.app.processEvents()
+            return self.app.activeWindow() == self.mw
+
+        try_repeatedly(is_main_window_active_yet)
         self.assertEqual(self.app.activeWindow(), self.mw)
 
     def tearDown(self):
