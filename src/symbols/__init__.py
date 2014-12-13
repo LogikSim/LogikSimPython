@@ -23,8 +23,7 @@ def load_all_symbols():
     # for module in modules:
     #    __import__(__name__ + "."+module, globals(), locals())
 
-# until it works we load it manually
-
+# until it works we load them manually
 from .and_item import AndItem
 
 __all__ = ('AndItem')

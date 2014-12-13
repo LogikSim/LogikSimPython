@@ -39,6 +39,10 @@ class GridScene(QtGui.QGraphicsScene):
         self.selectedItemPosChanged.connect(
             self._selection_item.onSelectedItemPosChanged)
 
+        # setup signal for single selection notification
+        self._single_selected_item = None
+        self.selectionChanged.connect(self.onSelectionChanged)
+
     def setGridEnabled(self, value):
         assert isinstance(value, bool)
         self._is_grid_enabled = value
@@ -195,3 +199,23 @@ class GridScene(QtGui.QGraphicsScene):
         QtGui.QGraphicsScene.wheelEvent(self, event)
         # mark event as handled (prevent view from scrolling)
         event.accept()
+
+    def onSelectionChanged(self):
+        def set_state(state):
+            if self._single_selected_item is not None and \
+                    self._single_selected_item.scene() is self:
+                assert isinstance(self._single_selected_item,
+                                  logicitems.ItemBase)
+                self._single_selected_item.itemChange(
+                    logicitems.ItemBase.ItemSingleSelectionHasChanged,
+                    state)
+
+        # disable last
+        set_state(False)
+        # enable new
+        sel_items = self.selectedItems()
+        if len(sel_items) == 1:
+            self._single_selected_item = sel_items[0]
+        else:
+            self._single_selected_item = None
+        set_state(True)

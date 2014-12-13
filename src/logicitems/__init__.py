@@ -8,10 +8,11 @@
 
 from .anchor import LineAnchorIndicator
 from .connector import ConnectorItem
+from .itembase import ItemBase
 from .linetree import LineTree
 from .logicitem import LogicItem
 from .selection import SelectionItem
 from .resizehandle import ResizeHandle
 
-__all__ = ('LineAnchorIndicator', 'ConnectorItem', 'LineTree', 'LogicItem',
-           'SelectionItem', 'ResizeHandle')
+__all__ = ('LineAnchorIndicator', 'ConnectorItem', 'ItemBase', 'LineTree',
+           'LogicItem', 'SelectionItem', 'ResizeHandle')

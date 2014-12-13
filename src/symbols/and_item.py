@@ -22,9 +22,15 @@ class AndItem(logicitems.LogicItem):
         self.setAcceptHoverEvents(True)
 
         # internal state
+        self._show_handles = False
         self._body_rect = None
         self._connectors = []
         self._handles = {}
+
+    def _set_show_handles(self, value):
+        if value != self._show_handles:
+            self._show_handles = value
+            self._update_resize_tool_handles()
 
     def _update_state(self):
         assert self.scene() is not None
@@ -54,7 +60,7 @@ class AndItem(logicitems.LogicItem):
         for handle in self._handles.values():
             handle.setParentItem(None)
         self._handles = {}
-        if self.isSelected():
+        if self.isSelected() and self._show_handles:
             scale = self.scene().get_grid_spacing()
             ht = logicitems.ResizeHandle(self, horizontal=False,
                                          resize_callback=self.on_handle_resize)
@@ -88,8 +94,10 @@ class AndItem(logicitems.LogicItem):
         if change is QtGui.QGraphicsItem.ItemSceneHasChanged:
             if value is not None:
                 self._update_state()
-        if change is QtGui.QGraphicsItem.ItemSelectedHasChanged:
+        elif change is QtGui.QGraphicsItem.ItemSelectedHasChanged:
             self._update_resize_tool_handles()
+        elif change == logicitems.ItemBase.ItemSingleSelectionHasChanged:
+            self._set_show_handles(value)
         return super().itemChange(change, value)
 
     def ownBoundingRect(self):
