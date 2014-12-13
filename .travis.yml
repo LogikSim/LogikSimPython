@@ -8,6 +8,7 @@ install:
     - pip install coveralls pylama
 script:
     - pylama src/
-    - xvfb-run --server-args="-screen 0 1280x1024x16" coverage run --source=src -m unittest discover -s src/tests/ -t src
+    - xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x16" coverage run --source=src -m unittest discover -s src/tests/ -t src
 after_success:
     coveralls
+

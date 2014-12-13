@@ -14,7 +14,7 @@ from PySide.QtTest import QTest
 import main_window
 from settings import setup_settings
 from tests.mocks import SettingsMock
-from tests.helpers import delayed_perform_on_modal
+from tests.helpers import delayed_perform_on_modal, try_repeatedly
 import logicitems
 
 
@@ -114,9 +114,12 @@ class MainWindowTest(unittest.TestCase):
         )
         self.app.processEvents()
 
-        self.assertEqual(1, len(self.mw._view.scene().items()))
-        self.assertIsInstance(self.mw._view.scene().items()[0],
-                              logicitems.LogicItem)
+        logic_item_count = 0
+        for item in self.mw._view.scene().items():
+            if isinstance(item, logicitems.LogicItem):
+                logic_item_count += 1
+
+        self.assertEqual(1, logic_item_count)
 
     def test_about_box(self):
         """
@@ -142,6 +145,7 @@ class MainWindowTest(unittest.TestCase):
             nonlocal called
             self.assertIsInstance(window, QtGui.QMessageBox)
             QTest.keyClick(window, QtCore.Qt.Key_Escape)
+            QtGui.QApplication.instance().processEvents()
             called = True
 
         delayed_perform_on_modal(check_open_and_dismiss)
@@ -158,6 +162,12 @@ class MainWindowTest(unittest.TestCase):
         #
 
         self.assertTrue(called)
+
+        def is_main_window_active_yet():
+            self.app.processEvents()
+            return self.app.activeWindow() == self.mw
+
+        try_repeatedly(is_main_window_active_yet)
         self.assertEqual(self.app.activeWindow(), self.mw)
 
     def test_lulu_about_qt_box(self):
@@ -184,6 +194,7 @@ class MainWindowTest(unittest.TestCase):
             nonlocal called
             self.assertIsInstance(window, QtGui.QMessageBox)
             QTest.keyClick(window, QtCore.Qt.Key_Escape)
+            QtGui.QApplication.instance().processEvents()
             called = True
 
         delayed_perform_on_modal(check_open_and_dismiss)
@@ -200,6 +211,12 @@ class MainWindowTest(unittest.TestCase):
         #
 
         self.assertTrue(called)
+
+        def is_main_window_active_yet():
+            self.app.processEvents()
+            return self.app.activeWindow() == self.mw
+
+        try_repeatedly(is_main_window_active_yet)
         self.assertEqual(self.app.activeWindow(), self.mw)
 
     def tearDown(self):

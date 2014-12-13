@@ -11,6 +11,7 @@ Contains helper functions that are helpful for creating unit-tests.
 '''
 
 from PySide import QtGui, QtCore
+from time import time, sleep
 
 
 class CallTrack:
@@ -38,7 +39,25 @@ class CallTrack:
         return self.calls
 
 
-def delayed_perform_on_modal(what, delay=50):
+def try_repeatedly(fun, timeout=5, delay=0.05):
+    """
+    Repeatedly executes fun until it returns true or a timeout occurs.
+
+    :param fun: Parameterless function to execute. Returns true on success.
+    :param timeout: Time in seconds to try before returning unsuccessful
+    :param delay: Delay between tries.
+    :return True if successful once, false if not
+    """
+    start = time()
+    while time() - start < timeout:
+        if fun():
+            return True
+        sleep(delay)
+
+    return False
+
+
+def delayed_perform_on_modal(what, delay=10):
     """
     Meant to be used for interacting with modal dialogs during testing.
 
@@ -65,6 +84,7 @@ def perform_on_modal(what):
     :param what: Function handed the active modal widget
     """
     app = QtGui.QApplication.instance()
+    app.processEvents()
     active = app.activeModalWidget()
     if active:
         what(active)
