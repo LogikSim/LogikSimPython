@@ -17,7 +17,7 @@ class Core(Process):
         super().__init__()
 
         self.queue = PriorityQueue()
-        self.clock = 0
+        self.clock = -1
 
     def __str__(self):
         return "|Core(time={0})|={1}".format(self.clock, len(self.queue))

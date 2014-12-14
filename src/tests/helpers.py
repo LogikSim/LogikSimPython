@@ -25,15 +25,23 @@ class CallTrack:
     >>> log() # Returns list of call tuple arguments (unpacked for 1 argument)
     """
 
-    def __init__(self):
+    def __init__(self, tracked_member="slot", result_fu=None):
+        """
+        :param tracked_member: Name of member to remember calls for
+        """
         self.calls = []
+        self.result_fu = result_fu
+        setattr(self, tracked_member, self.__tracker)
 
-    def slot(self, *args):
+    def __tracker(self, *args):
         if len(args) == 1:
             # Unpack for one
             self.calls.append(args[0])
         else:
             self.calls.append(args)
+
+        if self.result_fu is not None:
+            return self.result_fu(*args)
 
     def __call__(self):
         return self.calls

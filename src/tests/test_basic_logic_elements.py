@@ -39,7 +39,7 @@ class BasicLogicElementTest(unittest.TestCase):
         self.assertSequenceEqual((1, 1), e.input_states)
         self.assertSequenceEqual((1,), e.output_states)
 
-         # Falling edge on pin 0
+        # Falling edge on pin 0
         events = e.edge(10, 0, False)
         self.assertSequenceEqual((1,), e.output_states)  # Verify is delayed
         self.assertListEqual([OutEdge(11, e, 0, False)], events)
