@@ -7,7 +7,7 @@
 #
 import unittest
 from backend.simple_element import OutEdge
-from backend.basic_logic_elements import And, Or
+from backend.basic_logic_elements import And, Or, Xor
 
 
 class BasicLogicElementTest(unittest.TestCase):
@@ -66,11 +66,43 @@ class BasicLogicElementTest(unittest.TestCase):
         # Rising edge on pin 1
         events = e.edge(3, 1, True)
         self.assertSequenceEqual((1,), e.output_states)  # Verify is delayed
-        self.assertListEqual([OutEdge(4, e, 0, True)], events)
-        events[0].process()
+        # NOP self.assertListEqual([OutEdge(4, e, 0, True)], events)
+        # events[0].process()
 
         self.assertSequenceEqual((1, 1), e.input_states)
         self.assertSequenceEqual((1,), e.output_states)
+
+        # Falling edge on pin 0 and 1
+        e.edge(10, 0, False)[0].process()
+        self.assertSequenceEqual((1,), e.output_states)
+
+        e.edge(10, 1, False)[0].process()
+        self.assertSequenceEqual((0, 0), e.input_states)
+        self.assertSequenceEqual((0,), e.output_states)
+
+    def test_xor(self):
+        # Create two pin or
+        e = Xor()
+        self.assertSequenceEqual((0, 0), e.input_states)
+        self.assertSequenceEqual((0,), e.output_states)
+
+        # Rising edge on pin 0
+        events = e.edge(0, 0, True)
+        self.assertSequenceEqual((0,), e.output_states)  # Verify is delayed
+        self.assertListEqual([OutEdge(1, e, 0, True)], events)
+        events[0].process()
+
+        self.assertSequenceEqual((1,), e.output_states)
+        self.assertSequenceEqual((1, 0), e.input_states)
+
+        # Rising edge on pin 1
+        events = e.edge(3, 1, True)
+        self.assertSequenceEqual((1,), e.output_states)  # Verify is delayed
+        self.assertListEqual([OutEdge(4, e, 0, False)], events)
+        events[0].process()
+
+        self.assertSequenceEqual((1, 1), e.input_states)
+        self.assertSequenceEqual((0,), e.output_states)
 
         # Falling edge on pin 0 and 1
         e.edge(10, 0, False)[0].process()

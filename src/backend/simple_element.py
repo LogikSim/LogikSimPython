@@ -95,8 +95,7 @@ class SimpleElement(Element):
         return [OutEdge(when + self.delay,
                         self,
                         output,
-                        fstate) for output, fstate in enumerate(future_output)
-                if state != self.output_states[output]]
+                        fstate) for output, fstate in enumerate(future_output)]
 
     def connect(self, element, output=0, input=0):
         """
@@ -112,6 +111,10 @@ class SimpleElement(Element):
         assert output < len(self.output_states), \
             "Gate does not have an output {0}" \
             .format(output)
+
+        if self.output_states[output] == state:
+            # No thing to do here.
+            return []
 
         self.output_states[output] = state
 
