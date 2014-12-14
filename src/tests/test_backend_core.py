@@ -12,7 +12,7 @@ from backend.basic_logic_elements import Xor, And, Nor, Or
 from backend.compound_element import CompoundElement
 from backend.element import Edge
 from backend.interconnect import Interconnect
-from helpers import CallTrack
+from tests.helpers import CallTrack
 
 
 class TestingCore(Core):
