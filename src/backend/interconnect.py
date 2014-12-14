@@ -17,23 +17,44 @@ class Interconnect(Element):
     meta-data for the front-end would be quite annoying. We'll see if this
     becomes an issue in the future.
     """
-    PROPAGATION_CONSTANT=1  # One time unit per length unit
+    PROPAGATION_CONSTANT = 1  # One time unit per length unit
 
     def __init__(self):
         self.endpoints = []
+        self.state = False
 
     def __str__(self):
         names = [(id(endpoint), input) for (endpoint, input) in self.endpoints]
         return "{0}(=>{1})".format(self.__class__.__name__,
                                    ','.join(names))
 
-    def add_connection(self, element, input, connection_length=1):
+    def reset(self, when):
         """
-        Inserts a new connection to the given elements input with given length.
-        :param element: Element `input` refers to.
-        :param input: Index of input to connect to
+        Emulates an input reset resulting in edge events for every output.
+        :return: Edge events for every output.
+        """
+        return [Edge(when + delay,
+                     element,
+                     input,
+                     self.state) for element, input, delay in self.endpoints]
+
+    def connect(self, element, output=0, input=0, connection_length=1):
+        """
+        Connects an element output to another elements input.
+
+        :param element: Element to connect to output (None disconnects output)
+        :param output: This elements output to connect to the input (always 0)
+        :param input: Input on given element to connect to
         :param connection_length: Length of the connection for delay calc
+        :return: True if successfully connected
         """
+        assert output == 0, "Interconnect only has one output"
+
+        if element is None:
+            # Disconnect everything
+            self.endpoints.clear()
+            pass
+
         delay = connection_length * self.PROPAGATION_CONSTANT
         self.endpoints.append((element, input, delay))
 
@@ -50,9 +71,11 @@ class Interconnect(Element):
         :param state: Value of the input (True/False) at time `when`
         :return: One future edge event for each connection endpoint.
         """
-        assert input==0, "Interconnect does not have multiple inputs."
+        assert input == 0, "Interconnect does not have multiple inputs."
+
+        self.state = state
 
         return [Edge(when + delay,
                      element,
-                     input,
-                     state) for element, input, delay in self.endpoints]
+                     iinput,
+                     state) for element, iinput, delay in self.endpoints]

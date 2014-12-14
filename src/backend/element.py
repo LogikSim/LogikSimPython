@@ -32,9 +32,9 @@ class Edge(Event):
 
     def __eq__(self, other):
         return self.element == other.element \
-               and self.input == other.input \
-               and self.state == other.state \
-               and self.when == other.when
+            and self.input == other.input \
+            and self.state == other.state \
+            and self.when == other.when
 
     def _process(self):
         """Edge only knows handler functions so this function implements one"""
@@ -56,3 +56,29 @@ class Element(object):
         :return: List of one or more future Event s
         """
         assert False, "Elements must implement input edge handling"
+
+    def reset(self, when):
+        """
+        Emulates an input reset resulting in edge events for every output.
+        :return: Edge events for every output.
+        """
+        assert False, "Elements must implement reset handling"
+
+    def connect(self, element, output=0, input=0):
+        """
+        Connects an element output to another elements input.
+
+        :param element: Element to connect to output (None disconnects output)
+        :param output: This elements output to connect to the input
+        :param input: Input on given element to connect to
+        :return: True if successfully connected
+        """
+        assert False, "Elements must implement output connection handling"
+
+    def disconnect(self, output):
+        """
+        Disconnects the given output.
+        :param output: Output index.
+        :return: True if successful
+        """
+        return self.connect(None, output)

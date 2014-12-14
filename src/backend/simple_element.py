@@ -55,9 +55,21 @@ class SimpleElement(Element):
         """
         self.input_states = array('i', [False] * input_count)
         self.output_states = array('i', [False] * output_count)
-        self.outputs = [None] * output_count
+        self.outputs = [(None, 0)] * output_count
         self.delay = delay
         self.logic_function = logic_function
+
+    def reset(self, when):
+        """
+        Emulates an input reset resulting in edge events for every output.
+        :return: Edge events for every output.
+        """
+        future_output = self.logic_function(self.input_states)
+
+        return [OutEdge(when + self.delay,
+                        self,
+                        output,
+                        state) for output, state in enumerate(future_output)]
 
     def __str__(self):
         return "{0}({1})={2}".format(self.__class__.__name__,
@@ -83,21 +95,28 @@ class SimpleElement(Element):
         return [OutEdge(when + self.delay,
                         self,
                         output,
-                        state) for output, state in enumerate(future_output)]
+                        fstate) for output, fstate in enumerate(future_output)
+                if state != self.output_states[output]]
 
-    def attach(self, output, element, input=0):
+    def connect(self, element, output=0, input=0):
+        """
+        Attach a given elements input to one of this elements outputs.
+
+        :param element: Element to connect to output
+        :param output: This elements output to connect to the input
+        :param input: Input on given element to connect to
+        """
         self.outputs[output] = (element, input)
 
     def _output(self, when, output, state):
         assert output < len(self.output_states), \
             "Gate does not have an output {0}" \
-                .format(output)
+            .format(output)
 
         self.output_states[output] = state
 
-        if self.outputs[output] is not None:
-            element, input = self.outputs[output]
-            return element.edge(when, input, state)
+        element, input = self.outputs[output]
+        if element is None:
+            return []  # Nothing connected. No follow-up events
 
-        return []  # Nothing connected. No follow-up events
-
+        return element.edge(when, input, state)
