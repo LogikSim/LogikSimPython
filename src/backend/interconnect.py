@@ -42,6 +42,9 @@ class Interconnect(Element):
         Schedules delayed propagation of state change to all connected element
         inputs.
 
+        Note: This schedules directly on connected elements so it won't
+              react to connectivity changes while the event is pending.
+
         :param when: Current simulation time.
         :param input: Index of the input
         :param state: Value of the input (True/False) at time `when`

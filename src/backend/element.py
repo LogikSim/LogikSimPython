@@ -26,6 +26,16 @@ class Edge(Event):
         self.input = input
         self.state = state
 
+    def __str__(self):
+        return "Edge(when={0},element={1},input={2},state={3}" \
+            .format(self.when, id(self.element), self.input, self.state)
+
+    def __eq__(self, other):
+        return self.element == other.element \
+               and self.input == other.input \
+               and self.state == other.state \
+               and self.when == other.when
+
     def _process(self):
         """Edge only knows handler functions so this function implements one"""
         return self.element.edge(self.when, self.input, self.state)
