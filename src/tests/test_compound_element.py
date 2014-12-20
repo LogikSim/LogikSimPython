@@ -7,8 +7,8 @@
 #
 import unittest
 
-from backend.compound_element import CompoundElement
-from backend.interconnect import Interconnect
+from backend.components.compound_element import CompoundElement
+from backend.components.interconnect import Interconnect
 
 
 class CompoundElementTest(unittest.TestCase):
@@ -17,14 +17,14 @@ class CompoundElementTest(unittest.TestCase):
     """
 
     def test_pass_through(self):
-        e = CompoundElement("pass")
+        e = CompoundElement.instantiate(0, {})
 
-        e.input_posts.connect(e.output_posts, 0, 1)
-        e.input_posts.connect(e.output_posts, 2, 3)
-        e.input_posts.connect(e.output_posts, 5, 6)
+        e.input_bank.connect(e.output_bank, 0, 1)
+        e.input_bank.connect(e.output_bank, 2, 3)
+        e.input_bank.connect(e.output_bank, 5, 6)
 
-        ins = [Interconnect() for i in range(0, 6)]
-        outs = [Interconnect() for i in range(0, 6)]
+        ins = [Interconnect.instantiate(i) for i in range(0, 6)]
+        outs = [Interconnect.instantiate(i*10) for i in range(0, 6)]
 
         for i in range(0, 6):
             ins[i].connect(e, input=i)

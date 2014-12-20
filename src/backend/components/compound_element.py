@@ -6,13 +6,31 @@
 # be found in the LICENSE.txt file.
 #
 from backend.element import Element
+from backend.component_library import ComponentType
+from copy import copy
 
 
-class IndirectionElement(Element):
+class InputOutputBank(ComponentType):
     """
     Zero latency indirection element.
     """
-    def __init__(self):
+    METADATA = {"GUID": "ab47bdb4-b44d-4c16-9cbb-1a3810ad830f",
+                "name": "In/Out Bank",
+                "description": "Input out bank used in compound elements"}
+
+    @classmethod
+    def instantiate(cls, id, additional_metadata):
+        metadata = copy(additional_metadata)
+        metadata["id"] = id
+        return InputOutputBankInstance(metadata)
+
+
+class InputOutputBankInstance(Element):
+    """
+    Zero latency indirection element instance.
+    """
+    def __init__(self, metadata):
+        super().__init__(metadata, InputOutputBank)
         self.mapping = {}
 
     def connect(self, element, output=0, input=0):
@@ -60,19 +78,34 @@ class IndirectionElement(Element):
         return result
 
 
-class CompoundElement(Element):
+class CompoundElement(ComponentType):
+    """
+    Element wrapping other elements.
+    """
+    METADATA = {"GUID": "14328e37-1969-40e4-806f-cfe58e7fb6a0",
+                "name": "Compound element",
+                "description": "Element consisting of multiple other elements"}
+
+    @classmethod
+    def instantiate(cls, id, additional_metadata):
+        metadata = copy(additional_metadata)
+        metadata["id"] = id
+        return CompoundElementInstance(metadata)
+
+
+class CompoundElementInstance(Element):
     """
     Element wrapping other elements
     """
-    def __init__(self, name):
-        super().__init__()
+    def __init__(self, metadata):
+        super().__init__(metadata, CompoundElement)
 
-        self.name = name
-        self.input_posts = IndirectionElement()
-        self.output_posts = IndirectionElement()
+        self.input_bank = InputOutputBank.instantiate(0, {})  # FIXME: ID
+        self.output_bank = InputOutputBank.instantiate(1, {})  # FIXME: ID
 
     def __str__(self):
-        return "CompoundElement(name={0})".format(self.name)
+        return "CompoundElement(name={0})"\
+            .format(self.get_metadata_field("name"))
 
     def reset(self, when):
         """
@@ -81,7 +114,7 @@ class CompoundElement(Element):
         """
         # FIXME: Do we want this to propagate the signal? Probably should not
 
-        return self.input_posts.reset(when) + self.output_posts.reset(when)
+        return self.input_bank.reset(when) + self.output_bank.reset(when)
 
     def edge(self, input, state):
         """
@@ -91,7 +124,7 @@ class CompoundElement(Element):
         :param input: Index of the input
         :param state: Value of the input (True/False) at time `when`
         """
-        self.input_posts.edge(input, state)
+        self.input_bank.edge(input, state)
 
     def clock(self, when):
         """
@@ -101,7 +134,7 @@ class CompoundElement(Element):
         :param when: Point in time
         :return: List of none or more future Event s
         """
-        return self.input_posts.clock(when)
+        return self.input_bank.clock(when)
 
     def connect(self, element, output=0, input=0):
         """
@@ -112,4 +145,4 @@ class CompoundElement(Element):
         :param input: Input on element to connect to
         :return: True if connected successful
         """
-        return self.output_posts.connect(element, output, input)
+        return self.output_bank.connect(element, output, input)

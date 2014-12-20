@@ -5,7 +5,8 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 import unittest
-from backend.interconnect import Interconnect
+
+from backend.components.interconnect import Interconnect
 from backend.element import Edge
 
 
@@ -15,13 +16,13 @@ class InterconnectTest(unittest.TestCase):
     """
 
     def test_empty_interconnect(self):
-        empty = Interconnect()
+        empty = Interconnect.instantiate(0)
         empty.edge(0, True)
         self.assertListEqual([], empty.clock(0))
         self.assertTrue(empty.state)
 
     def test_edge_forward(self):
-        i = Interconnect()
+        i = Interconnect.instantiate(0)
 
         class Foo:
             pass

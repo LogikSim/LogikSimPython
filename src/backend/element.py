@@ -6,6 +6,7 @@
 # be found in the LICENSE.txt file.
 #
 from backend.event import Event
+from backend.component_library import ComponentInstance
 
 
 class Edge(Event):
@@ -49,10 +50,12 @@ class Edge(Event):
         return self.element.clock(self.when)
 
 
-class Element(object):
+class Element(ComponentInstance):
     """
     Baseclass for all Elements that are part of the simulation.
     """
+    def __init__(self, metadata, component_type):
+        super().__init__(metadata, component_type)
 
     def edge(self, input, state):
         """

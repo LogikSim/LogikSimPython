@@ -6,8 +6,9 @@
 # be found in the LICENSE.txt file.
 #
 import unittest
+
 from backend.simple_element import OutEdge
-from backend.basic_logic_elements import And, Or, Xor
+from backend.components.basic_logic_elements import And, Or, Xor
 
 
 class BasicLogicElementTest(unittest.TestCase):
@@ -17,7 +18,7 @@ class BasicLogicElementTest(unittest.TestCase):
 
     def test_and(self):
         # Create two pin and
-        e = And()
+        e = And.instantiate(0, {})
         self.assertSequenceEqual((0, 0), e.input_states)
         self.assertSequenceEqual((0,), e.output_states)
 
@@ -53,7 +54,7 @@ class BasicLogicElementTest(unittest.TestCase):
 
     def test_or(self):
         # Create two pin or
-        e = Or()
+        e = Or.instantiate(0, {})
         self.assertSequenceEqual((0, 0), e.input_states)
         self.assertSequenceEqual((0,), e.output_states)
 
@@ -88,7 +89,7 @@ class BasicLogicElementTest(unittest.TestCase):
 
     def test_xor(self):
         # Create two pin or
-        e = Xor()
+        e = Xor.instantiate(0, {})
         self.assertSequenceEqual((0, 0), e.input_states)
         self.assertSequenceEqual((0,), e.output_states)
 

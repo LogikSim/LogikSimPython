@@ -47,10 +47,9 @@ class SimpleElement(Element):
     Wasteful but should do fine for quick and dirty development experiments.
     """
     def __init__(self,
-                 logic_function,
-                 input_count=1,
-                 output_count=1,
-                 delay=1):
+                 metadata,
+                 component_type,
+                 logic_function):
         """
         Constructs a basic logic element with input to output transformation.
 
@@ -60,6 +59,12 @@ class SimpleElement(Element):
         :param output_count: Number of output latches for the element
         :param delay: Propagation delay inside this logic element
         """
+        super().__init__(metadata, component_type)
+
+        input_count = self.get_metadata_field("#inputs")
+        output_count = self.get_metadata_field("#outputs")
+        delay = self.get_metadata_field("delay")
+
         self.input_states = array('i', [False] * input_count)
         self.output_states = array('i', [False] * output_count)
         self.outputs = [(None, 0)] * output_count
