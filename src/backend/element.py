@@ -21,7 +21,7 @@ class Edge(Event):
         :param input: Index of the input the signal edge will occur on
         :param state: Signal value after the edge (True/False) at time `when`
         """
-        super().__init__(when, self._process)
+        super().__init__(when, id(element), self._process)
         self.element = element
         self.input = input
         self.state = state
@@ -36,9 +36,17 @@ class Edge(Event):
             and self.state == other.state \
             and self.when == other.when
 
-    def _process(self):
+    def _process(self, last):
         """Edge only knows handler functions so this function implements one"""
-        return self.element.edge(self.when, self.input, self.state)
+        self.element.edge(self.input, self.state)
+
+        # Only schedule events when all edges addresses to the element
+        # have been processed.
+
+        if not last:
+            return []
+
+        return self.element.clock(self.when)
 
 
 class Element(object):
@@ -46,16 +54,24 @@ class Element(object):
     Baseclass for all Elements that are part of the simulation.
     """
 
-    def edge(self, when, input, state):
+    def edge(self, input, state):
         """
         Handles a rising or falling edge on one of the elements inputs.
 
-        :param when: Current simulation time.
         :param input: Index of the input
         :param state: Value of the input (True/False) at time `when`
-        :return: List of one or more future Event s
+        :return: List of none or more future Event s
         """
         assert False, "Elements must implement input edge handling"
+
+    def clock(self, when):
+        """
+        Triggered when all egdes for a point in time have been received.
+
+        :param when: Point in time
+        :return: List of none or more future Event s
+        """
+        assert False, "Elements must implement clock handling"
 
     def reset(self, when):
         """

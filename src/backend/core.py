@@ -18,6 +18,7 @@ class Core(Process):
 
         self.queue = PriorityQueue()
         self.clock = -1
+        self.group = None
 
     def __str__(self):
         return "|Core(time={0})|={1}".format(self.clock, len(self.queue))
@@ -28,9 +29,17 @@ class Core(Process):
         :return: Processed event.
         """
         event = self.queue.get()
-        self.clock = event.when
 
-        for new_event in event.process():
+        assert event.when >= self.clock, "Encountered event from the past"
+        self.clock = event.when
+        self.group = event.group
+
+        last_in_group = \
+            self.queue.empty() or \
+            self.queue.queue[0].group != self.group or \
+            self.queue.queue[0].when != self.clock
+
+        for new_event in event.process(last_in_group):
             self.schedule(new_event)
 
         return event
@@ -42,7 +51,7 @@ class Core(Process):
     def schedule(self, event):
         assert isinstance(event, Event),\
             "Can only schedule things derived from Event"
-        assert event.when > self.clock,\
-            "Can only schedule things in the future"
+        assert event.when >= self.clock,\
+            "Cannot schedule events in the past"
 
         self.queue.put(event)

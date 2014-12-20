@@ -30,23 +30,34 @@ class IndirectionElement(Element):
 
         return events
 
-    def edge(self, when, input, state):
+    def edge(self, input, state):
         """
         Handles a rising or falling edge and maps it to the corresponding
         element.
 
-        :param when: Current simulation time.
         :param input: Index of the input
         :param state: Value of the input (True/False) at time `when`
         :return: List of one or more future Event s
         """
         if input not in self.mapping:
             # Pin is not connected.
-            return []
+            return
 
         element, element_input = self.mapping[input]
+        element.edge(element_input, state)
 
-        return element.edge(when, element_input, state)
+    def clock(self, when):
+        """
+        Triggered when all egdes for a point in time have been received.
+
+        :param when: Point in time
+        :return: List of none or more future Event s
+        """
+        result = []
+        for element in set([element for element, _ in self.mapping.values()]):
+            result.extend(element.clock(when))
+
+        return result
 
 
 class CompoundElement(Element):
@@ -72,17 +83,25 @@ class CompoundElement(Element):
 
         return self.input_posts.reset(when) + self.output_posts.reset(when)
 
-    def edge(self, when, input, state):
+    def edge(self, input, state):
         """
         Handles a rising or falling edge and maps it to the corresponding
         internal element.
 
-        :param when: Current simulation time.
         :param input: Index of the input
         :param state: Value of the input (True/False) at time `when`
-        :return: List of one or more future Event s
         """
-        return self.input_posts.edge(when, input, state)
+        self.input_posts.edge(input, state)
+
+    def clock(self, when):
+        """
+        Triggered when all egdes for a point in time have been received.
+        Clocks all elements connected to inputs.
+
+        :param when: Point in time
+        :return: List of none or more future Event s
+        """
+        return self.input_posts.clock(when)
 
     def connect(self, element, output=0, input=0):
         """

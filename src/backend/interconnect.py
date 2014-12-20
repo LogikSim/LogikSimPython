@@ -22,9 +22,13 @@ class Interconnect(Element):
     def __init__(self):
         self.endpoints = []
         self.state = False
+        self.last_clock = -1
 
     def __str__(self):
-        names = [(id(endpoint), input) for (endpoint, input) in self.endpoints]
+        names = []
+        for endpoint, endpoint_input, delay in self.endpoints:
+            names.append("{0}@{1}".format(endpoint_input, endpoint))
+
         return "{0}(=>{1})".format(self.__class__.__name__,
                                    ','.join(names))
 
@@ -58,7 +62,18 @@ class Interconnect(Element):
         delay = connection_length * self.PROPAGATION_CONSTANT
         self.endpoints.append((element, input, delay))
 
-    def edge(self, when, input, state):
+    def edge(self, input, state):
+        """
+        Registers a rising or falling edge on the interconnect.
+
+        :param input: Index of the input
+        :param state: Value of the input (True/False) at time `when`
+        """
+        assert input == 0, "Interconnect does not have multiple inputs."
+
+        self.state = state
+
+    def clock(self, when):
         """
         Schedules delayed propagation of state change to all connected element
         inputs.
@@ -67,15 +82,13 @@ class Interconnect(Element):
               react to connectivity changes while the event is pending.
 
         :param when: Current simulation time.
-        :param input: Index of the input
-        :param state: Value of the input (True/False) at time `when`
         :return: One future edge event for each connection endpoint.
         """
-        assert input == 0, "Interconnect does not have multiple inputs."
-
-        self.state = state
+        assert self.last_clock != when, "Repeated clock for {0} on {1}".format(
+            when, self)
+        self.last_clock = when
 
         return [Edge(when + delay,
                      element,
                      iinput,
-                     state) for element, iinput, delay in self.endpoints]
+                     self.state) for element, iinput, delay in self.endpoints]

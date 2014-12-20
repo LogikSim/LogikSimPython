@@ -22,28 +22,31 @@ class BasicLogicElementTest(unittest.TestCase):
         self.assertSequenceEqual((0,), e.output_states)
 
         # Rising edge on pin 0
-        events = e.edge(0, 0, True)
+        e.edge(0, True)
+        events = e.clock(0)
         self.assertSequenceEqual((0,), e.output_states)  # Verify is delayed
         self.assertListEqual([OutEdge(1, e, 0, False)], events)
-        events[0].process()
+        events[0].process(True)
 
         self.assertSequenceEqual((0,), e.output_states)
         self.assertSequenceEqual((1, 0), e.input_states)
 
         # Rising edge on pin 1
-        events = e.edge(2, 1, True)
+        e.edge(1, True)
+        events = e.clock(2)
         self.assertSequenceEqual((0,), e.output_states)  # Verify is delayed
         self.assertListEqual([OutEdge(3, e, 0, True)], events)
-        events[0].process()
+        events[0].process(True)
 
         self.assertSequenceEqual((1, 1), e.input_states)
         self.assertSequenceEqual((1,), e.output_states)
 
         # Falling edge on pin 0
-        events = e.edge(10, 0, False)
+        events = e.edge(0, False)
+        events = e.clock(10)
         self.assertSequenceEqual((1,), e.output_states)  # Verify is delayed
         self.assertListEqual([OutEdge(11, e, 0, False)], events)
-        events[0].process()
+        events[0].process(True)
 
         self.assertSequenceEqual((0,), e.output_states)
         self.assertSequenceEqual((0, 1), e.input_states)
@@ -55,16 +58,17 @@ class BasicLogicElementTest(unittest.TestCase):
         self.assertSequenceEqual((0,), e.output_states)
 
         # Rising edge on pin 0
-        events = e.edge(0, 0, True)
+        e.edge(0, True)
+        events = e.clock(0)
         self.assertSequenceEqual((0,), e.output_states)  # Verify is delayed
         self.assertListEqual([OutEdge(1, e, 0, True)], events)
-        events[0].process()
+        events[0].process(True)
 
         self.assertSequenceEqual((1,), e.output_states)
         self.assertSequenceEqual((1, 0), e.input_states)
 
         # Rising edge on pin 1
-        events = e.edge(3, 1, True)
+        e.edge(1, True)
         self.assertSequenceEqual((1,), e.output_states)  # Verify is delayed
         # NOP self.assertListEqual([OutEdge(4, e, 0, True)], events)
         # events[0].process()
@@ -73,10 +77,12 @@ class BasicLogicElementTest(unittest.TestCase):
         self.assertSequenceEqual((1,), e.output_states)
 
         # Falling edge on pin 0 and 1
-        e.edge(10, 0, False)[0].process()
+        e.edge(0, False)
+        e.clock(10)[0].process(True)
         self.assertSequenceEqual((1,), e.output_states)
 
-        e.edge(10, 1, False)[0].process()
+        e.edge(1, False)
+        e.clock(11)[0].process(True)
         self.assertSequenceEqual((0, 0), e.input_states)
         self.assertSequenceEqual((0,), e.output_states)
 
@@ -87,27 +93,31 @@ class BasicLogicElementTest(unittest.TestCase):
         self.assertSequenceEqual((0,), e.output_states)
 
         # Rising edge on pin 0
-        events = e.edge(0, 0, True)
+        e.edge(0, True)
+        events = e.clock(0)
         self.assertSequenceEqual((0,), e.output_states)  # Verify is delayed
         self.assertListEqual([OutEdge(1, e, 0, True)], events)
-        events[0].process()
+        events[0].process(True)
 
         self.assertSequenceEqual((1,), e.output_states)
         self.assertSequenceEqual((1, 0), e.input_states)
 
         # Rising edge on pin 1
-        events = e.edge(3, 1, True)
+        e.edge(1, True)
+        events = e.clock(3)
         self.assertSequenceEqual((1,), e.output_states)  # Verify is delayed
         self.assertListEqual([OutEdge(4, e, 0, False)], events)
-        events[0].process()
+        events[0].process(True)
 
         self.assertSequenceEqual((1, 1), e.input_states)
         self.assertSequenceEqual((0,), e.output_states)
 
         # Falling edge on pin 0 and 1
-        e.edge(10, 0, False)[0].process()
+        e.edge(0, False)
+        e.clock(10)[0].process(True)
         self.assertSequenceEqual((1,), e.output_states)
 
-        e.edge(10, 1, False)[0].process()
+        e.edge(1, False)
+        e.clock(11)[0].process(True)
         self.assertSequenceEqual((0, 0), e.input_states)
         self.assertSequenceEqual((0,), e.output_states)

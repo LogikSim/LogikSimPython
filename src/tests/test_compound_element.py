@@ -31,8 +31,9 @@ class CompoundElementTest(unittest.TestCase):
             e.connect(outs[i], i, 0)
 
         for i in range(0, 6):
-            for e in ins[i].edge(0, 0, True):
-                e.process()
+            ins[i].edge(0, True)
+            for e in ins[i].clock(0):
+                e.process(False)
 
         self.assertListEqual([False, True, False, True, False, False],
                              [outs[i].state for i in range(0, 6)])

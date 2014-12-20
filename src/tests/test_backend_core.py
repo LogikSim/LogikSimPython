@@ -25,10 +25,16 @@ class TestingCore(Core):
             if time is not None and self.queue.queue[0].when >= time:
                 return time
 
+            # print(" Processing {0}".format(self.queue.queue[0]))
             event = self._process_next_event()
             self.timeline.append((self.clock, event))
+            # print(" Done processing")
 
         return self.clock
+
+    def schedule(self, event):
+        # print("Scheduling {0}".format(event))
+        super().schedule(event)
 
 
 def build_halfadder(name):
@@ -82,19 +88,27 @@ class BackendCoreTest(unittest.TestCase):
     def test_priority_queue(self):
         c = TestingCore()  # We don't start the process. That would be messy
 
-        ct = CallTrack(result_fu=lambda: [])
-        ct2 = CallTrack(result_fu=lambda: [])
+        ct = CallTrack(result_fu=lambda x: [])
+        ct2 = CallTrack(result_fu=lambda x: [])
+        ct3 = CallTrack(result_fu=lambda x: [])
 
-        e1 = Event(10, ct.slot)
-        e2 = Event(100, ct2.slot)
+        e1 = Event(10, 0, ct.slot)
+        e2 = Event(100, 0, ct2.slot)
+        e3 = Event(100, 0, ct2.slot)
+        e4 = Event(100, 1, ct3.slot)
+
         c.schedule(e1)
         c.schedule(e2)
+        c.schedule(e3)
+        c.schedule(e4)
 
         c.loop_until_stable_state_or_time()
 
-        self.assertListEqual([(10, e1), (100, e2)], c.timeline)
-        self.assertListEqual([()], ct())
-        self.assertListEqual([()], ct2())
+        self.assertListEqual([(10, e1), (100, e3), (100, e2), (100, e4)],
+                             c.timeline)
+        self.assertListEqual([True], ct())
+        self.assertListEqual([False, True], ct2())
+        self.assertListEqual([True], ct3())
 
     def test_element_behavior(self):
         # Build a simple half-adder
