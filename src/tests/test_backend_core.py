@@ -22,8 +22,8 @@ class TestingCore(Core):
         self.timeline = []
 
     def loop_until_stable_state_or_time(self, time=None):
-        while not self.queue.empty():
-            if time is not None and self.queue.queue[0].when >= time:
+        while not self.eventQueue.empty():
+            if time is not None and self.eventQueue.queue[0].when >= time:
                 return time
 
             # print(" Processing {0}".format(self.queue.queue[0]))
@@ -81,6 +81,15 @@ def build_fulladder(name):
     return full_adder
 
 
+class FuEvent(Event):
+    def __init__(self, when, group, fu):
+        super().__init__(when, group)
+        self.fu = fu
+
+    def process(self, last):
+        return self.fu(last)
+
+
 class BackendCoreTest(unittest.TestCase):
     """
     Unit tests for backend core including some element integration tests.
@@ -93,10 +102,10 @@ class BackendCoreTest(unittest.TestCase):
         ct2 = CallTrack(result_fu=lambda x: [])
         ct3 = CallTrack(result_fu=lambda x: [])
 
-        e1 = Event(10, 0, ct.slot)
-        e2 = Event(100, 0, ct2.slot)
-        e3 = Event(100, 0, ct2.slot)
-        e4 = Event(100, 1, ct3.slot)
+        e1 = FuEvent(10, 0, ct.slot)
+        e2 = FuEvent(100, 0, ct2.slot)
+        e3 = FuEvent(100, 0, ct2.slot)
+        e4 = FuEvent(100, 1, ct3.slot)
 
         c.schedule(e1)
         c.schedule(e2)

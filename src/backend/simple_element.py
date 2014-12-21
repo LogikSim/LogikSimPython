@@ -23,7 +23,7 @@ class OutEdge(Event):
     OUT_EDGE_GROUP = -1
 
     def __init__(self, when, element, output, state):
-        super().__init__(when, self.OUT_EDGE_GROUP, self._process)
+        super().__init__(when, self.OUT_EDGE_GROUP)
         self.element = element
         self.output = output
         self.state = state
@@ -38,7 +38,7 @@ class OutEdge(Event):
             and self.state == other.state\
             and self.when == other.when
 
-    def _process(self, last):
+    def process(self, last):
         return self.element._output(self.when, self.output, self.state)
 
 

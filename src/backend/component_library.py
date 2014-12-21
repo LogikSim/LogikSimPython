@@ -5,6 +5,7 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
+from abc import ABCMeta
 
 
 class ComponentType(object):
@@ -20,10 +21,10 @@ class ComponentType(object):
 
     @classmethod
     def instantiate(cls, id, additional_metadata={}):
-        assert False, "Component type must implement instantiation method"
+        pass
 
 
-class ComponentInstance(object):
+class ComponentInstance(metaclass=ABCMeta):
     def __init__(self, metadata, component_type):
         assert "id" in metadata
 

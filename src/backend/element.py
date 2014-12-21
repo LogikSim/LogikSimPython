@@ -7,6 +7,7 @@
 #
 from backend.event import Event
 from backend.component_library import ComponentInstance
+from abc import abstractmethod
 
 
 class Edge(Event):
@@ -22,7 +23,7 @@ class Edge(Event):
         :param input: Index of the input the signal edge will occur on
         :param state: Signal value after the edge (True/False) at time `when`
         """
-        super().__init__(when, id(element), self._process)
+        super().__init__(when, id(element))
         self.element = element
         self.input = input
         self.state = state
@@ -37,7 +38,7 @@ class Edge(Event):
             and self.state == other.state \
             and self.when == other.when
 
-    def _process(self, last):
+    def process(self, last):
         """Edge only knows handler functions so this function implements one"""
         self.element.edge(self.input, self.state)
 
@@ -57,6 +58,7 @@ class Element(ComponentInstance):
     def __init__(self, metadata, component_type):
         super().__init__(metadata, component_type)
 
+    @abstractmethod
     def edge(self, input, state):
         """
         Handles a rising or falling edge on one of the elements inputs.
@@ -65,8 +67,9 @@ class Element(ComponentInstance):
         :param state: Value of the input (True/False) at time `when`
         :return: List of none or more future Event s
         """
-        assert False, "Elements must implement input edge handling"
+        pass
 
+    @abstractmethod
     def clock(self, when):
         """
         Triggered when all egdes for a point in time have been received.
@@ -74,15 +77,17 @@ class Element(ComponentInstance):
         :param when: Point in time
         :return: List of none or more future Event s
         """
-        assert False, "Elements must implement clock handling"
+        pass
 
+    @abstractmethod
     def reset(self, when):
         """
         Emulates an input reset resulting in edge events for every output.
         :return: Edge events for every output.
         """
-        assert False, "Elements must implement reset handling"
+        pass
 
+    @abstractmethod
     def connect(self, element, output=0, input=0):
         """
         Connects an element output to another elements input.
@@ -92,7 +97,7 @@ class Element(ComponentInstance):
         :param input: Input on given element to connect to
         :return: True if successfully connected
         """
-        assert False, "Elements must implement output connection handling"
+        pass
 
     def disconnect(self, output):
         """

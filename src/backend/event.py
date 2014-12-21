@@ -5,10 +5,12 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
+from abc import ABCMeta, abstractmethod
 
 
-class Event(object):
-    def __init__(self, when, group, process):
+class Event(metaclass=ABCMeta):
+    @abstractmethod
+    def __init__(self, when, group):
         """
         Creates a new event scheduled at a given time.
 
@@ -19,8 +21,17 @@ class Event(object):
                         to schedule.
         """
         self.when = when
-        self.process = process
         self.group = group
+
+    @abstractmethod
+    def process(self, last_in_group):
+        """
+        Called for processing events.
+        :param last_in_group: True if this is the last even of the group
+        handled at self.when
+        :return: None or more new Events to schedule
+        """
+        pass
 
     def __str__(self):
         return "Event({0},{1},{2})".format(self.when, self.group, self.process)
