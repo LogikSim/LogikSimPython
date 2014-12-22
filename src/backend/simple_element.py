@@ -47,6 +47,7 @@ class SimpleElement(Element):
     Wasteful but should do fine for quick and dirty development experiments.
     """
     def __init__(self,
+                 parent,
                  metadata,
                  component_type,
                  logic_function):
@@ -59,7 +60,7 @@ class SimpleElement(Element):
         :param output_count: Number of output latches for the element
         :param delay: Propagation delay inside this logic element
         """
-        super().__init__(metadata, component_type)
+        super().__init__(parent, metadata, component_type)
 
         input_count = self.get_metadata_field("#inputs")
         output_count = self.get_metadata_field("#outputs")
@@ -67,6 +68,10 @@ class SimpleElement(Element):
 
         self.input_states = array('i', [False] * input_count)
         self.output_states = array('i', [False] * output_count)
+
+        self.set_metadata_field('inputs', list(self.input_states), False)
+        self.set_metadata_field('outputs', list(self.output_states), False)
+
         self.outputs = [(None, 0)] * output_count
         self.delay = delay
         self.logic_function = logic_function
@@ -103,6 +108,8 @@ class SimpleElement(Element):
             .format(input, len(self.input_states))
 
         self.input_states[input] = state  # Inputs apply immediately
+
+        self.set_metadata_field('inputs', list(self.input_states))
 
     def clock(self, when):
         """
@@ -141,6 +148,7 @@ class SimpleElement(Element):
             return []
 
         self.output_states[output] = state
+        self.set_metadata_field('outputs', list(self.output_states))
 
         element, input = self.outputs[output]
         if element is None:

@@ -53,3 +53,11 @@ class ModelIndexMock:
 
     def isValid(self):
         return self._valid
+
+
+class ElementParentMock:
+    def __init__(self):
+        self.history = []
+
+    def propagate_change(self, data):
+        self.history.append(data)

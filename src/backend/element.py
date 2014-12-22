@@ -55,8 +55,8 @@ class Element(ComponentInstance):
     """
     Baseclass for all Elements that are part of the simulation.
     """
-    def __init__(self, metadata, component_type):
-        super().__init__(metadata, component_type)
+    def __init__(self, parent, metadata, component_type):
+        super().__init__(parent, metadata, component_type)
 
     @abstractmethod
     def edge(self, input, state):

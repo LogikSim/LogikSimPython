@@ -8,6 +8,7 @@ import unittest
 
 from backend.components.interconnect import Interconnect
 from backend.element import Edge
+from tests.mocks import ElementParentMock
 
 
 class InterconnectTest(unittest.TestCase):
@@ -16,13 +17,15 @@ class InterconnectTest(unittest.TestCase):
     """
 
     def test_empty_interconnect(self):
-        empty = Interconnect.instantiate(0)
+        p = ElementParentMock()
+        empty = Interconnect.instantiate(0, p)
         empty.edge(0, True)
         self.assertListEqual([], empty.clock(0))
         self.assertTrue(empty.state)
 
     def test_edge_forward(self):
-        i = Interconnect.instantiate(0)
+        p = ElementParentMock()
+        i = Interconnect.instantiate(0, p)
 
         class Foo:
             pass

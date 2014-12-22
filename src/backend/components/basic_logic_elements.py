@@ -22,18 +22,16 @@ class And(ComponentType):
                 "delay": 1}
 
     @classmethod
-    def instantiate(cls, id, additional_metadata={}):
+    def instantiate(cls, id, parent, additional_metadata={}):
         metadata = copy(additional_metadata)
         metadata["id"] = id
-        return AndInstance(metadata)
+        return AndInstance(parent, metadata)
 
 
 class AndInstance(SimpleElement):
-    def __init__(self, additional_metadata):
-        super().__init__(
-            additional_metadata,
-            component_type=And,
-            logic_function=lambda inputs: [all(inputs)],)
+    def __init__(self, parent, additional_metadata):
+        super().__init__(parent, additional_metadata, And,
+                         lambda inputs: [all(inputs)],)
 
 
 class Or(ComponentType):
@@ -48,18 +46,16 @@ class Or(ComponentType):
                 "delay": 1}
 
     @classmethod
-    def instantiate(cls, id, additional_metadata={}):
+    def instantiate(cls, id, parent, additional_metadata={}):
         metadata = copy(additional_metadata)
         metadata["id"] = id
-        return OrInstance(metadata)
+        return OrInstance(parent, metadata)
 
 
 class OrInstance(SimpleElement):
-    def __init__(self, additional_metadata):
-        super().__init__(
-            additional_metadata,
-            component_type=Or,
-            logic_function=lambda inputs: [any(inputs)],)
+    def __init__(self, parent, additional_metadata):
+        super().__init__(parent, additional_metadata, And,
+                         lambda inputs: [any(inputs)],)
 
 
 class Xor(ComponentType):
@@ -74,18 +70,16 @@ class Xor(ComponentType):
                 "delay": 1}
 
     @classmethod
-    def instantiate(cls, id, additional_metadata={}):
+    def instantiate(cls, id, parent, additional_metadata={}):
         metadata = copy(additional_metadata)
         metadata["id"] = id
-        return XorInstance(metadata)
+        return XorInstance(parent, metadata)
 
 
 class XorInstance(SimpleElement):
-    def __init__(self, additional_metadata):
-        super().__init__(
-            additional_metadata,
-            component_type=Xor,
-            logic_function=lambda inputs: [sum(inputs) == 1],)
+    def __init__(self, parent, additional_metadata):
+        super().__init__(parent, additional_metadata, Xor,
+                         lambda inputs: [sum(inputs) == 1],)
 
 
 class Nand(ComponentType):
@@ -100,18 +94,16 @@ class Nand(ComponentType):
                 "delay": 1}
 
     @classmethod
-    def instantiate(cls, id, additional_metadata={}):
+    def instantiate(cls, element_id, parent, additional_metadata={}):
         metadata = copy(additional_metadata)
-        metadata["id"] = id
-        return NandInstance(metadata)
+        metadata["id"] = element_id
+        return NandInstance(parent, metadata)
 
 
 class NandInstance(SimpleElement):
-    def __init__(self, additional_metadata):
-        super().__init__(
-            additional_metadata,
-            component_type=Nand,
-            logic_function=lambda inputs: [not all(inputs)],)
+    def __init__(self, parent, additional_metadata):
+        super().__init__(parent, additional_metadata, Nand,
+                         lambda inputs: [not all(inputs)],)
 
 
 class Nor(ComponentType):
@@ -126,23 +118,21 @@ class Nor(ComponentType):
                 "delay": 1}
 
     @classmethod
-    def instantiate(cls, id, additional_metadata={}):
+    def instantiate(cls, id, parent, additional_metadata={}):
         metadata = copy(additional_metadata)
         metadata["id"] = id
-        return NorInstance(metadata)
+        return NorInstance(parent, metadata)
 
 
 class NorInstance(SimpleElement):
-    def __init__(self, additional_metadata):
-        super().__init__(
-            additional_metadata,
-            component_type=Nor,
-            logic_function=lambda inputs: [not any(inputs)],)
+    def __init__(self, parent, additional_metadata):
+        super().__init__(parent, additional_metadata, Nor,
+                         lambda inputs: [not any(inputs)],)
 
 
 def register(library):
-    library.register_type(And)
-    library.register_type(Or)
-    library.register_type(Xor)
-    library.register_type(Nand)
-    library.register_type(Nor)
+    library.register(And)
+    library.register(Or)
+    library.register(Xor)
+    library.register(Nand)
+    library.register(Nor)

@@ -9,7 +9,7 @@ import unittest
 
 from backend.components.compound_element import CompoundElement
 from backend.components.interconnect import Interconnect
-
+from tests.mocks import ElementParentMock
 
 class CompoundElementTest(unittest.TestCase):
     """
@@ -17,14 +17,15 @@ class CompoundElementTest(unittest.TestCase):
     """
 
     def test_pass_through(self):
-        e = CompoundElement.instantiate(0, {})
+        p = ElementParentMock()
+        e = CompoundElement.instantiate(0, p)
 
         e.input_bank.connect(e.output_bank, 0, 1)
         e.input_bank.connect(e.output_bank, 2, 3)
         e.input_bank.connect(e.output_bank, 5, 6)
 
-        ins = [Interconnect.instantiate(i) for i in range(0, 6)]
-        outs = [Interconnect.instantiate(i*10) for i in range(0, 6)]
+        ins = [Interconnect.instantiate(i, p) for i in range(0, 6)]
+        outs = [Interconnect.instantiate(i*10, p) for i in range(0, 6)]
 
         for i in range(0, 6):
             ins[i].connect(e, input=i)

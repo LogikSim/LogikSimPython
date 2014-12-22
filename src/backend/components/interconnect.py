@@ -19,10 +19,10 @@ class Interconnect(ComponentType):
                 "description": __doc__}
 
     @classmethod
-    def instantiate(cls, id, additional_metadata={}):
+    def instantiate(cls, element_id, parent, additional_metadata={}):
         metadata = copy(additional_metadata)
-        metadata["id"] = id
-        return InterconnectInstance(metadata)
+        metadata["id"] = element_id
+        return InterconnectInstance(parent, metadata)
 
 
 class InterconnectInstance(Element):
@@ -36,8 +36,8 @@ class InterconnectInstance(Element):
     """
     PROPAGATION_CONSTANT = 1  # One time unit per length unit
 
-    def __init__(self, metadata):
-        super().__init__(metadata, Interconnect)
+    def __init__(self, parent, metadata):
+        super().__init__(parent, metadata, Interconnect)
 
         self.endpoints = []
         self.state = False

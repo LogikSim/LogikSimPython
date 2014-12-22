@@ -19,18 +19,18 @@ class InputOutputBank(ComponentType):
                 "description": "Input out bank used in compound elements"}
 
     @classmethod
-    def instantiate(cls, id, additional_metadata):
+    def instantiate(cls, element_id, parent, additional_metadata={}):
         metadata = copy(additional_metadata)
-        metadata["id"] = id
-        return InputOutputBankInstance(metadata)
+        metadata["id"] = element_id
+        return InputOutputBankInstance(parent, metadata)
 
 
 class InputOutputBankInstance(Element):
     """
     Zero latency indirection element instance.
     """
-    def __init__(self, metadata):
-        super().__init__(metadata, InputOutputBank)
+    def __init__(self, parent, metadata):
+        super().__init__(parent, metadata, InputOutputBank)
         self.mapping = {}
 
     def connect(self, element, output=0, input=0):
@@ -87,21 +87,21 @@ class CompoundElement(ComponentType):
                 "description": "Element consisting of multiple other elements"}
 
     @classmethod
-    def instantiate(cls, id, additional_metadata):
+    def instantiate(cls, element_id, parent, additional_metadata={}):
         metadata = copy(additional_metadata)
-        metadata["id"] = id
-        return CompoundElementInstance(metadata)
+        metadata["id"] = element_id
+        return CompoundElementInstance(parent, metadata)
 
 
 class CompoundElementInstance(Element):
     """
     Element wrapping other elements
     """
-    def __init__(self, metadata):
-        super().__init__(metadata, CompoundElement)
+    def __init__(self, parent, metadata):
+        super().__init__(parent, metadata, CompoundElement)
 
-        self.input_bank = InputOutputBank.instantiate(0, {})  # FIXME: ID
-        self.output_bank = InputOutputBank.instantiate(1, {})  # FIXME: ID
+        self.input_bank = InputOutputBank.instantiate(0, self)  # FIXME: ID
+        self.output_bank = InputOutputBank.instantiate(1, self)  # FIXME: ID
 
     def __str__(self):
         return "CompoundElement(name={0})"\

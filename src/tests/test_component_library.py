@@ -9,6 +9,7 @@ import unittest
 
 import backend.component_library as cl
 from backend.components import And, Xor
+from tests.mocks import ElementParentMock
 
 
 class ComponentLibraryTests(unittest.TestCase):
@@ -17,14 +18,15 @@ class ComponentLibraryTests(unittest.TestCase):
     """
 
     def test_component_instantiation(self):
+        p = ElementParentMock()
         lib = cl.get_library()
-        a = lib.instantiate_type(And.GUID())
+        a = lib.instantiate(And.GUID(), p)
         self.assertEqual("And", a.get_metadata_field("name"))
 
-        x = lib.instantiate_type(Xor.GUID())
+        x = lib.instantiate(Xor.GUID(), p)
         self.assertEqual("Xor", x.get_metadata_field("name"))
 
     def test_invalid_behavior(self):
         lib = cl.get_library()
 
-        self.assertRaises(AssertionError, lib.instantiate_type, "UNOBTAINIUM")
+        self.assertRaises(AssertionError, lib.instantiate, "UNOBTAINIUM", None)

@@ -14,8 +14,8 @@ from backend.components.interconnect import Interconnect
 from backend.components.compound_element import CompoundElement
 
 register(get_library())  # Register components
-get_library().register_type(Interconnect)
-get_library().register_type(CompoundElement)
+get_library().register(Interconnect)
+get_library().register(CompoundElement)
 
 __all__ = ('And', 'Or', 'Xor', 'Nand', 'Nor', 'Interconnect',
            'CompoundElement')
