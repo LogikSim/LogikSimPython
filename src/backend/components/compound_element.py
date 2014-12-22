@@ -100,8 +100,9 @@ class CompoundElementInstance(Element):
     def __init__(self, parent, metadata):
         super().__init__(parent, metadata, CompoundElement)
 
-        self.input_bank = InputOutputBank.instantiate(0, self)  # FIXME: ID
-        self.output_bank = InputOutputBank.instantiate(1, self)  # FIXME: ID
+        lib = self.get_library()
+        self.input_bank = lib.instantiate(InputOutputBank.GUID(), self)
+        self.output_bank = lib.instantiate(InputOutputBank.GUID(), self)
 
     def __str__(self):
         return "CompoundElement(name={0})"\

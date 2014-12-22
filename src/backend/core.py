@@ -115,7 +115,7 @@ class Core(Process):
         self.connections = []  # (source_id, source_port, sink_id, sink_port)
         self.connect_from = {}  # ID -> port -> connection
         self.connect_to = {}  # ID -> port -> connection
-
+        self.top_level_elements = []
         self.library = library
 
     def __str__(self):
@@ -156,6 +156,13 @@ class Core(Process):
         :return:
         """
         self.channel_out.put(data)
+
+    def get_library(self):
+        return self.library
+
+    def child_added(self, child):
+        # FIXME: Jucky hack...figure out how to clean this up
+        self.top_level_elements.append(child)
 
     def run(self):
         self.quit = False

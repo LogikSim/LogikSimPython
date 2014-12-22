@@ -11,11 +11,13 @@ from backend.components.basic_logic_elements import And, Or, Xor, Nand, Nor, \
     register
 
 from backend.components.interconnect import Interconnect
-from backend.components.compound_element import CompoundElement
+from backend.components.compound_element import CompoundElement,\
+    InputOutputBank
 
 register(get_library())  # Register components
 get_library().register(Interconnect)
 get_library().register(CompoundElement)
+get_library().register(InputOutputBank)
 
 __all__ = ('And', 'Or', 'Xor', 'Nand', 'Nor', 'Interconnect',
-           'CompoundElement')
+           'CompoundElement', 'InputOutputBank')

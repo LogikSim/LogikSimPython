@@ -29,8 +29,14 @@ class ComponentInstance(metaclass=ABCMeta):
         assert "id" in metadata
 
         self.parent = parent
+        self.children = []
         self.metadata = metadata
         self.component_type = component_type
+
+        self.parent.child_added(self)
+
+    def child_added(self, child):
+        self.children.append(child)
 
     def id(self):
         return self.get_metadata_field("id")
@@ -46,6 +52,9 @@ class ComponentInstance(metaclass=ABCMeta):
         """
         self.parent.propagate_change(data)
 
+    def get_library(self):
+        return self.parent.get_library()
+
     def get_metadata_field(self, field, default=None):
         return self.metadata.get(field,
                                  self.component_type.get_metadata_field(
@@ -58,10 +67,17 @@ class ComponentInstance(metaclass=ABCMeta):
         if propagate and value != previous_value:
             self.propagate_change({'id': self.id(), field: value})
 
+    def destruct(self):
+        for child in self.children:
+            child.destruct()
+
+        self.propagate_change({'id': self.id(), 'GUID': None})  # FIXME: Yuk
+
 class ComponentLibrary(object):
     def __init__(self):
         self.component_types = {}
         self.id_counter = 0
+        self.elements = {}
 
     def register(self, component_type):
         guid = component_type.GUID()
@@ -77,10 +93,18 @@ class ComponentLibrary(object):
         instance = self.component_types[guid].instantiate(self.id_counter,
                                                           parent,
                                                           additional_metadata)
+
+        self.elements[self.id_counter] = instance
         self.id_counter += 1
 
         return instance
 
+    def destruct(self, id):
+        element = self.elements.get(id)
+        if not element:
+            return False
+
+        element.destruct()
 
 global_component_library = ComponentLibrary()
 

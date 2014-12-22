@@ -14,6 +14,7 @@ from backend.components.compound_element import CompoundElement
 from backend.element import Edge
 from backend.components.interconnect import Interconnect
 from backend.component_library import ComponentLibrary
+from backend.component_library import get_library
 from tests.helpers import CallTrack
 
 
@@ -162,7 +163,7 @@ class BackendCoreTest(unittest.TestCase):
 
     def test_compound_element_behavior(self):
         # Test the half adder wrapped in a compound element
-        core = TestingCore()  # We don't start the process. That would be messy
+        core = TestingCore(get_library())
 
         s = Interconnect.instantiate(0, core)
         carry = Interconnect.instantiate(1, core)
@@ -237,7 +238,7 @@ class BackendCoreTest(unittest.TestCase):
         self.assertTrue(nq.state)
 
     def test_compound(self):
-        core = TestingCore()
+        core = TestingCore(get_library())
 
         fa = build_fulladder("fa", core)
         carry = Interconnect.instantiate(0, core)
