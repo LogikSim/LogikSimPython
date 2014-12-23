@@ -5,6 +5,47 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
+from abc import ABCMeta, abstractmethod
+
+
+class Handler(metaclass=ABCMeta):
+    """
+    The handler class can be registered with a controller for receiving
+    access to item updates outside of the backend.
+    """
+    def __init__(self):
+        self._channel_in = None
+
+    def _connect(self, channel_in):
+        """
+        Used by Controller to connect handler.
+
+        :param channel_in: Channel poll will take updates from.
+        """
+        self._channel_in = channel_in
+
+    def poll(self):
+        """
+        Called to process queued up updates in correct process context.
+        Calls handle once for each request.
+        :return: True if no more updates to handle. False if some remain.
+        """
+        assert self._channel_in is not None,\
+            "Handler must be connected to controller"
+
+        while not self._channel_in.empty() and \
+                self.handle(self._channel_in.get_nowait()):
+            pass
+
+        return self._channel_in.empty()
+
+    @abstractmethod
+    def handle(self, update):
+        """
+        This method will receive updates in the form of data dictionaries.
+        :return: True to keep processing. False to abort current poll loop.
+        """
+        pass
 
 
 class Interface:
@@ -18,7 +59,7 @@ class Interface:
         :param channel_out:
         :return:
         """
-        self.channel_out = channel_out
+        self._channel_out = channel_out
 
     def schedule_edge(self, element_id, input, state):
         """
@@ -27,7 +68,7 @@ class Interface:
         :param input: Input pin index
         :param state: State to transition to
         """
-        self.channel_out.put(
+        self._channel_out.put(
             {
                 'action': 'edge',
                 'id': element_id,
@@ -46,7 +87,7 @@ class Interface:
         :param parent: Optional parent element id
         :param additional_metadata: Additional meta-data to create element with
         """
-        self.channel_out.put(
+        self._channel_out.put(
             {
                 'action': 'create',
                 'GUID': guid,
@@ -56,7 +97,7 @@ class Interface:
         )
 
     def update_element(self, element_id, changed_metadata={}):
-        self.channel_out.put(
+        self._channel_out.put(
             {
                 'action': 'update',
                 'id': element_id,
@@ -65,7 +106,7 @@ class Interface:
         )
 
     def delete_element(self, element_id):
-        self.channel_out.put(
+        self._channel_out.put(
             {
                 'action': 'delete',
                 'id': element_id
@@ -73,7 +114,7 @@ class Interface:
         )
 
     def request_element_information(self, element_id):
-        self.channel_out.put(
+        self._channel_out.put(
             {
                 'action': 'query',
                 'id': element_id
@@ -81,7 +122,7 @@ class Interface:
         )
 
     def connect(self, source_id, source_port, sink_id, sink_port, delay):
-        self.channel_out.put(
+        self._channel_out.put(
             {
                 'action': 'connect',
                 'source_id': source_id,
@@ -93,7 +134,7 @@ class Interface:
         )
 
     def exit(self):
-        self.channel_out.put(
+        self._channel_out.put(
             {
                 'action': 'quit'
             }

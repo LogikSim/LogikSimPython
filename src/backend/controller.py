@@ -5,7 +5,7 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
-from queue import Queue
+import multiprocessing
 from backend.interface import Interface
 import time
 
@@ -23,8 +23,8 @@ class Controller:
     def __init__(self, core, library):
         self._core = core
         self._library = library
-        self._channel_out = Queue()
-        self._channel_in = Queue()
+        self._channel_out = multiprocessing.Queue()
+        self._channel_in = multiprocessing.Queue()
 
         self.elements = {}  # ID -> element in simulation
         self.connections = []  # (source_id, source_port, sink_id, sink_port)
@@ -47,6 +47,9 @@ class Controller:
     def get_interface(self):
         return Interface(self._channel_in)
 
+    def connect_handler(self, handler):
+        handler._connect(self.get_channel_out())
+
     def get_core(self):
         return self._core
 
@@ -60,7 +63,7 @@ class Controller:
         parent = self.elements.get(command.get("parent"))
         element = self._library.instantiate(
             command['GUID'],
-            self if not parent else parent,
+            parent if parent else self,
             command['metadata'])
 
         element_id = element.id()

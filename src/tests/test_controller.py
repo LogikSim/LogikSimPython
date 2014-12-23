@@ -7,7 +7,8 @@
 #
 import unittest
 from backend.controller import Controller
-from helpers import CallTrack
+from backend.interface import Handler
+from helpers import CallTrack, drain_queue, try_repeatedly
 
 
 class ElementMock:
@@ -47,6 +48,8 @@ class ControllerTest(unittest.TestCase):
         i.create_element("FOO")
         i.create_element("BAR")
 
+        # Work around multiprocessing.Queue insertion delay
+        try_repeatedly(lambda: not ctrl.get_channel_in().empty())
         ctrl.process(0)
 
         self.assertListEqual([("FOO", ctrl, {}),
@@ -81,6 +84,8 @@ class ControllerTest(unittest.TestCase):
         i.update_element(1, {'foo': 'buz',
                              'bernd': 'bread'})
 
+        # Work around multiprocessing.Queue insertion delay
+        try_repeatedly(lambda: not ctrl.get_channel_in().empty())
         ctrl.process(0)
 
         self.assertEqual(1, id_counter)
@@ -102,11 +107,15 @@ class ControllerTest(unittest.TestCase):
         ctrl.propagate_change({'id': 1,
                                'foo': 'bar'})
 
-        # def get_library(self):
-        self.assertIs(lib, ctrl.get_library())
+        # Work around multiprocessing.Queue insertion delay
+        try_repeatedly(lambda: not ctrl.get_channel_out().empty())
+
         self.assertListEqual([{'id': 1,
                                'foo': 'bar'}],
-                             list(ctrl.get_channel_out().queue))
+                             drain_queue(ctrl.get_channel_out()))
+
+        # def get_library(self):
+        self.assertIs(lib, ctrl.get_library())
 
         # def child_added(self, child):
         class El:
@@ -116,3 +125,46 @@ class ControllerTest(unittest.TestCase):
         ctrl.child_added(e)
 
         self.assertListEqual([e], ctrl._top_level_elements)
+
+    def test_controller_handler(self):
+        updates = []
+
+        class HandlerMock(Handler):
+            def handle(self, update):
+                updates.append(update)
+                return True
+
+        id_counter = 0
+        root = None
+
+        def instantiate_mock(guid, parent, metadata):
+            nonlocal id_counter
+            nonlocal root
+            root = parent
+            id_counter += 1
+            return ElementMock({'GUID': guid,
+                                'id': id_counter})
+
+        handler = HandlerMock()
+        library_emu = CallTrack(tracked_member="instantiate",
+                                result_fu=instantiate_mock)
+
+        ctrl = Controller(core=None, library=library_emu)
+        ctrl.connect_handler(handler)
+
+        i = ctrl.get_interface()
+        i.create_element("FOO")
+
+        # Work around multiprocessing.Queue insertion delay
+        try_repeatedly(lambda: not ctrl.get_channel_in().empty())
+        ctrl.process(0)
+
+        root.propagate_change({'foo': 'bar'})
+        root.propagate_change({'fiz': 'buz'})
+
+        # Work around multiprocessing.Queue insertion delay
+        try_repeatedly(lambda: not ctrl.get_channel_out().empty())
+        handler.poll()
+
+        self.assertListEqual([{'foo': 'bar'},
+                              {'fiz': 'buz'}], updates)
