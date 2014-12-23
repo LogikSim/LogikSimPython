@@ -12,7 +12,6 @@ from backend.simple_element import OutEdge
 from backend.components.basic_logic_elements import And, Or, Xor
 
 
-
 class BasicLogicElementTest(unittest.TestCase):
     """
     Unit tests for basic logic elements.

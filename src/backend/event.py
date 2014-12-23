@@ -15,7 +15,10 @@ class Event(metaclass=ABCMeta):
         Creates a new event scheduled at a given time.
 
         :param when: Simulation time to schedule this event to.
-        :param group: Value used to group events
+        :param group: Integer value used to group events. Events occurring at
+            the same time with the same group are guaranteed to be executed
+            consecutively with the last one receiving the last_in_group flag
+            during processing.
         :param process: Called with state to process event. Must
                         return a list of one or more future Events
                         to schedule.
@@ -28,7 +31,7 @@ class Event(metaclass=ABCMeta):
         """
         Called for processing events.
         :param last_in_group: True if this is the last even of the group
-        handled at self.when
+            handled at self.when
         :return: None or more new Events to schedule
         """
         pass

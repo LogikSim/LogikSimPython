@@ -12,6 +12,7 @@ from backend.components.interconnect import Interconnect
 from backend.component_library import get_library
 from tests.mocks import ElementParentMock
 
+
 class CompoundElementTest(unittest.TestCase):
     """
     Unit tests for compound element.

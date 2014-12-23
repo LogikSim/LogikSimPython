@@ -20,6 +20,7 @@ class Core(Process):
         self.event_queue = PriorityQueue()
 
         self.clock = -1
+        self.retired_events = 0
         self.group = None
 
         self._quit = False
@@ -30,17 +31,20 @@ class Core(Process):
 
     def _process_next_event(self, upto_clock):
         """
-        Broken out inner core of event processing loop for easier testing.
-        :param upto_clock: Only process events scheduled up to this time
-        :return: Processed event or None if nothing was pending or
+        Broken out inner core of event processing loop.
+        :param upto_clock: Only process events scheduled up to this time. -1
+            for executing till stable state.
+        :return: Processed event or None if nothing was pending or clock
+            limit reached
         """
 
         if self.event_queue.empty() or \
-           self.event_queue.queue[0].when > upto_clock:
+                self.event_queue.queue[0].when > upto_clock:
             # If queue is empty circuit is steady state so simulation is
             # infinitely fast. Also we need this clock behavior to make delta
             # timing in the controller work. It totally makes sense though ;)
             self.clock = upto_clock
+
             return None
 
         event = self.event_queue.get_nowait()
@@ -54,8 +58,10 @@ class Core(Process):
             self.event_queue.queue[0].group != self.group or \
             self.event_queue.queue[0].when != self.clock
 
-        for new_event in event.process(last_in_group):
-            self.schedule(new_event)
+        followup_events = event.process(last_in_group)
+        self.retired_events += 1
+
+        self.schedule_many(followup_events)
 
         return event
 

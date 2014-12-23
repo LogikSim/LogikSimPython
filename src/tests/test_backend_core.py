@@ -8,6 +8,7 @@
 import unittest
 
 from backend.core import Core
+from backend.controller import Controller
 from backend.event import Event
 from backend.components.basic_logic_elements import Xor, And, Nor, Or
 from backend.components.compound_element import CompoundElement
@@ -19,17 +20,18 @@ from tests.helpers import CallTrack
 
 
 class TestingCore(Core):
-    def __init__(self, library=ComponentLibrary()):
+    def __init__(self, library=None):
+        library = library if not library else ComponentLibrary()
         super().__init__(library)
         self.timeline = []
 
-    def loop_until_stable_state_or_time(self, time=None):
+    def loop_until_stable_state_or_time(self, time=float("inf")):
         while not self.event_queue.empty():
-            if time is not None and self.event_queue.queue[0].when >= time:
+            if self.event_queue.queue[0].when >= time:
                 return time
 
             # print(" Processing {0}".format(self.queue.queue[0]))
-            event = self._process_next_event()
+            event = self._process_next_event(time)
             self.timeline.append((self.clock, event))
             # print(" Done processing")
 
@@ -38,6 +40,13 @@ class TestingCore(Core):
     def schedule(self, event):
         # print("Scheduling {0}".format(event))
         super().schedule(event)
+
+
+class TestingController(Controller):
+    def __init__(self, core=None, library=None):
+        core = core if core else TestingCore()
+        library = library if library else ComponentLibrary()
+        super().__init__(core, library)
 
 
 def build_halfadder(name, parent):
@@ -125,17 +134,17 @@ class BackendCoreTest(unittest.TestCase):
         self.assertListEqual([True], ct3())
 
     def test_element_behavior(self):
-        core = TestingCore()  # We don't start the process. That would be messy
+        ctrl = TestingController()
 
         # Build a simple half-adder
-        a = Interconnect.instantiate(0, core)
-        b = Interconnect.instantiate(1, core)
+        a = Interconnect.instantiate(0, ctrl)
+        b = Interconnect.instantiate(1, ctrl)
 
-        s = Interconnect.instantiate(2, core)
-        c = Interconnect.instantiate(3, core)
+        s = Interconnect.instantiate(2, ctrl)
+        c = Interconnect.instantiate(3, ctrl)
 
-        xor_gate = Xor.instantiate(4, core)
-        and_gate = And.instantiate(5, core)
+        xor_gate = Xor.instantiate(4, ctrl)
+        and_gate = And.instantiate(5, ctrl)
 
         a.connect(xor_gate)
         a.connect(and_gate)
@@ -146,6 +155,7 @@ class BackendCoreTest(unittest.TestCase):
         xor_gate.connect(s)
         and_gate.connect(c)
 
+        core = ctrl.get_core()
         core.schedule(Edge(10, a, 0, True))
         core.schedule(Edge(15, b, 0, True))
 
@@ -163,14 +173,16 @@ class BackendCoreTest(unittest.TestCase):
 
     def test_compound_element_behavior(self):
         # Test the half adder wrapped in a compound element
-        core = TestingCore(get_library())
+        ctrl = TestingController(library=get_library())
 
-        s = Interconnect.instantiate(0, core)
-        carry = Interconnect.instantiate(1, core)
+        s = Interconnect.instantiate(0, ctrl)
+        carry = Interconnect.instantiate(1, ctrl)
 
-        ha = build_halfadder("ha1", core)
+        ha = build_halfadder("ha1", ctrl)
         ha.connect(s, 0)
         ha.connect(carry, 1)
+
+        core = ctrl.get_core()
 
         core.schedule(Edge(10, ha, 0, True))
         self.assertGreater(100, core.loop_until_stable_state_or_time(100))
@@ -193,17 +205,17 @@ class BackendCoreTest(unittest.TestCase):
         self.assertFalse(carry.state)
 
     def test_stabilization(self):
-        core = TestingCore()  # We don't start the process. That would be messy
+        ctrl = TestingController()
 
         # Build a basic RS flip-flop
-        r = Interconnect.instantiate(0, core)
-        s = Interconnect.instantiate(1, core)
+        r = Interconnect.instantiate(0, ctrl)
+        s = Interconnect.instantiate(1, ctrl)
 
-        nor_r = Nor.instantiate(2, core)
-        nor_s = Nor.instantiate(3, core)
+        nor_r = Nor.instantiate(2, ctrl)
+        nor_s = Nor.instantiate(3, ctrl)
 
-        q = Interconnect.instantiate(4, core)
-        nq = Interconnect.instantiate(5, core)
+        q = Interconnect.instantiate(4, ctrl)
+        nq = Interconnect.instantiate(5, ctrl)
 
         r.connect(nor_r)
         s.connect(nor_s)
@@ -213,6 +225,8 @@ class BackendCoreTest(unittest.TestCase):
 
         nor_r.connect(q)
         nor_s.connect(nq)
+
+        core = ctrl.get_core()
 
         core.schedule(Edge(0, r, 0, False))  # Make sure we don't oscillate
         core.schedule(Edge(10, s, 0, True))  # Set the FF
@@ -238,17 +252,19 @@ class BackendCoreTest(unittest.TestCase):
         self.assertTrue(nq.state)
 
     def test_compound(self):
-        core = TestingCore(get_library())
+        ctrl = TestingController(library=get_library())
 
-        fa = build_fulladder("fa", core)
-        carry = Interconnect.instantiate(0, core)
-        s = Interconnect.instantiate(1, core)
+        fa = build_fulladder("fa", ctrl)
+        carry = Interconnect.instantiate(0, ctrl)
+        s = Interconnect.instantiate(1, ctrl)
 
         fa.connect(s, 0)
         fa.connect(carry, 1)
 
         self.assertFalse(s.state)
         self.assertFalse(carry.state)
+
+        core = ctrl.get_core()
 
         core.schedule(Edge(0, fa, 0, True))
         self.assertGreater(100, core.loop_until_stable_state_or_time(100))

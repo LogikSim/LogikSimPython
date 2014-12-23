@@ -21,21 +21,21 @@ class Controller:
     hence doesn't rely on events for processing.
     """
     def __init__(self, core, library):
-        self.core = core
-        self.channel_out = Queue()
-        self.channel_in = Queue()
+        self._core = core
+        self._library = library
+        self._channel_out = Queue()
+        self._channel_in = Queue()
 
         self.elements = {}  # ID -> element in simulation
         self.connections = []  # (source_id, source_port, sink_id, sink_port)
         self.connect_from = {}  # ID -> port -> connection
         self.connect_to = {}  # ID -> port -> connection
-        self.top_level_elements = []
-        self.library = library
+        self._top_level_elements = []
 
-        self.simulation_rate = 1  # Ratio between SUs and wall-clock time
-        self.last_process_time = 0  # Remembers last process return time
+        self._simulation_rate = 1  # Ratio between SUs and wall-clock time
+        self._last_process_time = 0  # Remembers last process return time
 
-        self.action_handlers = {
+        self._action_handlers = {
             'create': self._on_create,
             'update': self._on_update,
             'delete': self._on_update,
@@ -44,18 +44,21 @@ class Controller:
             'quit': self._on_quit
         }
 
-    def interface(self):
-        return Interface(self.channel_in)
+    def get_interface(self):
+        return Interface(self._channel_in)
+
+    def get_core(self):
+        return self._core
 
     def get_channel_in(self):
-        return self.channel_in
+        return self._channel_in
 
     def get_channel_out(self):
-        return self.channel_out
+        return self._channel_out
 
     def _on_create(self, command):
         parent = self.elements.get(command.get("parent"))
-        element = self.library.instantiate(
+        element = self._library.instantiate(
             command['GUID'],
             self if not parent else parent,
             command['metadata'])
@@ -65,7 +68,7 @@ class Controller:
 
     def _on_update(self, command):
         element = self.elements[command['id']]
-        element.update_metadata_fields(command['metadata'])
+        element.set_metadata_fields(command['metadata'])
 
     def _on_delete(self, command):
         # Delete connections from first
@@ -80,7 +83,7 @@ class Controller:
         raise NotImplementedError(command['action'])
 
     def _on_quit(self, command):
-        self.core.quit()
+        self._core.quit()
 
     def process(self, current_clock):
         """
@@ -91,11 +94,11 @@ class Controller:
         time before returning to this processing function.
         """
 
-        while not self.channel_in.empty():  # We'll get another chance. Race ok
-            command = self.channel_in.get_nowait()  # Single consumer
+        while not self._channel_in.empty():  # Many chances. Race ok
+            command = self._channel_in.get_nowait()  # Single consumer
 
             action = command.get('action')
-            handler = self.action_handlers.get(action)
+            handler = self._action_handlers.get(action)
             if not handler:
                 raise TypeError("Unknown action type {0}".format(action))
 
@@ -104,9 +107,9 @@ class Controller:
         return self._delay_accordingly(current_clock)
 
     def _delay_accordingly(self, current_clock):
-        scheduling_interval = 0.04  # Seconds till reschedule of process
+        scheduling_interval = 0.05  # Seconds till reschedule of process
 
-        elapsed_time = time.perf_counter() - self.last_process_time
+        elapsed_time = time.perf_counter() - self._last_process_time
 
         if elapsed_time < scheduling_interval:
             # FIXME: Not very content with this. Limits our resolution a lot.
@@ -116,7 +119,7 @@ class Controller:
             #        great. It's totally fixable though. Should switch to a
             #        min{next_event, control_proc_schedule} with busy loop for
             #        small delays. In any case I'm not sure how much much
-            #        timing precision we can squeeze out of python anyways.
+            #        timing precision we can squeeze out this anyways.
             time.sleep(scheduling_interval - elapsed_time)
 
         # Set target clock independently of history. This prevents the
@@ -124,10 +127,10 @@ class Controller:
         # interactive control. If this behavior is wanted we should switch
         # from a delta to an absolute simulation time calculation.
         target_clock = current_clock + \
-            self.simulation_rate * scheduling_interval
+            self._simulation_rate * scheduling_interval
 
-        self.last_process_time = time.perf_counter()
-        return target_clock, self.last_process_time + scheduling_interval
+        self._last_process_time = time.perf_counter()
+        return target_clock, self._last_process_time + scheduling_interval
 
     def propagate_change(self, data):
         """
@@ -137,13 +140,13 @@ class Controller:
 
         :param data: metadata update message.
         """
-        self.channel_out.put(data)
+        self._channel_out.put(data)
 
     def get_library(self):
         """
         :return: Library instance this controller is working with.
         """
-        return self.library
+        return self._library
 
     def child_added(self, child):
         """
@@ -153,4 +156,4 @@ class Controller:
         :param child:
         :return:
         """
-        self.top_level_elements.append(child)
+        self._top_level_elements.append(child)

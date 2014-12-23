@@ -67,11 +67,25 @@ class ComponentInstance(metaclass=ABCMeta):
         if propagate and value != previous_value:
             self.propagate_change({'id': self.id(), field: value})
 
+    def set_metadata_fields(self, data, propagate=True):
+        changed = {}
+        for field, value in data.iteritems():
+            previous_value = self.get_metadata_field(field)
+            self.metadata[field] = value
+
+            if previous_value != value:
+                changed[field] = value
+
+        if propagate and changed:
+            changed['id'] = self.id()
+            self.propagate_change(changed)
+
     def destruct(self):
         for child in self.children:
             child.destruct()
 
         self.propagate_change({'id': self.id(), 'GUID': None})  # FIXME: Yuk
+
 
 class ComponentLibrary(object):
     def __init__(self):
