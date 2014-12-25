@@ -87,8 +87,8 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         to_grid = self.scene().to_grid
         to_scene_point = self.scene().to_scene_point
 
-        p_start = to_grid(start.x()), to_grid(start.y())
-        p_end = to_grid(end.x()), to_grid(end.y())
+        p_start = to_grid(start)
+        p_end = to_grid(end)
 
         # compare to last call
         if (p_start, p_end) == self._insert_line_start_end_last:
@@ -100,11 +100,12 @@ class InsertingLineSubMode(InsertLineSubModeBase):
 
         # get rectangle with one space free around the scene
         bound_rect = self.scene().itemsBoundingRect()
-        r_left = to_grid(min(bound_rect.left(), start.x(), end.x())) - 1
-        r_top = to_grid(min(bound_rect.top(), start.y(), end.y())) - 1
-        r_right = to_grid(max(bound_rect.right(), start.x(), end.x())) + 2
-        r_bottom = to_grid(max(bound_rect.bottom(),
-                               start.y(), end.y())) + 2
+        r_left, r_top = to_grid(QtCore.QPointF(
+            min(bound_rect.left(), start.x(), end.x()) - 1,
+            min(bound_rect.top(), start.y(), end.y()) - 1))
+        r_right, r_bottom = to_grid(QtCore.QPointF(
+            max(bound_rect.right(), start.x(), end.x()) + 2,
+            max(bound_rect.bottom(), start.y(), end.y()) + 2))
 
         # save line trees at endpoints
         tree_start = self._get_linetrees_at_point(start)

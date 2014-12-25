@@ -73,7 +73,7 @@ class AndItem(logicitems.LogicItem):
     def on_handle_resize(self, handle, delta):
         sign = (-1 if handle is self._handles['top'] else 1)
         round_delta = self.scene().roundToGrid(delta)
-        input_delta = sign * self.scene().to_grid(round_delta.y())
+        input_delta = sign * self.scene().to_grid(round_delta)[1] # y delta
         new_input_count = max(2, self._input_count + input_delta)
         if new_input_count != self._input_count:
             eff_pos_delta = self.scene().to_scene_point(

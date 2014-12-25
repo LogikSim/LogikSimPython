@@ -264,12 +264,12 @@ class LineTree(ItemBase):
 
     def paint(self, painter, option, widget=None):
         # draw lines
-        painter.setPen(QtGui.QPen(QtCore.Qt.red))
+        painter.setPen(QtGui.QPen(QtCore.Qt.black))
         for line in self._lines:
             painter.drawLine(line)
 
         # draw edge indicators
-        painter.setBrush(QtGui.QBrush(QtCore.Qt.red))
+        painter.setBrush(QtGui.QBrush(QtCore.Qt.black))
         target_size = self.scene().get_grid_spacing() / 40
         # draw edge indicators always with the same size on screen, except
         # when zooming in very closely (in this case draw them bigger)
