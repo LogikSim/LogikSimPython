@@ -14,7 +14,7 @@ import unittest
 from logicitems.linetree import LineTree
 
 
-class LineTreeTest(unittest.TestCase):
+class LineTreeRerootTest(unittest.TestCase):
     def test_reroot_path_3(self):
         tree = {1: {2: {3: {}}}}
         n_tree = LineTree._reroot(tree, 2)

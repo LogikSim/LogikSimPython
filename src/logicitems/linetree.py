@@ -156,7 +156,7 @@ class LineTree(ItemBase):
         return res[-1]
 
     def _split_line_of_tree(self, tree, point):
-        """ split line in tree into two lines at given point (as tuple) """
+        """Split line in tree into two lines at given point (as tuple)."""
         tree = copy.deepcopy(tree)
 
         class ItemFound(Exception):
@@ -182,7 +182,24 @@ class LineTree(ItemBase):
             raise Exception("Point not found in tree")
         return tree
 
-    def merge_tree(self, m_line_tree):
+    def _merge_root_lines_of_tree(self, tree):
+        """
+        Merge lines at the root of given tree.
+
+        Two lines can be merged, if they have the same orientation.
+        """
+        b = list(tree)[0]
+        if len(tree[b]) == 2:
+            a, c = list(tree[b])
+            # check if all points lay on one line
+            if a[0] == b[0] == c[0] or a[1] == b[1] == c[1]:
+                # remove root and make 'a' the new root
+                tree[b][a].update({c: tree[b][c]})
+                tree = {a: tree[b][a]}
+        assert len(tree) == 1
+        return tree
+
+    def merge_tree(self, merge_line_tree):
         """
         Merges two touching trees.
 
@@ -190,39 +207,31 @@ class LineTree(ItemBase):
         """
         # find all touching points
         col_points = set([edge for edge in self._edges
-                          if m_line_tree.contains(QtCore.QPointF(*edge))] +
-                         [edge for edge in m_line_tree._edges
+                          if merge_line_tree.contains(QtCore.QPointF(*edge))] +
+                         [edge for edge in merge_line_tree._edges
                           if self.contains(QtCore.QPointF(*edge))])
         if len(col_points) > 1:
             raise Exception("Cannot merge trees")
         col_point = col_points.pop()
 
-        s_tree = self._tree
-        m_tree = m_line_tree._tree
-
+        # split trees at collision points
+        self_tree = self._tree
         if col_point not in self._edges:
-            s_tree = self._split_line_of_tree(s_tree, col_point)
-        if col_point not in m_line_tree._edges:
-            m_tree = self._split_line_of_tree(m_tree, col_point)
+            self_tree = self._split_line_of_tree(self._tree, col_point)
+        merge_tree = merge_line_tree._tree
+        if col_point not in merge_line_tree._edges:
+            merge_tree = self._split_line_of_tree(merge_line_tree._tree,
+                                                  col_point)
 
         # reroot trees to collision point
-        self._tree = self._reroot(s_tree, col_point)
-        re_m_tree = self._reroot(m_tree, col_point)
+        new_tree = self._reroot(self_tree, col_point)
+        re_merge_tree = self._reroot(merge_tree, col_point)
 
         # add siblings from other tree to our tree
-        self._tree[col_point].update(re_m_tree[col_point])
+        new_tree[col_point].update(re_merge_tree[col_point])
 
         # merge lines at new root, if they have same orientation
-        b = list(self._tree)[0]
-        if len(self._tree[b]) == 2:
-            a, c = list(self._tree[b])
-            # check if all points lay on one line
-            if a[0] == b[0] == c[0] or a[1] == b[1] == c[1]:
-                # remove root and make a the new root
-                self._tree[b][a].update({c: self._tree[b][c]})
-                self._tree = {a: self._tree[b][a]}
-        assert len(self._tree) == 1
-
+        self._tree = self._merge_root_lines_of_tree(new_tree)
         self._update_tree()
 
     def is_edge(self, scene_point):

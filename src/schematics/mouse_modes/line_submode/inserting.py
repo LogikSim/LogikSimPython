@@ -210,14 +210,11 @@ class LineRouteBetweenPoints:
         assert not self._is_routed
 
         endpoint_trees = self._get_endpoint_trees()
-
         get_obj_at_point = GetHightowerObjectAtPoint(
             self.scene, self.p_start, self.p_end, endpoint_trees)
-
         # We only want to search for a limited amount of time
         time_limited_get_obj_at_point = time_limited(
             get_obj_at_point, self.max_line_search_time)
-
         search_rect = self._get_search_rect()
 
         try:
@@ -226,13 +223,11 @@ class LineRouteBetweenPoints:
                 search_rect, do_second_refinement=False)
         except TimeReached:
             raise RouteNotFoundException()
-
         if res is None:
             raise RouteNotFoundException()
 
         # remove parts of the path that are already part of
-        # adjacent line trees of the end points
-
+        #     adjacent line trees of the end points
         res = self._extract_new_path(res, endpoint_trees.start)
         res = self._extract_new_path(list(reversed(res)), endpoint_trees.end)
 
