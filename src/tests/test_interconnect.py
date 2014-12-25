@@ -33,8 +33,8 @@ class InterconnectTest(unittest.TestCase):
         a = Foo()
         b = Foo()
 
-        i.connect(a, input=0)
-        i.connect(b, input=2, connection_length=10)
+        i.connect(a, input_port=0)
+        i.connect(b, input_port=2, connection_length=10)
 
         i.edge(0, False)
         self.assertListEqual([Edge(1, a, 0, False),

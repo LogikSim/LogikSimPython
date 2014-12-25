@@ -8,7 +8,7 @@
 import unittest
 from backend.controller import Controller
 from backend.interface import Handler
-from helpers import CallTrack, drain_queue, try_repeatedly
+from tests.helpers import CallTrack, drain_queue, try_repeatedly
 
 
 class ElementMock:
@@ -34,6 +34,7 @@ class ElementMock:
 class CoreMock:
     def set_controller(self, controller):
         pass
+
 
 class ControllerTest(unittest.TestCase):
     """

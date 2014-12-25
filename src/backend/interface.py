@@ -7,6 +7,7 @@
 #
 import queue
 
+
 class Handler:
     """
     The handler class can be registered with a controller for receiving

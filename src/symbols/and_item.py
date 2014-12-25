@@ -12,13 +12,14 @@ And logic item with variable number of inputs.
 from PySide import QtGui, QtCore
 
 import logicitems
-from backend.components.basic_logic_elements import And
+from backend.simple_element import SimpleElementGuiItem
 
 
-class AndItem(logicitems.LogicItem):
-    def __init__(self, input_count=3):
-        super().__init__()
-        self._input_count = input_count
+class AndItem(logicitems.LogicItem, SimpleElementGuiItem):
+    def __init__(self, parent=None, metadata={}):
+        super().__init__(parent)
+        self._input_count = metadata['#inputs']
+        self.setPos(metadata.get('x', 0), metadata.get('y', 0))
 
         self.setAcceptHoverEvents(True)
 
@@ -27,9 +28,6 @@ class AndItem(logicitems.LogicItem):
         self._body_rect = None
         self._connectors = []
         self._handles = {}
-
-    def GUID(self):
-        return And.GUID()
 
     def _set_show_handles(self, value):
         if value != self._show_handles:

@@ -61,17 +61,18 @@ class InterconnectInstance(Element):
                      input,
                      self.state) for element, input, delay in self.endpoints]
 
-    def connect(self, element, output=0, input=0, connection_length=1):
+    def connect(self, element, output_port=0, input_port=0,
+                connection_length=1):
         """
         Connects an element output to another elements input.
 
         :param element: Element to connect to output (None disconnects output)
-        :param output: This elements output to connect to the input (always 0)
-        :param input: Input on given element to connect to
+        :param output_port: This elements output to connect to the input (=0)
+        :param input_port: Input on given element to connect to
         :param connection_length: Length of the connection for delay calc
         :return: True if successfully connected
         """
-        assert output == 0, "Interconnect only has one output"
+        assert output_port == 0, "Interconnect only has one output"
 
         if element is None:
             # Disconnect everything
@@ -79,16 +80,24 @@ class InterconnectInstance(Element):
             pass
 
         delay = connection_length * self.PROPAGATION_CONSTANT
-        self.endpoints.append((element, input, delay))
+        self.endpoints.append((element, input_port, delay))
+        # FIXME: Kinda misses propagation also mega-mew at connection_length
+        #        get rid of that. This should happen through meta-data updates.
 
-    def edge(self, input, state):
+        return True
+
+    def connected(self, element, output_port=0, input_port=0):
+        # FIXME: Implement this
+        return True
+
+    def edge(self, input_port, state):
         """
         Registers a rising or falling edge on the interconnect.
 
-        :param input: Index of the input
+        :param input_port: Index of the input
         :param state: Value of the input (True/False) at time `when`
         """
-        assert input == 0, "Interconnect does not have multiple inputs."
+        assert input_port == 0, "Interconnect does not have multiple inputs."
 
         self.state = state
 

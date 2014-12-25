@@ -31,9 +31,6 @@ class Controller:
         self._channel_in = multiprocessing.Queue()
 
         self.elements = {}  # ID -> element in simulation
-        self.connections = []  # (source_id, source_port, sink_id, sink_port)
-        self.connect_from = {}  # ID -> port -> connection
-        self.connect_to = {}  # ID -> port -> connection
         self._top_level_elements = []
 
         self._simulation_rate = 1  # Ratio between SUs and wall-clock time
@@ -82,25 +79,53 @@ class Controller:
         element = self.elements[command['id']]
         element.set_metadata_fields(command['metadata'])
 
+        self.log.info("Updated %d with %s", command['id'], command['metadata'])
+
     def _on_delete(self, command):
-        # Delete connections from first
-        # The connections to
-        # Then delete element
+        deleted_elements = self.elements[command['id']].destruct()
+
+        for element_id in deleted_elements:
+            del self.elements[element_id]
+            # Since the element can't effectively self-destruct propagate
+            # this event after removing them from the controller
+            self.propagate_change({'id': element_id, 'GUID': None})
+
         self.log.info("Delete %s", command)
-        raise NotImplementedError(command['action'])
 
     def _on_query(self, command):
-        raise NotImplementedError(command['action'])
+        uid = command['id']
+        element = self.elements[uid]
+        self.propagate_change(element.get_metadata())
+
+        self.log.info("Queried for %d", uid)
 
     def _on_connect(self, command):
         source = self.elements[command['source_id']]
         sink = self.elements[command['sink_id']]
 
-        source.connect(sink, command['source_port'], command['sink_port'])
+        if not source.connect(sink,
+                              command['source_port'],
+                              command['sink_port']):
+            self.log.warning("Failed to connect %d port %d to %d port %d",
+                             command['source_id'],
+                             command['source_port'],
+                             command['sink_id'],
+                             command['sink_port'])
+            return
+
+        self.log.info("Connected %d port %d to %d port %d",
+                      command['source_id'],
+                      command['source_port'],
+                      command['sink_id'],
+                      command['sink_port'])
 
     def _on_disconnect(self, command):
         source = self.elements[command['source_id']]
         source.disconnect(command['source_port'])
+
+        self.log.info("Disconnected port %d of %d",
+                      command['source_id'],
+                      command['source_port'])
 
     def _on_quit(self, command):
         self.log.info("Asked to quit")

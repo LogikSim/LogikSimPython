@@ -60,8 +60,8 @@ def build_halfadder(name, parent):
     a.connect(xor_gate)
     a.connect(and_gate)
 
-    b.connect(xor_gate, input=1)
-    b.connect(and_gate, input=1)
+    b.connect(xor_gate, input_port=1)
+    b.connect(and_gate, input_port=1)
 
     half_adder.input_bank.connect(a, 0)
     half_adder.input_bank.connect(b, 1)
@@ -148,8 +148,8 @@ class BackendCoreTest(unittest.TestCase):
         a.connect(xor_gate)
         a.connect(and_gate)
 
-        b.connect(xor_gate, input=1)
-        b.connect(and_gate, input=1)
+        b.connect(xor_gate, input_port=1)
+        b.connect(and_gate, input_port=1)
 
         xor_gate.connect(s)
         and_gate.connect(c)
@@ -219,8 +219,8 @@ class BackendCoreTest(unittest.TestCase):
         r.connect(nor_r)
         s.connect(nor_s)
 
-        q.connect(nor_s, input=1)
-        nq.connect(nor_r, input=1)
+        q.connect(nor_s, input_port=1)
+        nq.connect(nor_r, input_port=1)
 
         nor_r.connect(q)
         nor_s.connect(nq)
@@ -257,8 +257,8 @@ class BackendCoreTest(unittest.TestCase):
         carry = Interconnect.instantiate(0, ctrl)
         s = Interconnect.instantiate(1, ctrl)
 
-        fa.connect(s, 0)
-        fa.connect(carry, 1)
+        self.assertTrue(fa.connect(s, 0))
+        self.assertTrue(fa.connect(carry, 1))
 
         self.assertFalse(s.state)
         self.assertFalse(carry.state)

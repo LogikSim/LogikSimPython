@@ -16,31 +16,12 @@ import logicitems
 
 from backend.core import Core
 from backend.controller import Controller
-from backend.interface import Handler
 from backend.component_library import get_library
 from threading import Thread
 from logging import getLogger
+from logicitems.item_registry import ItemRegistry
+from symbols.and_item import AndItem
 
-
-class GridSimulationHandler(QtCore.QThread, Handler):
-    def __init__(self, scene):
-        QtCore.QThread.__init__(self, scene)
-        Handler.__init__(self)
-
-        self._scene = scene
-        self._quit = False
-
-    def run(self):
-        self._quit = False
-        while not self._quit:
-            self.poll_blocking(timeout=0.01)
-
-    def quit(self):
-        self._quit = True
-
-    def handle(self, update):
-        self._scene.log.info("Update %s", update)
-        # TODO: Impl this. Probably want to emit some signals to a dispatcher
 
 class GridScene(QtGui.QGraphicsScene):
     # signals position or shape change of any selected item
@@ -60,11 +41,12 @@ class GridScene(QtGui.QGraphicsScene):
         self._controller = Controller(self._core, get_library())
         self._interface = self._controller.get_interface()
 
-        self._simulation_handler = GridSimulationHandler(self)
-        self._controller.connect_handler(self._simulation_handler)
-        self._simulation_handler.start()
+        self._registry = ItemRegistry(self._controller, self)
+        self._registry.register_type(AndItem)
+        self._registry.start_handling()
 
-        self._core_thread = Thread(target=self._core.run)
+        self._core_thread = Thread(target=self._core.run,
+                                   daemon=True)  # FIXME: Daemon :(
         self._core_thread.start()
 
         self.actions = ActionStackModel(self.tr("New circuit"), parent=self)
@@ -85,18 +67,6 @@ class GridScene(QtGui.QGraphicsScene):
         self.selectionChanged.connect(self.onSelectionChanged)
         self.destroyed.connect(self.on_destroyed)
 
-    def addItem(self, item):
-        guid = item.GUID()
-        if guid:
-            # Instantiate corresponding backend item
-            self._interface.create_element(
-                guid,
-                None,
-                {'x': item.pos().x(),
-                 'y': item.pos().y()})
-
-        super().addItem(item)
-
     @QtCore.Slot()
     def on_destroyed(self):
         """
@@ -104,11 +74,12 @@ class GridScene(QtGui.QGraphicsScene):
         """
         self._core.quit()
         self._core_thread.join()
-        self._simulation_handler.quit()
-        self._simulation_handler.wait()
 
     def get_interface(self):
         return self._interface
+
+    def get_registry(self):
+        return self._registry
 
     def setGridEnabled(self, value):
         assert isinstance(value, bool)

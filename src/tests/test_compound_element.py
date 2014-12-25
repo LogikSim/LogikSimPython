@@ -30,7 +30,7 @@ class CompoundElementTest(unittest.TestCase):
         outs = [Interconnect.instantiate(i*10, p) for i in range(0, 6)]
 
         for i in range(0, 6):
-            ins[i].connect(e, input=i)
+            ins[i].connect(e, input_port=i)
             e.connect(outs[i], i, 0)
 
         for i in range(0, 6):

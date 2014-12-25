@@ -8,6 +8,7 @@
 from abc import ABCMeta
 from copy import copy
 
+
 class ComponentType(object):
     METADATA = None  # Must override this in component types
 
@@ -96,10 +97,16 @@ class ComponentInstance(metaclass=ABCMeta):
             self.propagate_change(changed)
 
     def destruct(self):
+        destroyed_components = []
         for child in self.children:
-            child.destruct()
+            destroyed_components.extend(child.destruct())
+        self.children = []
+
+        destroyed_components.append(self.id())
 
         self.propagate_change({'id': self.id(), 'GUID': None})  # FIXME: Yuk
+
+        return destroyed_components
 
 
 class ComponentLibrary(object):

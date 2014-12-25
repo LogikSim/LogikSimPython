@@ -59,11 +59,11 @@ class Element(ComponentInstance):
         super().__init__(parent, metadata, component_type)
 
     @abstractmethod
-    def edge(self, input, state):
+    def edge(self, input_port, state):
         """
         Handles a rising or falling edge on one of the elements inputs.
 
-        :param input: Index of the input
+        :param input_port: Index of the input
         :param state: Value of the input (True/False) at time `when`
         :return: List of none or more future Event s
         """
@@ -88,21 +88,34 @@ class Element(ComponentInstance):
         pass
 
     @abstractmethod
-    def connect(self, element, output=0, input=0):
+    def connect(self, element, output_port=0, input_port=0):
         """
         Connects an element output to another elements input.
 
         :param element: Element to connect to output (None disconnects output)
-        :param output: This elements output to connect to the input
-        :param input: Input on given element to connect to
+        :param output_port: This elements output to connect to the input
+        :param input_port: Input on given element to connect to
         :return: True if successfully connected
         """
         pass
 
-    def disconnect(self, output):
+    @abstractmethod
+    def connected(self, element, output_port=0, input_port=0):
+        """
+        Notifies an element of another elements output connected to one of its
+        inputs.
+
+        :param element: Element connected to this one
+        :param output_port: Output of the element connected to this one
+        :param input_port: Input of this element connected to
+        :return: True if connection was accepted
+        """
+        pass
+
+    def disconnect(self, output_port):
         """
         Disconnects the given output.
-        :param output: Output index.
+        :param output_port: Output index.
         :return: True if successful
         """
-        return self.connect(None, output)
+        return self.connect(None, output_port)

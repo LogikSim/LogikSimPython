@@ -30,9 +30,6 @@ class ItemBase(QtGui.QGraphicsItem):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
 
-    def GUID(self):
-        return None
-
     def _line_to_rect(self, line):
         """ converts QLineF to its collision area """
         radius = 10**-3

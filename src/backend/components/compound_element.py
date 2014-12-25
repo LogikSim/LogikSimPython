@@ -33,8 +33,14 @@ class InputOutputBankInstance(Element):
         super().__init__(parent, metadata, InputOutputBank)
         self.mapping = {}
 
-    def connect(self, element, output=0, input=0):
-        self.mapping[output] = (element, input)
+    def connect(self, element, output_port=0, input_port=0):
+        self.mapping[output_port] = (element, input_port)
+        # FIXME: Implement rest of this
+        return True
+
+    def connected(self, element, output_port=0, input_port=0):
+        # FIXME: Implement this
+        return True
 
     def reset(self, when):
         """
@@ -48,20 +54,20 @@ class InputOutputBankInstance(Element):
 
         return events
 
-    def edge(self, input, state):
+    def edge(self, input_port, state):
         """
         Handles a rising or falling edge and maps it to the corresponding
         element.
 
-        :param input: Index of the input
+        :param input_port: Index of the input
         :param state: Value of the input (True/False) at time `when`
         :return: List of one or more future Event s
         """
-        if input not in self.mapping:
+        if input_port not in self.mapping:
             # Pin is not connected.
             return
 
-        element, element_input = self.mapping[input]
+        element, element_input = self.mapping[input_port]
         element.edge(element_input, state)
 
     def clock(self, when):
@@ -117,15 +123,15 @@ class CompoundElementInstance(Element):
 
         return self.input_bank.reset(when) + self.output_bank.reset(when)
 
-    def edge(self, input, state):
+    def edge(self, input_port, state):
         """
         Handles a rising or falling edge and maps it to the corresponding
         internal element.
 
-        :param input: Index of the input
+        :param input_port: Index of the input
         :param state: Value of the input (True/False) at time `when`
         """
-        self.input_bank.edge(input, state)
+        self.input_bank.edge(input_port, state)
 
     def clock(self, when):
         """
@@ -137,13 +143,16 @@ class CompoundElementInstance(Element):
         """
         return self.input_bank.clock(when)
 
-    def connect(self, element, output=0, input=0):
+    def connect(self, element, output_port=0, input_port=0):
         """
         Connects output posts to external element.
 
         :param element: Element to connect
-        :param output: Output of post to connect to element
-        :param input: Input on element to connect to
+        :param output_port: Output of post to connect to element
+        :param input_port: Input on element to connect to
         :return: True if connected successful
         """
-        return self.output_bank.connect(element, output, input)
+        return self.output_bank.connect(element, output_port, input_port)
+
+    def connected(self, element, output_port=0, input_port=0):
+        return self.output_bank.connected(element, output_port, input_port)
