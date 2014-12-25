@@ -37,7 +37,7 @@ class AndItem(logicitems.LogicItem):
         self._invalidate_bounding_rect()
         scale = self.scene().get_grid_spacing()
         # update body
-        self._body_rect = QtCore.QRectF(0, -scale/2, scale * 2,
+        self._body_rect = QtCore.QRectF(0, -scale / 2, scale * 2,
                                         scale * (self._input_count))
         # update connectors
         for con in self._connectors:
@@ -64,7 +64,7 @@ class AndItem(logicitems.LogicItem):
             scale = self.scene().get_grid_spacing()
             ht = logicitems.ResizeHandle(self, horizontal=False,
                                          resize_callback=self.on_handle_resize)
-            ht.setPos(scale, -scale/2)
+            ht.setPos(scale, -scale / 2)
             hb = logicitems.ResizeHandle(self, horizontal=False,
                                          resize_callback=self.on_handle_resize)
             hb.setPos(scale, (self._input_count - 0.5) * scale)
@@ -73,7 +73,7 @@ class AndItem(logicitems.LogicItem):
     def on_handle_resize(self, handle, delta):
         sign = (-1 if handle is self._handles['top'] else 1)
         round_delta = self.scene().roundToGrid(delta)
-        input_delta = sign * self.scene().to_grid(round_delta)[1] # y delta
+        input_delta = sign * self.scene().to_grid(round_delta)[1]  # y delta
         new_input_count = max(2, self._input_count + input_delta)
         if new_input_count != self._input_count:
             eff_pos_delta = self.scene().to_scene_point(

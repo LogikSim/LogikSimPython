@@ -76,7 +76,7 @@ class GridScene(QtGui.QGraphicsScene):
         """ Converts points in self.scene to grid points used here.
 
         The functions always rounds down
-        
+
         :param scene_point: Point in scene coordinates as QtCore.QPointF
         :return: Point in grid coordinates as tuple (int, int)
         """
