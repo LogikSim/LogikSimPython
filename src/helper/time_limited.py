@@ -25,9 +25,12 @@ def time_limited(fun, lifetime):
 
     :param fun: Function to decorate
     :param lifetime: Number of seconds after which calls to this function
-        should throw.
+        should throw or None for infinite lifetime.
     :return: decorated fun
     """
+    if lifetime is None:
+        return fun
+
     max_time = time.time() + lifetime
 
     def time_limited_execution(*args, **argv):

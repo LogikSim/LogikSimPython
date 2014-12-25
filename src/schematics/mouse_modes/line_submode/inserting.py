@@ -35,9 +35,8 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         # stores two tuples with start and end coordinates as used in
         # mouseMoveEvent
         self._insert_line_start_end_last = None
-        # contains merged lines that can be removed when inserting lines
-        # stored in _inserted_lines
-        self._merged_line_trees = []
+        # stores temporarily inserted line route object
+        self._temp_line_route = None
 
     @line_submode_filtered
     def mousePressEvent(self, event):
@@ -49,7 +48,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         # left button
         if event.button() is QtCore.Qt.LeftButton:
             anchor = self.find_line_anchor_at_view_pos(event.pos())
-            self._commit_inserted_lines()
+            self.commit_inserted_temp_line()
             # if there is no anchor, immediately start inserting new lines
             if anchor is None:
                 self._do_start_insert_lines(event.pos(), anchor)
@@ -71,137 +70,161 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         self._insert_line_start_end = (start, end)
         self._update_line_timer.start()
 
-    def _get_linetrees_at_point(self, scene_point):
-        """ get line trees at given scene point as list """
-        return [item for item in self.scene().items(scene_point)
-                if isinstance(item, logicitems.LineTree)]
-
     @line_submode_filtered
     @timeit
     def do_update_line(self):
         start, end = self._insert_line_start_end
 
-        #
-        # new graph based search
-        #
-        to_grid = self.scene().to_grid
-        to_scene_point = self.scene().to_scene_point
-
-        p_start = to_grid(start)
-        p_end = to_grid(end)
+        p_start = self.scene().to_grid(start)
+        p_end = self.scene().to_grid(end)
 
         # compare to last call
         if (p_start, p_end) == self._insert_line_start_end_last:
             return
         self._insert_line_start_end_last = p_start, p_end
 
-        # remove old results
-        self._undo_temp_insert_lines()
+        # remove old route
+        if self._temp_line_route is not None:
+            self._temp_line_route.undo_insert()
+            self._temp_line_route = None
 
+        # create new route
+        line_route = LineRouteBetweenPoints(self.scene(), start, end,
+                                            self._max_line_search_time)
+        try:
+            line_route.route()
+        except RouteNotFoundException:
+            return
+
+        # temporarily add route to scene
+        line_route.do_temp_insert()
+        self._temp_line_route = line_route
+
+    def commit_inserted_temp_line(self):
+        """ finalize inserting routed line """
+        if self._temp_line_route is None:
+            return
+
+        temp_line_route = self._temp_line_route
+        self._temp_line_route = None
+
+        def do():
+            temp_line_route.do_insert()
+        def undo():
+            temp_line_route.undo_insert()
+
+        self.scene().actions.execute(
+            do, undo, "insert lines"
+        )
+
+    def linesub_leave(self):
+        super().linesub_leave()
+        # cleanup InsertingLine
+        if self._temp_line_route is not None:
+            self._temp_line_route.undo_insert()
+            self._temp_line_route = None
+
+
+class RouteNotFoundException(Exception):
+    """ Is raised when no route could be found between given points """
+    def __init__(self):
+        super().__init__("Route not Found")
+
+
+class LineRouteBetweenPoints:
+    def __init__(self, scene, start, end, max_line_search_time=None):
+        self.scene = scene
+        self.start = start
+        self.end = end
+        self.max_line_search_time = max_line_search_time
+
+        # store start and end in grid coordinates
+        self.p_start = self.scene.to_grid(start)
+        self.p_end = self.scene.to_grid(end)
+
+        # route result
+        self._is_routed = False
+        self._is_temp_inserted = False
+        self._is_inserted = False  # when this is True, temp is also True
+        self._new_line_tree = None
+        # contains merged lines that can be removed when inserting new route
+        self._merged_line_trees = []
+
+    def _get_search_rect(self):
         # get rectangle with one space free around the scene
-        bound_rect = self.scene().itemsBoundingRect()
-        r_left, r_top = to_grid(QtCore.QPointF(
-            min(bound_rect.left(), start.x(), end.x()) - 1,
-            min(bound_rect.top(), start.y(), end.y()) - 1))
-        r_right, r_bottom = to_grid(QtCore.QPointF(
-            max(bound_rect.right(), start.x(), end.x()) + 2,
-            max(bound_rect.bottom(), start.y(), end.y()) + 2))
+        bound_rect = self.scene.itemsBoundingRect()
+        r_left, r_top = self.scene.to_grid(QtCore.QPointF(
+            min(bound_rect.left(), self.start.x(), self.end.x()) - 1,
+            min(bound_rect.top(), self.start.y(), self.end.y()) - 1))
+        r_right, r_bottom = self.scene.to_grid(QtCore.QPointF(
+            max(bound_rect.right(), self.start.x(), self.end.x()) + 2,
+            max(bound_rect.bottom(), self.start.y(), self.end.y()) + 2))
+        return ((r_left, r_top), (r_right, r_bottom))
 
+    def _get_linetrees_at_point(self, scene_point):
+        """ get line trees at given scene point as list """
+        return [item for item in self.scene.items(scene_point)
+                if isinstance(item, logicitems.LineTree)]
+
+    def _get_endpoint_rees(self):
         # save line trees at endpoints
-        tree_start = self._get_linetrees_at_point(start)
-        tree_end = self._get_linetrees_at_point(end)
+        tree_start = self._get_linetrees_at_point(self.start)
+        tree_end = self._get_linetrees_at_point(self.end)
 
         # can only merge two trees if start == end
         if len(tree_start) > 1 or len(tree_end) > 1:
-            if p_start == p_end:
+            if self.p_start == self.p_end:
                 # pick one, as they are the same
                 endpoint_trees = tree_start
             else:
-                return
+                raise RouteNotFoundException()
         else:
-            if p_start == p_end:
-                return
+            if self.p_start == self.p_end:
+                raise RouteNotFoundException()
             endpoint_trees = [tree_start[0] if len(tree_start) > 0 else None,
                               tree_end[0] if len(tree_end) > 0 else None]
 
         # if both trees are the same --> line already exists --> nothing todo
         if endpoint_trees[0] is endpoint_trees[1] is not None:
-            return
+            raise RouteNotFoundException()
+
+        return tree_start, tree_end, endpoint_trees
+
+    def route(self):
+        assert not self._is_routed
+
+        # TODO: only use tree_start and tree_end or endpoint_trees
+        tree_start, tree_end, endpoint_trees = self._get_endpoint_rees()
 
         get_obj_at_point = GetHightowerObjectAtPoint(
-            self.scene(), p_start, p_end, tree_start, tree_end, endpoint_trees,
-            self._line_anchor_indicator)
+            self.scene, self.p_start, self.p_end,
+            tree_start, tree_end, endpoint_trees,
+            None)
 
         # We only want to search for a limited amount of time
         time_limited_get_obj_at_point = time_limited(
-            get_obj_at_point, self._max_line_search_time)
+            get_obj_at_point, self.max_line_search_time)
 
-        search_rect = ((r_left, r_top), (r_right, r_bottom))
+        search_rect = self._get_search_rect()
 
         try:
             res = hightower.hightower_line_search(
-                p_start, p_end, time_limited_get_obj_at_point,
+                self.p_start, self.p_end, time_limited_get_obj_at_point,
                 search_rect, do_second_refinement=False)
         except TimeReached:
-            res = None
+            raise RouteNotFoundException()
 
         if res is None:
-            return
+            raise RouteNotFoundException()
 
         # remove parts of the path that are already part of
         # adjacent line trees of the end points
 
-        def iter_line(line):
-            """
-            Iterate through all points on the line, except endpoint
-            """
-            # define two way range, including edges
-            def fullrange2w(a, b):
-                return range(a, b + (-1 if a > b else 1), -1 if a > b else 1)
-
-            if line[0][1] == line[1][1]:
-                for x in fullrange2w(line[0][0], line[1][0]):
-                    yield (x, line[0][1])
-            else:
-                for y in fullrange2w(line[0][1], line[1][1]):
-                    yield (line[0][0], y)
-
-        def extract_new_path(path, line_tree):
-            """
-            Returns new path branching from existing line_tree.
-
-            Go through the path from the beginning and removes segments
-            until they are not anymore part of the line tree
-            """
-            res = path[:]
-            if line_tree is not None:
-                last_index = 0
-                last_point = path[0]
-
-                def helper():
-                    nonlocal last_index, last_point
-                    for i, line in enumerate(zip(path, path[1:])):
-                        points = list(iter_line(line))
-                        for segment in zip(points, points[1:]):
-                            segment_line = QtCore.QLineF(
-                                to_scene_point(segment[0]),
-                                to_scene_point(segment[1]))
-                            if line_tree.contains_line(segment_line):
-                                last_index = i
-                                last_point = segment[1]
-                            else:
-                                return
-
-                helper()
-                res[last_index] = last_point
-                del res[:last_index]
-            return res
-
-        res = extract_new_path(res, endpoint_trees[0])
-        res = extract_new_path(list(reversed(res)), endpoint_trees[1])
+        res = self._extract_new_path(res, endpoint_trees[0])
+        res = self._extract_new_path(list(reversed(res)), endpoint_trees[1])
 
         # create line tree from result
-        path = list(map(to_scene_point, res))
+        path = list(map(self.scene.to_scene_point, res))
         l_tree = logicitems.LineTree(path)
 
         # merge start and end lines
@@ -211,59 +234,112 @@ class InsertingLineSubMode(InsertLineSubModeBase):
                 l_tree.merge_tree(tree)
                 merged_trees.append(tree)
 
-        # temporarily add them to scene
-        self._do_temp_insert_lines(l_tree, merged_trees)
-
-    def _do_temp_insert_lines(self, l_tree, merged_trees):
-        """ insert given line tree and remove merged trees """
-        self.scene().addItem(l_tree)
-        # we do not delete merged_trees, otherwise line
-        # indicator is not drawn any more
-
-        self._inserted_lines = l_tree
+        # store result
+        self._is_routed = True
+        self._new_line_tree = l_tree
         self._merged_line_trees = merged_trees
 
-    def _undo_temp_insert_lines(self):
-        """ undo previously inserted lines and restore merged trees """
-        if self._inserted_lines is not None:
-            self.scene().removeItem(self._inserted_lines)
-
-        self._inserted_lines = None
-        self._merged_line_trees = []
-
-    def _commit_inserted_lines(self):
-        """ insert lines currently drawn persistently """
-        if self._inserted_lines is None:
+    def do_temp_insert(self):
+        """
+        add routed line to scene, but do not remove any line
+        
+        This is useful, when e.g. the old lines are still needed
+        to draw line anchor indicators
+        """
+        if self._is_inserted:
+            self.undo_insert()
+        if not self._is_routed or self._is_temp_inserted:  # nothing todo
             return
 
-        # go back to neutral state, before inserting
-        inserted_lines = self._inserted_lines
-        merged_trees = self._merged_line_trees
-        self._undo_temp_insert_lines()
+        # add routed tree
+        self.scene.addItem(self._new_line_tree)
+        self._new_line_tree.set_temporary(True)
+        # we do not delete merged_trees here, otherwise line
+        #     indicator is not drawn any more
+        self._is_temp_inserted = True
 
-        def do():
-            self._do_temp_insert_lines(inserted_lines, merged_trees)
-            for linetree in merged_trees:
-                self.scene().removeItem(linetree)
-            self._inserted_lines = None
-            self._merged_line_trees = []
-            self._insert_line_start_end_last = None
+    def do_insert(self):
+        """ insert line route persistently """
+        if not self._is_routed or self._is_inserted:  # nothing todo
+            return
 
-        def undo():
-            self._inserted_lines = inserted_lines
-            self._merged_line_trees = merged_trees
-            self._undo_temp_insert_lines()
-            for linetree in merged_trees:
-                self.scene().addItem(linetree)
+        if not self._is_temp_inserted:
+            self.do_temp_insert()
 
-        self.scene().actions.execute(
-            do, undo, "insert lines"
-        )
+        # unset temporary flag
+        self._new_line_tree.set_temporary(False)
+        # remove merged line trees
+        for linetree in self._merged_line_trees:
+            self.scene.removeItem(linetree)
+        self._is_inserted = True
 
-    def linesub_leave(self):
-        super().linesub_leave()
-        # cleanup InsertingLine
-        self._undo_temp_insert_lines()
+    def undo_insert(self):
+        """ undo previously inserted line route """
+        if not self._is_routed:  # nothing todo
+            return
+
+        if self._is_inserted:
+            # add merged line trees
+            for linetree in self._merged_line_trees:
+                self.scene.addItem(linetree)
+            self._is_inserted = False
+        if self._is_temp_inserted:
+            # remove routed tree
+            self.scene.removeItem(self._new_line_tree)
+            self._is_temp_inserted = False
+
+    @staticmethod
+    def _iter_line(line):
+        """
+        Iterate through all points on the line, except endpoint
+        
+        :param line: line given as tuple ((x1, y1), (x2, y2)) of int
+        :result: iterator yielding all point (u,v) between p1 and p2.
+            including both edges
+        """
+        # define two way range, including edges
+        def fullrange2w(a, b):
+            return range(a, b + (-1 if a > b else 1), -1 if a > b else 1)
+
+        if line[0][1] == line[1][1]:
+            for x in fullrange2w(line[0][0], line[1][0]):
+                yield (x, line[0][1])
+        else:
+            for y in fullrange2w(line[0][1], line[1][1]):
+                yield (line[0][0], y)
+
+    def _extract_new_path(self, path, line_tree):
+        """
+        Returns new path branching from existing line_tree.
+
+        Go through the path from the beginning and removes segments
+        until they are not anymore part of the line tree
+        """
+        res = path[:]
+        if line_tree is not None:
+            last_index = 0
+            last_point = path[0]
+
+            def helper():
+                nonlocal last_index, last_point
+                for i, line in enumerate(zip(path, path[1:])):
+                    points = list(self._iter_line(line))
+                    for segment in zip(points, points[1:]):
+                        # TODO: refactor to use just:
+                        #      self.scene.to_scene_point(segment)
+                        segment_line = QtCore.QLineF(
+                            self.scene.to_scene_point(segment[0]),
+                            self.scene.to_scene_point(segment[1]))
+                        if line_tree.contains_line(segment_line):
+                            last_index = i
+                            last_point = segment[1]
+                        else:
+                            return
+
+            helper()
+            res[last_index] = last_point
+            del res[:last_index]
+        return res
 
 
 class GetHightowerObjectAtPoint:
@@ -336,7 +412,7 @@ class GetHightowerObjectAtPoint:
         found_line_edge = False
 
         for item in items:
-            if item is self.line_anchor_indicator:
+            if isinstance(item, logicitems.LineAnchorIndicator):  # TODO: remove: is self.line_anchor_indicator:
                 continue
             elif isinstance(item, logicitems.ConnectorItem) and \
                     item.anchorPoint() == scene_point and \

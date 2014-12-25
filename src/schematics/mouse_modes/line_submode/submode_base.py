@@ -27,7 +27,6 @@ class InsertLineSubModeBase(LineSubModeBase):
         super().__init__(*args, **kargs)
         # store start position and new line items while inserting lines
         self._insert_line_start = None
-        self._inserted_lines = None
         self._line_anchor_indicator = None
         # shape used for mouse collision tests while searching for
         # line anchors (must be float!)
@@ -83,7 +82,7 @@ class InsertLineSubModeBase(LineSubModeBase):
             # line items
             if radius <= self._mouse_collision_line_radius and \
                     isinstance(item, logicitems.LineTree) and \
-                    item is not self._inserted_lines:
+                    not item.is_temporary():
                 return True
             # connector items
             elif radius <= self._mouse_collision_connector_radius and \

@@ -33,6 +33,8 @@ class LineTree(ItemBase):
         """
         super().__init__()
 
+        self._is_temp = False  # is temporary linetree
+
         # defines tree as dict of dict, with key being a tuple (x,y) and
         # value being a dict of children or empty dict. Since there is only
         # one root node, the _tree only contains one key-value pair.
@@ -104,6 +106,14 @@ class LineTree(ItemBase):
                 bounding_rect = bounding_rect.united(l_bounding_rect)
         self._shape = shape_path
         self._rect = bounding_rect
+
+    def set_temporary(self, temp):
+        """ Set line tree temporary status """
+        self._is_temp = temp
+
+    def is_temporary(self):
+        """ Is line tree temporary added to the scene """
+        return self._is_temp
 
     def add_path(self, path):
         """
