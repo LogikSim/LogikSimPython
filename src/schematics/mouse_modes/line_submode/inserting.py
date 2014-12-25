@@ -19,10 +19,10 @@ import algorithms.hightower as hightower
 
 
 class InsertingLineSubMode(InsertLineSubModeBase):
+
     # time budget to search for lines
     _max_line_search_time = 0.3
-
-    """ while new lines are inserted """
+    """While new lines are inserted."""
 
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
@@ -101,7 +101,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         self._temp_line_route = line_route
 
     def commit_inserted_temp_line(self):
-        """ finalize inserting routed line """
+        """Finalize inserted routed line."""
         if self._temp_line_route is None:
             return
 
@@ -127,13 +127,13 @@ class InsertingLineSubMode(InsertLineSubModeBase):
 
 
 class RouteNotFoundException(Exception):
-    """ Is raised when no route could be found between given points """
+    """No route can be found."""
     def __init__(self):
         super().__init__("Route not Found")
 
 
 class EndpointTrees:
-    """ Stores existing endpoint trees for line routing """
+    """Store existing line-trees at the endpoints for routing."""
     def __init__(self, start, end):
         self.start = start
         self.end = end
@@ -173,7 +173,7 @@ class LineRouteBetweenPoints:
         return ((r_left, r_top), (r_right, r_bottom))
 
     def _get_linetrees_at_point(self, scene_point):
-        """ get line trees at given scene point as list """
+        """Get line trees at given scene point as list."""
         return [item for item in self.scene.items(scene_point)
                 if isinstance(item, logicitems.LineTree)]
 
@@ -202,6 +202,11 @@ class LineRouteBetweenPoints:
         return endpoint_trees
 
     def route(self):
+        """
+        Try to find route between given points.
+
+        :raises RouteNotFoundException: when no route can be found.
+        """
         assert not self._is_routed
 
         endpoint_trees = self._get_endpoint_trees()
@@ -249,10 +254,11 @@ class LineRouteBetweenPoints:
 
     def do_temp_insert(self):
         """
-        add routed line to scene, but do not remove any line
+        Add new route to scene as temporary object.
 
         This is useful, when e.g. the old lines are still needed
-        to draw line anchor indicators
+        to draw line anchor indicators. Also in this mode no
+        existing line is removed.
         """
         if self._is_inserted:
             self.undo_insert()
@@ -267,7 +273,7 @@ class LineRouteBetweenPoints:
         self._is_temp_inserted = True
 
     def do_insert(self):
-        """ insert line route persistently """
+        """ Add new route persistently. """
         if not self._is_routed or self._is_inserted:  # nothing todo
             return
 
@@ -282,7 +288,7 @@ class LineRouteBetweenPoints:
         self._is_inserted = True
 
     def undo_insert(self):
-        """ undo previously inserted line route """
+        """ Undo previously inserted route (temporary or persistent). """
         if not self._is_routed:  # nothing todo
             return
 
@@ -321,7 +327,7 @@ class LineRouteBetweenPoints:
         Returns new path branching from existing line_tree.
 
         Go through the path from the beginning and removes segments
-        until they are not anymore part of the line tree
+        until they are not anymore part of the line tree.
         """
         res = path[:]
         if line_tree is not None:
@@ -365,10 +371,10 @@ class GetHightowerObjectAtPoint:
         :param endpoint_trees: line-trees at p_start and p_end given
             as EndpointTrees object
         """
+        self.scene = scene
         self.p_start = p_start
         self.p_end = p_end
         self.endpoint_trees = endpoint_trees
-        self.scene = scene
 
     def _is_self_line_edge(self, point, item):
         """
