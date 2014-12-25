@@ -17,6 +17,9 @@ class ItemBase(QtGui.QGraphicsItem):
     _selection_color_fill = QtGui.QColor(80, 151, 222)
     _selection_color_line = QtGui.QColor(40, 125, 210)
 
+    # collision margin added to all bounding boxes and shapes
+    collision_margin = 10 ** -3
+
     class ItemSingleSelectionHasChanged:
         """
         QGraphicsItem.itemChange() notification
@@ -30,9 +33,15 @@ class ItemBase(QtGui.QGraphicsItem):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
 
-    def _line_to_rect(self, line):
-        """ converts QLineF to its collision area """
-        radius = 10**-3
+    def _line_to_rect(self, line, radius=None):
+        """
+        Converts QLineF to its collision area.
+
+        :param radius: Collision radius of the line, using collision margin
+            as default value.
+        """
+        if radius is None:
+            radius = self.collision_margin
         rect = QtCore.QRectF(line.p1(), line.p2()).normalized()
         return rect.normalized().adjusted(-radius, -radius, radius, radius)
 

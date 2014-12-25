@@ -30,6 +30,8 @@ class LineTree(ItemBase):
         one output have a defined start, the output. A line tree can only
         have one output driving it and arbitrarily many inputs or free ends.
         Unconnected line trees can be driven by mouse interaction.
+
+        :param path: Initial path given as list of QtCore.QPointF.
         """
         super().__init__()
 
@@ -108,19 +110,18 @@ class LineTree(ItemBase):
         self._rect = bounding_rect
 
     def set_temporary(self, temp):
-        """ Set line tree temporary status """
+        """Set line tree temporary status."""
         self._is_temp = temp
 
     def is_temporary(self):
-        """ Is line tree temporary added to the scene """
+        """Is line tree temporary."""
         return self._is_temp
 
     def add_path(self, path):
         """
-        Add new path to the tree
+        Add new path to the tree.
 
-        Args:
-            path (list of QPoint): Path being added
+        :param path: Path being added given as list of QtCore.QPointF
         """
 
         def path_to_tree(p):
@@ -135,7 +136,7 @@ class LineTree(ItemBase):
 
     @staticmethod
     def _reroot(tree, new_root):
-        """ reroot the tree with given new root """
+        """Reroot the tree with given new root."""
         tree = copy.deepcopy(tree)
 
         def helper(tree):
@@ -269,10 +270,9 @@ class LineTree(ItemBase):
         return p_nearest
 
     def contains_line(self, line):
-        """ Returns true if QLineF a full part of this line tree """
-        margin = 1e-3  # TODO: derive from scene grid spacing
-        l_bounding_rect = self._line_to_rect(line). \
-            adjusted(margin, margin, -margin, -margin)
+        """ Returns true if QLineF is fully contained by this line tree """
+        radius = self.collision_margin / 2
+        l_bounding_rect = self._line_to_rect(line, radius)
         return self._shape.contains(l_bounding_rect)
 
     def boundingRect(self):

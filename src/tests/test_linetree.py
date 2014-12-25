@@ -11,6 +11,8 @@ Test the LineTree implementation.
 
 import unittest
 
+from PySide import QtCore
+
 from logicitems.linetree import LineTree
 
 
@@ -68,3 +70,41 @@ class LineTreeRerootTest(unittest.TestCase):
                     13: {}}}
         n_tree = LineTree._reroot(tree, 1)
         self.assertEqual(n_tree, tree)
+
+
+class LineTreeGeneralTest(unittest.TestCase):
+    def test_is_edge(self):
+        tree = LineTree([QtCore.QPointF(0, 0),
+                         QtCore.QPointF(10, 0)])
+
+        self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(10, 0)))
+
+        self.assertFalse(tree.is_edge(QtCore.QPointF(1, 0)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(5, 0)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(9, 0)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(11, 0)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(15, 0)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(0, 1)))
+
+    def test_contains_line(self):
+        hor_tree = LineTree([QtCore.QPointF(0, 0),
+                             QtCore.QPointF(10, 0)])
+
+        self.assertTrue(hor_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(3, 0), QtCore.QPointF(7, 0))))
+        self.assertTrue(hor_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(7, 0), QtCore.QPointF(3, 0))))
+        self.assertTrue(hor_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(10, 0))))
+        self.assertTrue(hor_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(10, 0), QtCore.QPointF(0, 0))))
+
+        self.assertFalse(hor_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(11, 0))))
+        self.assertFalse(hor_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(-1, 0), QtCore.QPointF(0, 0))))
+        self.assertFalse(hor_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(20, 0), QtCore.QPointF(25, 0))))
+        self.assertFalse(hor_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 1), QtCore.QPointF(10, 1))))
