@@ -16,9 +16,12 @@ from PySide import QtGui, QtCore
 from settings import setup_settings
 import main_window
 import symbols
+from logging import basicConfig, INFO
 
 
 def main():
+    basicConfig(level=INFO)
+
     symbols.load_all_symbols()
 
     app = QtGui.QApplication(sys.argv)

@@ -12,6 +12,7 @@ And logic item with variable number of inputs.
 from PySide import QtGui, QtCore
 
 import logicitems
+from backend.components.basic_logic_elements import And
 
 
 class AndItem(logicitems.LogicItem):
@@ -26,6 +27,9 @@ class AndItem(logicitems.LogicItem):
         self._body_rect = None
         self._connectors = []
         self._handles = {}
+
+    def GUID(self):
+        return And.GUID()
 
     def _set_show_handles(self, value):
         if value != self._show_handles:

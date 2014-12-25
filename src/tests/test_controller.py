@@ -24,6 +24,16 @@ class ElementMock:
     def set_metadata_fields(self, data, propagate=True):
         self._metadata.update(data)
 
+    def get_metadata(self):
+        return self._metadata
+
+    def updated(self):
+        pass
+
+
+class CoreMock:
+    def set_controller(self, controller):
+        pass
 
 class ControllerTest(unittest.TestCase):
     """
@@ -42,7 +52,7 @@ class ControllerTest(unittest.TestCase):
         library_emu = CallTrack(tracked_member="instantiate",
                                 result_fu=instantiate_mock)
 
-        ctrl = Controller(core=None, library=library_emu)
+        ctrl = Controller(core=CoreMock(), library=library_emu)
         i = ctrl.get_interface()
 
         i.create_element("FOO")
@@ -77,7 +87,7 @@ class ControllerTest(unittest.TestCase):
         library_emu = CallTrack(tracked_member="instantiate",
                                 result_fu=instantiate_mock)
 
-        ctrl = Controller(core=None, library=library_emu)
+        ctrl = Controller(core=CoreMock(), library=library_emu)
         i = ctrl.get_interface()
 
         i.create_element("FOO")
@@ -101,7 +111,7 @@ class ControllerTest(unittest.TestCase):
 
         lib = Lib()
 
-        ctrl = Controller(core=None, library=lib)
+        ctrl = Controller(core=CoreMock(), library=lib)
 
         # def propagate_change(self, data)
         ctrl.propagate_change({'id': 1,
@@ -149,7 +159,7 @@ class ControllerTest(unittest.TestCase):
         library_emu = CallTrack(tracked_member="instantiate",
                                 result_fu=instantiate_mock)
 
-        ctrl = Controller(core=None, library=library_emu)
+        ctrl = Controller(core=CoreMock(), library=library_emu)
         ctrl.connect_handler(handler)
 
         i = ctrl.get_interface()
@@ -163,7 +173,7 @@ class ControllerTest(unittest.TestCase):
         root.propagate_change({'fiz': 'buz'})
 
         # Work around multiprocessing.Queue insertion delay
-        try_repeatedly(lambda: not ctrl.get_channel_out().empty())
+        try_repeatedly(lambda: not ctrl.get_channel_out().qsize() != 2)
         handler.poll()
 
         self.assertListEqual([{'foo': 'bar'},

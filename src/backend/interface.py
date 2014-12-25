@@ -5,10 +5,9 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
-from abc import ABCMeta, abstractmethod
+import queue
 
-
-class Handler(metaclass=ABCMeta):
+class Handler:
     """
     The handler class can be registered with a controller for receiving
     access to item updates outside of the backend.
@@ -23,6 +22,22 @@ class Handler(metaclass=ABCMeta):
         :param channel_in: Channel poll will take updates from.
         """
         self._channel_in = channel_in
+
+    def poll_blocking(self, timeout=None):
+        """
+        Blocks for updates with given timeout and processes exactly one of
+        them once it becomes available.
+        :return: True if handled one event, false if timeout was reached
+        """
+        assert self._channel_in is not None, \
+            "Handler must be connected to controller"
+
+        try:
+            self.handle(self._channel_in.get(timeout=timeout))
+        except queue.Empty:
+            return False
+
+        return True
 
     def poll(self):
         """
@@ -39,7 +54,6 @@ class Handler(metaclass=ABCMeta):
 
         return self._channel_in.empty()
 
-    @abstractmethod
     def handle(self, update):
         """
         This method will receive updates in the form of data dictionaries.
@@ -121,7 +135,7 @@ class Interface:
             }
         )
 
-    def connect(self, source_id, source_port, sink_id, sink_port, delay):
+    def connect(self, source_id, source_port, sink_id, sink_port):
         self._channel_out.put(
             {
                 'action': 'connect',
@@ -129,7 +143,15 @@ class Interface:
                 'source_port': source_port,
                 'sink_id': sink_id,
                 'sink_port': sink_port,
-                'delay': delay
+            }
+        )
+
+    def disconnect(self, source_id, source_port):
+        self._channel_out.put(
+            {
+                'action': 'disconnect',
+                'source_id': source_id,
+                'source_port': source_port
             }
         )
 

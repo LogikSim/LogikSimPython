@@ -6,7 +6,7 @@
 # be found in the LICENSE.txt file.
 #
 from abc import ABCMeta
-
+from copy import copy
 
 class ComponentType(object):
     METADATA = None  # Must override this in component types
@@ -18,6 +18,10 @@ class ComponentType(object):
     @classmethod
     def get_metadata_field(cls, field, default=None):
         return cls.METADATA.get(field, default)
+
+    @classmethod
+    def get_metadata(cls):
+        return cls.METADATA
 
     @classmethod
     def instantiate(cls, element_id, parent, additional_metadata={}):
@@ -59,6 +63,17 @@ class ComponentInstance(metaclass=ABCMeta):
         return self.metadata.get(field,
                                  self.component_type.get_metadata_field(
                                      field, default))
+
+    def get_metadata(self):
+        metadata_combined = copy(self.component_type.get_metadata())
+        metadata_combined.update(self.metadata)
+        return metadata_combined
+
+    def updated(self):
+        """
+        Trigger full metadata propagation for this component.
+        """
+        self.propagate_change(self.get_metadata())
 
     def set_metadata_field(self, field, value, propagate=True):
         previous_value = self.get_metadata_field(field)

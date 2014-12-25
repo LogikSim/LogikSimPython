@@ -6,17 +6,14 @@
 # be found in the LICENSE.txt file.
 #
 from queue import PriorityQueue
-from multiprocessing import Process
 from backend.event import Event
 import time
 
 
 # FIXME: Figure out how to best provide logging to the core process
 
-class Core(Process):
-    def __init__(self, controller):
-        super().__init__()
-
+class Core:
+    def __init__(self):
         self.event_queue = PriorityQueue()
 
         self.clock = -1
@@ -24,10 +21,13 @@ class Core(Process):
         self.group = None
 
         self._quit = False
-        self.controller = controller
+        self._controller = None
 
     def __str__(self):
         return "|Core(time={0})|={1}".format(self.clock, len(self.event_queue))
+
+    def set_controller(self, controller):
+        self._controller = controller
 
     def _process_next_event(self, upto_clock):
         """
@@ -72,10 +72,12 @@ class Core(Process):
         self._quit = True
 
     def run(self):
+        assert self._controller, "Need to set a controller"
+
         self._quit = False
 
         while not self._quit:
-            (target_clock, target_time) = self.controller.process(self.clock)
+            (target_clock, target_time) = self._controller.process(self.clock)
 
             while target_time - time.perf_counter() > 0:
                 if not self._process_next_event(target_clock):

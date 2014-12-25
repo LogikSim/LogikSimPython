@@ -8,6 +8,7 @@
 import multiprocessing
 from backend.interface import Interface
 import time
+from logging import getLogger
 
 
 class Controller:
@@ -22,6 +23,9 @@ class Controller:
     """
     def __init__(self, core, library):
         self._core = core
+        self._core.set_controller(self)
+        self.log = getLogger("ctrl")
+
         self._library = library
         self._channel_out = multiprocessing.Queue()
         self._channel_in = multiprocessing.Queue()
@@ -41,6 +45,7 @@ class Controller:
             'delete': self._on_update,
             'query': self._on_query,
             'connect': self._on_connect,
+            'disconnect': self._on_disconnect,
             'quit': self._on_quit
         }
 
@@ -61,13 +66,17 @@ class Controller:
 
     def _on_create(self, command):
         parent = self.elements.get(command.get("parent"))
+        guid = command['GUID']
         element = self._library.instantiate(
-            command['GUID'],
+            guid,
             parent if parent else self,
             command['metadata'])
 
         element_id = element.id()
         self.elements[element_id] = element
+        self.log.info("Instantiated %s as %d", guid, element_id)
+
+        element.updated()
 
     def _on_update(self, command):
         element = self.elements[command['id']]
@@ -77,15 +86,24 @@ class Controller:
         # Delete connections from first
         # The connections to
         # Then delete element
+        self.log.info("Delete %s", command)
         raise NotImplementedError(command['action'])
 
     def _on_query(self, command):
         raise NotImplementedError(command['action'])
 
     def _on_connect(self, command):
-        raise NotImplementedError(command['action'])
+        source = self.elements[command['source_id']]
+        sink = self.elements[command['sink_id']]
+
+        source.connect(sink, command['source_port'], command['sink_port'])
+
+    def _on_disconnect(self, command):
+        source = self.elements[command['source_id']]
+        source.disconnect(command['source_port'])
 
     def _on_quit(self, command):
+        self.log.info("Asked to quit")
         self._core.quit()
 
     def process(self, current_clock):

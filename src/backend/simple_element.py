@@ -137,6 +137,7 @@ class SimpleElement(Element):
         :param input: Input on given element to connect to
         """
         self.outputs[output] = (element, input)
+        # FIXME: Store and propagate change
 
     def _output(self, when, output, state):
         assert output < len(self.output_states), \

@@ -20,9 +20,8 @@ from tests.helpers import CallTrack
 
 
 class TestingCore(Core):
-    def __init__(self, library=None):
-        library = library if not library else ComponentLibrary()
-        super().__init__(library)
+    def __init__(self):
+        super().__init__()
         self.timeline = []
 
     def loop_until_stable_state_or_time(self, time=float("inf")):
