@@ -110,6 +110,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
 
         def do():
             temp_line_route.do_insert()
+
         def undo():
             temp_line_route.undo_insert()
 
@@ -129,6 +130,16 @@ class RouteNotFoundException(Exception):
     """ Is raised when no route could be found between given points """
     def __init__(self):
         super().__init__("Route not Found")
+
+
+class EndpointTrees:
+    """ Stores existing endpoint trees for line routing """
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+
+    def __iter__(self):
+        return iter((self.start, self.end))
 
 
 class LineRouteBetweenPoints:
@@ -166,40 +177,37 @@ class LineRouteBetweenPoints:
         return [item for item in self.scene.items(scene_point)
                 if isinstance(item, logicitems.LineTree)]
 
-    def _get_endpoint_rees(self):
+    def _get_endpoint_trees(self):
         # save line trees at endpoints
         tree_start = self._get_linetrees_at_point(self.start)
         tree_end = self._get_linetrees_at_point(self.end)
 
         # can only merge two trees if start == end
         if len(tree_start) > 1 or len(tree_end) > 1:
-            if self.p_start == self.p_end:
-                # pick one, as they are the same
-                endpoint_trees = tree_start
-            else:
+            if self.p_start != self.p_end:
                 raise RouteNotFoundException()
+            # pick one, as they are the same
+            assert len(tree_start) == 2
+            endpoint_trees = EndpointTrees(*tree_start)
         else:
-            if self.p_start == self.p_end:
+            if self.p_start == self.p_end:  # nothing todo
                 raise RouteNotFoundException()
-            endpoint_trees = [tree_start[0] if len(tree_start) > 0 else None,
-                              tree_end[0] if len(tree_end) > 0 else None]
+            endpoint_trees = EndpointTrees(
+                tree_start[0] if len(tree_start) > 0 else None,
+                tree_end[0] if len(tree_end) > 0 else None)
+            # both the same? --> line already exists --> nothing todo
+            if endpoint_trees.start is endpoint_trees.end is not None:
+                raise RouteNotFoundException()
 
-        # if both trees are the same --> line already exists --> nothing todo
-        if endpoint_trees[0] is endpoint_trees[1] is not None:
-            raise RouteNotFoundException()
-
-        return tree_start, tree_end, endpoint_trees
+        return endpoint_trees
 
     def route(self):
         assert not self._is_routed
 
-        # TODO: only use tree_start and tree_end or endpoint_trees
-        tree_start, tree_end, endpoint_trees = self._get_endpoint_rees()
+        endpoint_trees = self._get_endpoint_trees()
 
         get_obj_at_point = GetHightowerObjectAtPoint(
-            self.scene, self.p_start, self.p_end,
-            tree_start, tree_end, endpoint_trees,
-            None)
+            self.scene, self.p_start, self.p_end, endpoint_trees)
 
         # We only want to search for a limited amount of time
         time_limited_get_obj_at_point = time_limited(
@@ -220,8 +228,8 @@ class LineRouteBetweenPoints:
         # remove parts of the path that are already part of
         # adjacent line trees of the end points
 
-        res = self._extract_new_path(res, endpoint_trees[0])
-        res = self._extract_new_path(list(reversed(res)), endpoint_trees[1])
+        res = self._extract_new_path(res, endpoint_trees.start)
+        res = self._extract_new_path(list(reversed(res)), endpoint_trees.end)
 
         # create line tree from result
         path = list(map(self.scene.to_scene_point, res))
@@ -242,7 +250,7 @@ class LineRouteBetweenPoints:
     def do_temp_insert(self):
         """
         add routed line to scene, but do not remove any line
-        
+
         This is useful, when e.g. the old lines are still needed
         to draw line anchor indicators
         """
@@ -292,7 +300,7 @@ class LineRouteBetweenPoints:
     def _iter_line(line):
         """
         Iterate through all points on the line, except endpoint
-        
+
         :param line: line given as tuple ((x1, y1), (x2, y2)) of int
         :result: iterator yielding all point (u,v) between p1 and p2.
             including both edges
@@ -325,8 +333,6 @@ class LineRouteBetweenPoints:
                 for i, line in enumerate(zip(path, path[1:])):
                     points = list(self._iter_line(line))
                     for segment in zip(points, points[1:]):
-                        # TODO: refactor to use just:
-                        #      self.scene.to_scene_point(segment)
                         segment_line = QtCore.QLineF(
                             self.scene.to_scene_point(segment[0]),
                             self.scene.to_scene_point(segment[1]))
@@ -347,8 +353,7 @@ class GetHightowerObjectAtPoint:
     Function object which returns which kind of hightower object can be found
     at the given point. Meant to be used while inserting a line.
     """
-    def __init__(self, scene, p_start, p_end, tree_start, tree_end,
-                 endpoint_trees, line_anchor_indicator):
+    def __init__(self, scene, p_start, p_end, endpoint_trees):
         """
         Creates a new callable function object.
 
@@ -357,18 +362,13 @@ class GetHightowerObjectAtPoint:
             grid coordinates
         :param p_end: Ending point of the line segment being inserted in
             grid coordinates
-        :param tree_start: Line-trees at p_start location (if any)
-        :param tree_end: Line-trees at p_end location (if any)
-        :param endpoint_trees: Unique line-trees at p_start and p_end
-        :param line_anchor_indicator: Line anchor indicator singleton
+        :param endpoint_trees: line-trees at p_start and p_end given
+            as EndpointTrees object
         """
         self.p_start = p_start
         self.p_end = p_end
-        self.tree_start = tree_start
-        self.tree_end = tree_end
         self.endpoint_trees = endpoint_trees
         self.scene = scene
-        self.line_anchor_indicator = line_anchor_indicator
 
     def _is_self_line_edge(self, point, item):
         """
@@ -381,19 +381,21 @@ class GetHightowerObjectAtPoint:
         :param item: Item to check for
         :return: True if self line-edge we want to filter. False otherwise.
         """
-        if item in self.tree_start and point != self.p_start:
+        if item is self.endpoint_trees.start and point != self.p_start:
             start_to_point_line = QtCore.QLineF(
                 self.scene.to_scene_point(self.p_start),
                 self.scene.to_scene_point(point))
 
-            return not self.tree_start[0].contains_line(start_to_point_line)
+            return not self.endpoint_trees.start.contains_line(
+                start_to_point_line)
 
-        if item in self.tree_end and point != self.p_end:
+        if item is self.endpoint_trees.end and point != self.p_end:
             point_to_end_line = QtCore.QLineF(
                 self.scene.to_scene_point(point),
                 self.scene.to_scene_point(self.p_end))
 
-            return not self.tree_end[0].contains_line(point_to_end_line)
+            return not self.endpoint_trees.end.contains_line(
+                point_to_end_line)
 
         return False
 
@@ -412,7 +414,7 @@ class GetHightowerObjectAtPoint:
         found_line_edge = False
 
         for item in items:
-            if isinstance(item, logicitems.LineAnchorIndicator):  # TODO: remove: is self.line_anchor_indicator:
+            if isinstance(item, logicitems.LineAnchorIndicator):
                 continue
             elif isinstance(item, logicitems.ConnectorItem) and \
                     item.anchorPoint() == scene_point and \
