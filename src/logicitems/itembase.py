@@ -18,8 +18,8 @@ class ItemBase(QtGui.QGraphicsItem):
     _selection_color_line = QtGui.QColor(40, 125, 210)
 
     # collision margin added to all bounding boxes and shapes
-    #    (make sure this is fully representable as double, otherwise we get
-    #     rounding errors)
+    # (make sure this is fully representable as double, otherwise we get
+    # rounding errors, check with (number).hex() how many digits are taken)
     collision_margin = 2 ** -10
 
     class ItemSingleSelectionHasChanged:

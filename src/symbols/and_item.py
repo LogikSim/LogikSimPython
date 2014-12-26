@@ -19,8 +19,6 @@ class AndItem(logicitems.LogicItem):
         super().__init__()
         self._input_count = input_count
 
-        self.setAcceptHoverEvents(True)
-
         # internal state
         self._show_handles = False
         self._body_rect = QtCore.QRectF(0, 0, 0, 0)

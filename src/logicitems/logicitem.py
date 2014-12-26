@@ -25,6 +25,7 @@ class LogicItem(ItemBase):
         # self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
         self.setFlag(QtGui.QGraphicsItem.ItemSendsGeometryChanges)
+        self.setAcceptHoverEvents(True)
 
         # contains last valid position for self.itemChange(...)
         self._last_position = None
@@ -79,6 +80,16 @@ class LogicItem(ItemBase):
                       QtGui.QGraphicsItem.ItemChildRemovedChange):
             self._invalidate_bounding_rect()
         return super().itemChange(change, value)
+
+    def hoverMoveEvent(self, event):
+        super().hoverMoveEvent(event)
+        self.setCursor(QtCore.Qt.SizeAllCursor if self.isSelected() else
+                       QtCore.Qt.ArrowCursor)
+
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        self.setCursor(QtCore.Qt.SizeAllCursor if self.isSelected() else
+                       QtCore.Qt.ArrowCursor)
 
     def boundingRect(self):
         if not self._bounding_rect_valid:

@@ -69,8 +69,8 @@ class SelectionItem(ItemBase):
         return self._rect
 
     def hoverMoveEvent(self, event):
-        self.setCursor(QtCore.Qt.SizeAllCursor)
         super().hoverMoveEvent(event)
+        self.setCursor(QtCore.Qt.SizeAllCursor)
 
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
