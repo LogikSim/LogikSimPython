@@ -135,7 +135,7 @@ class TestLineRouteGraphical(unittest.TestCase):
                     pivot = scene.to_scene_point(p)
                     items = scene.items(pivot)
                     merger_tree = None
-                    for item in items[1:]:
+                    for item in items:
                         if not item.is_edge(pivot):
                             continue
                         if merger_tree is None:
