@@ -564,4 +564,3 @@ class TestLineRouteGraphical(unittest.TestCase):
                  ->
         """
         self.visual_test(input_area, position_area, output_area)
-
