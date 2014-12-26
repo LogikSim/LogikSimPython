@@ -132,6 +132,20 @@ class LineTreeGeneralTest(unittest.TestCase):
         self.assertFalse(ver_tree.contains_line(QtCore.QLineF(
             QtCore.QPointF(1, 0), QtCore.QPointF(1, 10))))
 
+    def test_contains_hor_gap(self):
+        ver_tree = LineTree([QtCore.QPointF(0, 0),
+                             QtCore.QPointF(0, 10),
+                             QtCore.QPointF(1, 10),
+                             QtCore.QPointF(1, 11),
+                             QtCore.QPointF(0, 11),
+                             QtCore.QPointF(0, 20)])
+
+        self.assertTrue(ver_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 3), QtCore.QPointF(0, 7))))
+
+        self.assertFalse(ver_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 5), QtCore.QPointF(0, 15))))
+
 
 class LineNearestPointTest(unittest.TestCase):
     def test_nearest_point_horizontal(self):

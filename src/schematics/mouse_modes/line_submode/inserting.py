@@ -371,33 +371,28 @@ class GetHightowerObjectAtPoint:
         self.p_end = p_end
         self.endpoint_trees = endpoint_trees
 
-    def _is_self_line_edge(self, point, item):
+    def _is_start_of_linetree(self, point, item):
         """
-        Must not have cycles so we can not allow overlapping the edges
-        of the trees the line we are drawing belongs to. A special case
-        is if what we are drawing is fully contained in the tree in which
-        case overlapping edges is just fine.
+        Is this point the start of a linetree?
+
+        Must not have cycles, so we have to consider existing line-trees.
+        Otherwise it can happen that the found path overlapping the edges
+        of the endpoint trees. Furthermore we don't want to categorically
+        exclude them for router, since routing over an edge from A to B:
+        (<------A------>     B)  would not be possible in this simple case.
+        That is why we ignore the lines and first edges
 
         :param point: Point in grid coordinates currently being checked.
         :param item: Item to check for
-        :return: True if self line-edge we want to filter. False otherwise.
+        :return: true in case it can be ignored for routing
         """
-        if item is self.endpoint_trees.start and point != self.p_start:
-            start_to_point_line = QtCore.QLineF(
-                self.scene.to_scene_point(self.p_start),
+        if item in self.endpoint_trees:
+            p_pivot = {self.endpoint_trees.start: self.p_start,
+                       self.endpoint_trees.end: self.p_end}[item]
+            pivot_to_point_line = QtCore.QLineF(
+                self.scene.to_scene_point(p_pivot),
                 self.scene.to_scene_point(point))
-
-            return not self.endpoint_trees.start.contains_line(
-                start_to_point_line)
-
-        if item is self.endpoint_trees.end and point != self.p_end:
-            point_to_end_line = QtCore.QLineF(
-                self.scene.to_scene_point(point),
-                self.scene.to_scene_point(self.p_end))
-
-            return not self.endpoint_trees.end.contains_line(
-                point_to_end_line)
-
+            return item.contains_line(pivot_to_point_line)
         return False
 
     def __call__(self, point):
@@ -422,10 +417,9 @@ class GetHightowerObjectAtPoint:
                     point in (self.p_start, self.p_end):
                 continue
             elif isinstance(item, logicitems.LineTree):
-                if item in self.endpoint_trees:
-                    if self._is_self_line_edge(point, item):
-                        return hightower.Solid
-                elif item.is_edge(scene_point):
+                if self._is_start_of_linetree(point, item):
+                    continue
+                if item.is_edge(scene_point):
                     found_line_edge = True
                 else:
                     found_passable_line = True

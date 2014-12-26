@@ -140,9 +140,11 @@ class TestLineRouteGraphical(unittest.TestCase):
                             continue
                         if merger_tree is None:
                             merger_tree = item
-                        else:
-                            merger_tree.merge_tree(item)
-                            scene.removeItem(item)
+                    if merger_tree is not None:
+                        for item in items:
+                            if item is not merger_tree:
+                                merger_tree.merge_tree(item)
+                                scene.removeItem(item)
 
     def to_positions(self, scene, position_area):
         scene = GridScene()
@@ -166,12 +168,12 @@ class TestLineRouteGraphical(unittest.TestCase):
                 pivot = scene.to_scene_point((x, y))
                 items = scene.items(pivot)
                 if char in 'x┴˄˅<┤├>┬-|┘┐┌└':
-                    self.assertEqual(len(items), 1)
+                    self.assertEqual(len(items), 1, (x, y))
                     self.assertIsInstance(items[0], LineTree)
                     self.assertEqual(items[0].is_edge(pivot),
-                                     char in 'x┴˄˅<┤├>┬')
+                                     char in 'x┴˄˅<┤├>┬┘┐┌└')
                 elif char in ['+']:
-                    self.assertEqual(len(items), 2)
+                    self.assertLessEqual(len(items), 2)
                     for item in items:
                         self.assertIsInstance(item, LineTree)
                         self.assertEqual(item.is_edge(pivot), False)
@@ -305,7 +307,6 @@ class TestLineRouteGraphical(unittest.TestCase):
         """
         self.visual_test(input_area, position_area, output_area)
 
-    @unittest.skip("Broken")
     def test_simple_connected_crossover_two_lines(self):
         # ┴˄˅<┤├>┬-|┘┐┌└
         input_area = """
@@ -322,6 +323,31 @@ class TestLineRouteGraphical(unittest.TestCase):
                 ˄
            ┌----+------>
            └----┴------>
+        """
+        self.visual_test(input_area, position_area, output_area)
+
+    def test_simple_route_accross_edge(self):
+        # ┴˄˅<┤├>┬-|┘┐┌└
+        input_area = """
+                 ┌----------->
+                 |
+           ┌-----┴------------>
+           └----------->
+
+        """
+        position_area = """
+                 ┌-----A----->
+                 |
+           ┌-----┴------------>
+           └----------->
+                       B
+        """
+        output_area = """
+                 ┌----┬------>
+                 |    |
+           ┌-----┴----+------->
+           └----------+>
+                      └>
         """
         self.visual_test(input_area, position_area, output_area)
 
@@ -422,5 +448,24 @@ class TestLineRouteGraphical(unittest.TestCase):
            <--x-->
               |
               ˅
+        """
+        self.visual_test(input_area, position_area, output_area)
+
+    def test_simple_route_accross_gap(self):
+        # ┴˄˅<┤├>┬-|┘┐┌└
+        input_area = """
+
+           <------┐┌----->
+                  └┘
+        """
+        position_area = """
+
+           <---A--┐┌----->    B
+                  └┘
+        """
+        output_area = """
+               ┌--------------┐
+           <---┴--┐┌----->    ˅
+                  └┘
         """
         self.visual_test(input_area, position_area, output_area)
