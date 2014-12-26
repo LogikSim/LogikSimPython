@@ -50,7 +50,7 @@ class ConnectorItem(ItemBase):
 
     def boundingRect(self):
         if not self._bounding_rect_valid:
-            self._bounding_rect = self._line_to_rect(self._line)
+            self._bounding_rect = self._line_to_col_rect(self._line)
             self._bounding_rect_valid = True
         return self._bounding_rect
 

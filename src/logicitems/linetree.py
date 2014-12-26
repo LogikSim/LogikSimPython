@@ -99,7 +99,7 @@ class LineTree(ItemBase):
         bounding_rect = None
         poly = QtGui.QPolygonF()
         for line in self._lines:
-            l_bounding_rect = self._line_to_rect(line)
+            l_bounding_rect = self._line_to_col_rect(line)
             poly = poly.united(QtGui.QPolygonF(l_bounding_rect))
             if bounding_rect is None:
                 bounding_rect = l_bounding_rect
@@ -169,7 +169,7 @@ class LineTree(ItemBase):
                 for child in children:
                     line = QtCore.QLineF(QtCore.QPointF(*node),
                                          QtCore.QPointF(*child))
-                    rect = self._line_to_rect(line)
+                    rect = self._line_to_col_rect(line)
                     if rect.contains(QtCore.QPointF(*point)):
                         children[point] = {child: children[child]}
                         del children[child]
@@ -273,7 +273,7 @@ class LineTree(ItemBase):
     def contains_line(self, line):
         """ Returns true if QLineF is fully contained by this line tree """
         radius = self.collision_margin / 2
-        l_bounding_rect = self._line_to_rect(line, radius)
+        l_bounding_rect = self._line_to_col_rect(line, radius)
         return self._shape.contains(l_bounding_rect)
 
     def boundingRect(self):

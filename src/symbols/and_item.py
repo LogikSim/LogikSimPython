@@ -35,8 +35,8 @@ class AndItem(logicitems.LogicItem):
         self._invalidate_bounding_rect()
         scale = self.scene().get_grid_spacing()
         # update body
-        self._body_rect = QtCore.QRectF(0, -scale / 2, scale * 2,
-                                        scale * (self._input_count))
+        self._body_rect = self._to_col_rect(QtCore.QRectF(
+            0, -scale / 2, scale * 2, scale * (self._input_count)))
         # update connectors
         for con in self._connectors:
             con.setParentItem(None)

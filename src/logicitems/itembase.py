@@ -35,19 +35,28 @@ class ItemBase(QtGui.QGraphicsItem):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
 
-    def _line_to_rect(self, line, radius=None):
+    def _line_to_col_rect(self, line, radius=None):
         """
         Converts QLineF to its collision area.
 
         :param radius: Collision radius of the line, using collision margin
             as default value.
         """
+        return self._to_col_rect(QtCore.QRectF(line.p1(), line.p2()), radius)
+
+    def _to_col_rect(self, rect, radius=None):
+        """
+        Converts QRectF to its collision area.
+
+        :param radius: Collision radius of the line, using collision margin
+            as default value.
+        """
         if radius is None:
             radius = self.collision_margin
-        rect = QtCore.QRectF(line.p1(), line.p2()).normalized()
         return rect.normalized().adjusted(-radius, -radius, radius, radius)
 
     def itemChange(self, change, value):
-        if change is not ItemBase.ItemSingleSelectionHasChanged:
-            # QGraphicsItem only supports changes defined in Qt
+        # QGraphicsItem only supports changes defined in Qt
+        if isinstance(change, QtGui.QGraphicsItem.GraphicsItemChange):
             return super().itemChange(change, value)
+
