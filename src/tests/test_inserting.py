@@ -117,7 +117,7 @@ class TestLineRouteGraphical(unittest.TestCase):
             for x, char in enumerate(line):
                 if char in '-+┬┴':  # horizontal
                     add_tree((x - 0.5, y), (x + 0.5, y))
-                if char in '┤├|+':
+                if char in '┤+├|':
                     add_tree((x, y - 0.5), (x, y + 0.5))
                 if char in '┐˄┬┌x':
                     add_tree((x, y), (x, y + 0.5))
@@ -132,13 +132,16 @@ class TestLineRouteGraphical(unittest.TestCase):
         for y, line in enumerate(lines):
             for x, char in enumerate(line):
                 for p in [(x, y), (x + 0.5, y), (x, y + 0.5)]:
-                # for p in [(x, y)]:
                     pivot = scene.to_scene_point(p)
                     items = scene.items(pivot)
-                    if len(items) > 1:
-                        tree = items[0]
-                        for item in items[1:]:
-                            tree.merge_tree(item)
+                    merger_tree = None
+                    for item in items[1:]:
+                        if not item.is_edge(pivot):
+                            continue
+                        if merger_tree is None:
+                            merger_tree = item
+                        else:
+                            merger_tree.merge_tree(item)
                             scene.removeItem(item)
 
     def to_positions(self, scene, position_area):
@@ -371,3 +374,28 @@ class TestLineRouteGraphical(unittest.TestCase):
                     ˅
         """
         self.visual_test(input_area, position_area, output_area)
+
+    def test_connect_passing_crossing_lines(self):
+        # ┴˄˅<┤├>┬-|┘┐┌└|
+        input_area = """
+              ˄
+              |
+           <--+-->
+              |
+              ˅
+        """
+        position_area = """
+              ˄
+              |
+           <--X-->
+              |
+              ˅
+        """
+        output_area = """
+              ˄
+              |
+           <--x-->
+              |
+              ˅
+        """
+        self.visual_test(input_area, position_area, output_area, True)
