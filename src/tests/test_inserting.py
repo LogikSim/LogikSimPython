@@ -375,6 +375,31 @@ class TestLineRouteGraphical(unittest.TestCase):
         """
         self.visual_test(input_area, position_area, output_area)
 
+    def test_extend_over_corner_swapped(self):
+        # ┴˄˅<┤├>┬-|┘┐┌└|
+        input_area = """
+           <--------┐
+                    |
+                    |
+                    |
+                    ˅
+        """
+        position_area = """
+           <---B----┐    A
+                    |
+                    |
+                    |
+                    ˅
+        """
+        output_area = """
+           <--------┬---->
+                    |
+                    |
+                    |
+                    ˅
+        """
+        self.visual_test(input_area, position_area, output_area)
+
     def test_connect_passing_crossing_lines(self):
         # ┴˄˅<┤├>┬-|┘┐┌└|
         input_area = """
@@ -398,4 +423,4 @@ class TestLineRouteGraphical(unittest.TestCase):
               |
               ˅
         """
-        self.visual_test(input_area, position_area, output_area, True)
+        self.visual_test(input_area, position_area, output_area)
