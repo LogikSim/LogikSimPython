@@ -97,15 +97,17 @@ class LineTree(ItemBase):
         """
         self.prepareGeometryChange()
         bounding_rect = None
-        shape_path = QtGui.QPainterPath()
-        shape_path.setFillRule(QtCore.Qt.WindingFill)
+        poly = QtGui.QPolygonF()
         for line in self._lines:
             l_bounding_rect = self._line_to_rect(line)
-            shape_path.addRect(l_bounding_rect)
+            poly = poly.united(QtGui.QPolygonF(l_bounding_rect))
             if bounding_rect is None:
                 bounding_rect = l_bounding_rect
             else:
                 bounding_rect = bounding_rect.united(l_bounding_rect)
+
+        shape_path = QtGui.QPainterPath()
+        shape_path.addPolygon(poly)
         self._shape = shape_path
         self._rect = bounding_rect
 

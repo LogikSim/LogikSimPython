@@ -16,7 +16,8 @@ import unittest
 from PySide import QtCore
 
 from schematics.mouse_modes.line_submode.inserting import (
-    GetHightowerObjectAtPoint, LineRouteBetweenPoints, EndpointTrees)
+    GetHightowerObjectAtPoint, LineRouteBetweenPoints, EndpointTrees,
+    RouteNotFoundException)
 from schematics.grid_scene import GridScene
 from algorithms import hightower
 from symbols import AndItem
@@ -177,6 +178,8 @@ class TestLineRouteGraphical(unittest.TestCase):
                     for item in items:
                         self.assertIsInstance(item, LineTree)
                         self.assertEqual(item.is_edge(pivot), False)
+                else:
+                    self.assertEqual(len(items), 0)
 
     def visual_test(self, input_area, position_area, output_area,
                     view_result=False):
@@ -210,7 +213,10 @@ class TestLineRouteGraphical(unittest.TestCase):
         self.fill_scene(scene, input_area)
         start, end = self.to_positions(scene, position_area)
         line_route = LineRouteBetweenPoints(scene, start, end)
-        line_route.route()
+        try:
+            line_route.route()
+        except RouteNotFoundException:
+            pass
         line_route.do_insert()
 
         if view_result:
@@ -426,6 +432,31 @@ class TestLineRouteGraphical(unittest.TestCase):
         """
         self.visual_test(input_area, position_area, output_area)
 
+    def test_extend_over_two_corners(self):
+        # ┴˄˅<┤├>┬-|┘┐┌└|
+        input_area = """
+           <--------┬-----┐
+                    |     |
+                    |     |
+                    |     |
+                    ˅     ˅
+        """
+        position_area = """
+           <---A----┬-----┐     B
+                    |     |
+                    |     |
+                    |     |
+                    ˅     ˅
+        """
+        output_area = """
+           <--------┬-----┬----->
+                    |     |
+                    |     |
+                    |     |
+                    ˅     ˅
+        """
+        self.visual_test(input_area, position_area, output_area)
+
     def test_connect_passing_crossing_lines(self):
         # ┴˄˅<┤├>┬-|┘┐┌└|
         input_area = """
@@ -451,6 +482,31 @@ class TestLineRouteGraphical(unittest.TestCase):
         """
         self.visual_test(input_area, position_area, output_area)
 
+    def test_try_route_from_passing_crossing_lines(self):
+        # ┴˄˅<┤├>┬-|┘┐┌└|
+        input_area = """
+              ˄
+              |
+           <--+-->
+              |
+              ˅
+        """
+        position_area = """
+              ˄
+              |
+        B  <--A-->
+              |
+              ˅
+        """
+        output_area = """
+              ˄
+              |
+           <--+-->
+              |
+              ˅
+        """
+        self.visual_test(input_area, position_area, output_area)
+
     def test_simple_route_accross_gap(self):
         # ┴˄˅<┤├>┬-|┘┐┌└
         input_area = """
@@ -469,3 +525,43 @@ class TestLineRouteGraphical(unittest.TestCase):
                   └┘
         """
         self.visual_test(input_area, position_area, output_area)
+
+    def test_try_route_loop(self):
+        # ┴˄˅<┤├>┬-|┘┐┌└|
+        input_area = """
+            ┌-----┐
+            |     |
+            |     |
+            |     |
+            ˅     ˅
+        """
+        position_area = """
+            ┌-----┐
+            |     |
+            A     B
+            |     |
+            ˅     ˅
+        """
+        output_area = """
+            ┌-----┐
+            |     |
+            |     |
+            |     |
+            ˅     ˅
+        """
+        self.visual_test(input_area, position_area, output_area)
+
+    @unittest.expectedFailure
+    def test_verifyer(self):
+        # ┴˄˅<┤├>┬-|┘┐┌└|
+        input_area = """
+            <----->
+        """
+        position_area = """
+            A-----B
+        """
+        output_area = """
+                 ->
+        """
+        self.visual_test(input_area, position_area, output_area)
+
