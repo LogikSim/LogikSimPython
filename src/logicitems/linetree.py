@@ -48,7 +48,7 @@ class LineTree(ItemBase):
         self._rect = None  # bounding rect
         self._edge_indicators = None  # list of QPointF for edge indicators
 
-        self.add_path(path)
+        self._set_path(path)
 
     def _update_tree(self):
         """
@@ -117,13 +117,12 @@ class LineTree(ItemBase):
         """Is line tree temporary."""
         return self._is_temp
 
-    def add_path(self, path):
+    def _set_path(self, path):
         """
-        Add new path to the tree.
+        Set tree to representing given path.
 
         :param path: Path being added given as list of QtCore.QPointF
         """
-
         def path_to_tree(p):
             root = pivot = {}
             for point in p:

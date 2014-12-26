@@ -87,7 +87,7 @@ class LineTreeGeneralTest(unittest.TestCase):
         self.assertFalse(tree.is_edge(QtCore.QPointF(15, 0)))
         self.assertFalse(tree.is_edge(QtCore.QPointF(0, 1)))
 
-    def test_contains_line(self):
+    def test_contains_hor_line(self):
         hor_tree = LineTree([QtCore.QPointF(0, 0),
                              QtCore.QPointF(10, 0)])
 
@@ -108,3 +108,212 @@ class LineTreeGeneralTest(unittest.TestCase):
             QtCore.QPointF(20, 0), QtCore.QPointF(25, 0))))
         self.assertFalse(hor_tree.contains_line(QtCore.QLineF(
             QtCore.QPointF(0, 1), QtCore.QPointF(10, 1))))
+
+    def test_contains_ver_line(self):
+        ver_tree = LineTree([QtCore.QPointF(0, 0),
+                             QtCore.QPointF(0, 10)])
+
+        self.assertTrue(ver_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 3), QtCore.QPointF(0, 7))))
+        self.assertTrue(ver_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 7), QtCore.QPointF(0, 3))))
+        self.assertTrue(ver_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(0, 10))))
+        self.assertTrue(ver_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 10), QtCore.QPointF(0, 0))))
+
+        self.assertFalse(ver_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(0, 11))))
+        self.assertFalse(ver_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, -1), QtCore.QPointF(0, 0))))
+        self.assertFalse(ver_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 20), QtCore.QPointF(0, 25))))
+        self.assertFalse(ver_tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(1, 0), QtCore.QPointF(1, 10))))
+
+
+class LineMergeRegressionTest(unittest.TestCase):
+    """Merge test not relying on introspecting inner states."""
+    def test_simple_corner(self):
+        tree = LineTree([QtCore.QPointF(0, 0),
+                         QtCore.QPointF(10, 0)])
+        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
+                                  QtCore.QPointF(10, 10)]))
+
+        # check edges
+        self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(10, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(10, 10)))
+
+        self.assertFalse(tree.is_edge(QtCore.QPointF(5, 0)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(0, 5)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(5, 5)))
+
+        # contains line
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(3, 0), QtCore.QPointF(7, 0))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(7, 0), QtCore.QPointF(3, 0))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(10, 0))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(10, 0), QtCore.QPointF(0, 0))))
+
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(10, 3), QtCore.QPointF(10, 7))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(10, 7), QtCore.QPointF(10, 3))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(10, 0), QtCore.QPointF(10, 10))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(10, 10), QtCore.QPointF(10, 0))))
+
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(11, 0))))
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(-1, 0), QtCore.QPointF(0, 0))))
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(20, 0), QtCore.QPointF(25, 0))))
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 1), QtCore.QPointF(10, 1))))
+
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(10, 0), QtCore.QPointF(10, 11))))
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(10, -1), QtCore.QPointF(10, 0))))
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(10, 20), QtCore.QPointF(10, 25))))
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(11, 0), QtCore.QPointF(11, 10))))
+
+    def test_horizontal_merge(self):
+        tree = LineTree([QtCore.QPointF(0, 0),
+                         QtCore.QPointF(10, 0)])
+        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
+                                  QtCore.QPointF(20, 0)]))
+
+        # check edges
+        self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(10, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(20, 0)))
+
+        self.assertFalse(tree.is_edge(QtCore.QPointF(5, 0)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(0, 5)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(5, 5)))
+
+        # contains line
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(20, 0))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(5, 0), QtCore.QPointF(20, 0))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(15, 0))))
+
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(30, 0))))
+
+    def test_split_merge(self):
+        tree = LineTree([QtCore.QPointF(0, 0),
+                         QtCore.QPointF(10, 0)])
+        tree.merge_tree(LineTree([QtCore.QPointF(5, 0),
+                                  QtCore.QPointF(5, 10)]))
+
+        # check edges
+        self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(10, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(5, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(5, 10)))
+
+        self.assertFalse(tree.is_edge(QtCore.QPointF(3, 0)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(0, 5)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(5, 5)))
+
+        # contains line
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(10, 0))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(5, 0), QtCore.QPointF(10, 0))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(5, 0), QtCore.QPointF(5, 10))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(5, 2), QtCore.QPointF(5, 7))))
+
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(30, 0))))
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(5, 0), QtCore.QPointF(5, 15))))
+
+    def test_two_sided_vertical_merge(self):
+        tree = LineTree([QtCore.QPointF(0, 10),
+                         QtCore.QPointF(0, 20)])
+        tree.merge_tree(LineTree([QtCore.QPointF(0, 0),
+                                  QtCore.QPointF(0, 10)]))
+        tree.merge_tree(LineTree([QtCore.QPointF(0, 20),
+                                  QtCore.QPointF(0, 30)]))
+
+        # check edges
+        self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(0, 30)))
+
+        self.assertFalse(tree.is_edge(QtCore.QPointF(0, 10)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(0, 20)))
+
+        # contains line
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(0, 30))))
+
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(40, 0))))
+
+    def test_pass_crossing_merge(self):
+        """Lines crossing, without being merged"""
+        tree = LineTree([QtCore.QPointF(0, 0),
+                         QtCore.QPointF(10, 0)])
+        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
+                                  QtCore.QPointF(10, 10)]))
+
+        tree_m = LineTree([QtCore.QPointF(5, 0),
+                           QtCore.QPointF(5, 5)])
+        tree_m.merge_tree(LineTree([QtCore.QPointF(5, 5),
+                                    QtCore.QPointF(15, 5)]))
+
+        tree.merge_tree(tree_m)
+
+        # check edges
+        self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(10, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(10, 10)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(5, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(5, 5)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(15, 5)))
+        self.assertFalse(tree.is_edge(QtCore.QPointF(10, 5)))
+
+        self.assertFalse(tree.is_edge(QtCore.QPointF(0, 10)))
+
+    def test_four_crossing_merge(self):
+        tree = LineTree([QtCore.QPointF(0, 0),
+                         QtCore.QPointF(10, 0)])
+        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
+                                  QtCore.QPointF(10, 10)]))
+        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
+                                  QtCore.QPointF(20, 0)]))
+        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
+                                  QtCore.QPointF(10, -10)]))
+
+        # check edges
+        self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(10, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(10, 10)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(20, 0)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(10, -10)))
+
+        self.assertFalse(tree.is_edge(QtCore.QPointF(0, 10)))
+
+        # contains line
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(20, 0))))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(10, -10), QtCore.QPointF(10, 10))))
+
+        self.assertFalse(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(40, 0))))
