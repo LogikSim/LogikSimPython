@@ -23,7 +23,7 @@ class AndItem(logicitems.LogicItem):
 
         # internal state
         self._show_handles = False
-        self._body_rect = None
+        self._body_rect = QtCore.QRectF(0, 0, 0, 0)
         self._connectors = []
         self._handles = {}
 
@@ -101,7 +101,6 @@ class AndItem(logicitems.LogicItem):
         return super().itemChange(change, value)
 
     def ownBoundingRect(self):
-        assert self._body_rect is not None
         return self._body_rect
 
     def selectionRect(self):

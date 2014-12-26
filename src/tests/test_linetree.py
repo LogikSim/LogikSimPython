@@ -14,6 +14,7 @@ import unittest
 from PySide import QtCore
 
 from logicitems.linetree import LineTree
+from schematics.grid_scene import GridScene
 
 
 class LineTreeRerootTest(unittest.TestCase):
@@ -130,6 +131,60 @@ class LineTreeGeneralTest(unittest.TestCase):
             QtCore.QPointF(0, 20), QtCore.QPointF(0, 25))))
         self.assertFalse(ver_tree.contains_line(QtCore.QLineF(
             QtCore.QPointF(1, 0), QtCore.QPointF(1, 10))))
+
+
+class LineNearestPointTest(unittest.TestCase):
+    def test_nearest_point_horizontal(self):
+        scene = GridScene()
+
+        def tsp(x, y):
+            return scene.to_scene_point((x, y))
+        hor_tree = LineTree([tsp(0, 0), tsp(10, 0)])
+        scene.addItem(hor_tree)
+
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(0, 0)), tsp(0, 0))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(5, 0)), tsp(5, 0))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(10, 0)), tsp(10, 0))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(1.3, 0)), tsp(1, 0))
+
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(5, 1)), tsp(5, 0))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(5, 100)), tsp(5, 0))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(-10, 0)), tsp(0, 0))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(-10, 10)), tsp(0, 0))
+
+    def test_nearest_point_vertical(self):
+        scene = GridScene()
+
+        def tsp(x, y):
+            return scene.to_scene_point((x, y))
+        hor_tree = LineTree([tsp(0, 0), tsp(0, 10)])
+        scene.addItem(hor_tree)
+
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(0, 0)), tsp(0, 0))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(0, 5)), tsp(0, 5))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(0, 10)), tsp(0, 10))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(0, 1.3)), tsp(0, 1))
+
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(1, 5)), tsp(0, 5))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(100, 5)), tsp(0, 5))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(0, -10)), tsp(0, 0))
+        self.assertEqual(
+            hor_tree.get_nearest_point(tsp(10, -10)), tsp(0, 0))
 
 
 class LineMergeRegressionTest(unittest.TestCase):
@@ -360,14 +415,21 @@ class LineMergeRegressionTest(unittest.TestCase):
         tree_c.merge_tree(LineTree([QtCore.QPointF(-10, 10),
                                     QtCore.QPointF(0, 10)]))
 
+        tree_d = LineTree([QtCore.QPointF(3, 10),
+                           QtCore.QPointF(3, 20)])
+        tree_d.merge_tree(LineTree([QtCore.QPointF(0, 20),
+                                    QtCore.QPointF(10, 20)]))
+
         tree_b.merge_tree(tree_a)
         tree_b.merge_tree(tree_c)
+        tree_b.merge_tree(tree_d)
         tree = tree_b
 
         # check edges
         self.assertTrue(tree.is_edge(QtCore.QPointF(5, 0)))
         self.assertTrue(tree.is_edge(QtCore.QPointF(5, 10)))
         self.assertTrue(tree.is_edge(QtCore.QPointF(0, 10)))
+        self.assertTrue(tree.is_edge(QtCore.QPointF(3, 10)))
 
         self.assertFalse(tree.is_edge(QtCore.QPointF(5, 5)))
 

@@ -360,11 +360,11 @@ class GetHightowerObjectAtPoint:
 
         :param scene: Scene operation is taking place in
         :param p_start: Starting point of the line segment being inserted in
-            grid coordinates
+            grid coordinates as tuple (int, int).
         :param p_end: Ending point of the line segment being inserted in
-            grid coordinates
+            grid coordinates as tuple (int, int).
         :param endpoint_trees: line-trees at p_start and p_end given
-            as EndpointTrees object
+            as EndpointTrees object.
         """
         self.scene = scene
         self.p_start = p_start
@@ -405,7 +405,7 @@ class GetHightowerObjectAtPoint:
         Returns which kind of hightower object can be found at the given point.
         Meant to be used while inserting a line.
 
-        :param point: Point to check in grid coordinates.
+        :param point: Point to check in grid coordinates as tuple (int, int).
         :return: hightower object found at position.
         """
 
