@@ -59,4 +59,3 @@ class ItemBase(QtGui.QGraphicsItem):
         # QGraphicsItem only supports changes defined in Qt
         if isinstance(change, QtGui.QGraphicsItem.GraphicsItemChange):
             return super().itemChange(change, value)
-

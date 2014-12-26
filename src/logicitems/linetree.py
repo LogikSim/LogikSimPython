@@ -14,6 +14,7 @@ import copy
 from PySide import QtGui, QtCore
 
 from .itembase import ItemBase
+from .line_edge_indicator import LineEdgeIndicator
 
 
 class LineTree(ItemBase):
@@ -46,7 +47,7 @@ class LineTree(ItemBase):
         self._edges = None  # set with all edges as tuples
         self._shape = None  # shape path
         self._rect = None  # bounding rect
-        self._edge_indicators = None  # list of QPointF for edge indicators
+        self._edge_indicators = []  # list of LineEdgeIndicators
 
         self._set_path(path)
 
@@ -55,6 +56,18 @@ class LineTree(ItemBase):
         Updates internal storage.
 
         Call this function whenever changing the line tree.
+        """
+
+        # edge indicators and shape
+        self._update_data_structures()
+        self._update_edge_indicators()
+        self._update_shape()
+
+    def _update_data_structures(self):
+        """
+        Update derived data structures.
+
+        Like lines, edges that are derived from self._tree.
         """
         # collect all lines
         def iter_lines(tree, origin=None):
@@ -76,18 +89,20 @@ class LineTree(ItemBase):
 
         self._edges = set(iter_edges_as_tuple(self._tree))
 
+    def _update_edge_indicators(self):
+        # delete old
+        for indicator in self._edge_indicators:
+            indicator.setParentItem(None)
+
         # collect all edge indicators
         def iter_edge_indicators(tree, root=True):
             for point, children in tree.items():
                 if len(children) >= (3 if root else 2):
-                    yield QtCore.QPointF(*point)
+                    yield LineEdgeIndicator(self, QtCore.QPointF(*point))
                 for indicator in iter_edge_indicators(children, False):
                     yield indicator
 
         self._edge_indicators = list(iter_edge_indicators(self._tree))
-
-        # update shape
-        self._update_shape()
 
     def _update_shape(self):
         """
@@ -288,24 +303,13 @@ class LineTree(ItemBase):
         for line in self._lines:
             painter.drawLine(line)
 
-        # draw edge indicators
-        painter.setBrush(QtGui.QBrush(QtCore.Qt.black))
-        target_size = self.scene().get_grid_spacing() / 40
-        # draw edge indicators always with the same size on screen, except
-        # when zooming in very closely (in this case draw them bigger)
-        lod = min(self.scene().get_lod_from_painter(painter), 0.1)
-        ei_size = target_size / lod
-        painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        for edge in self._edge_indicators:
-            painter.drawEllipse(edge, ei_size, ei_size)
-        painter.setRenderHint(QtGui.QPainter.Antialiasing, False)
-
         # debugging
         if self._debug_painting:
             painter.setPen(QtCore.Qt.NoPen)
             painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 128)))
             for line in self._lines:
-                rect = self._line_to_rect(line)
+                radius = self.scene().get_grid_spacing() / 4
+                rect = self._line_to_col_rect(line, radius)
                 painter.drawRect(rect)
-            for edge in self._edge_indicators:
-                painter.drawEllipse(edge, 50, 50)
+            for indicator in self._edge_indicators:
+                painter.drawEllipse(indicator.pos(), 50, 50)

@@ -134,7 +134,8 @@ class TestLineRouteGraphical(unittest.TestCase):
             for x, char in enumerate(line):
                 for p in [(x, y), (x + 0.5, y), (x, y + 0.5)]:
                     pivot = scene.to_scene_point(p)
-                    items = scene.items(pivot)
+                    items = [item for item in scene.items(pivot)
+                             if isinstance(item, LineTree)]
                     merger_tree = None
                     for item in items:
                         if not item.is_edge(pivot):
@@ -167,16 +168,15 @@ class TestLineRouteGraphical(unittest.TestCase):
         for y, line in enumerate(lines):
             for x, char in enumerate(line):
                 pivot = scene.to_scene_point((x, y))
-                items = scene.items(pivot)
+                items = [item for item in scene.items(pivot)
+                         if isinstance(item, LineTree)]
                 if char in 'x┴˄˅<┤├>┬-|┘┐┌└':
                     self.assertEqual(len(items), 1, (x, y))
-                    self.assertIsInstance(items[0], LineTree)
                     self.assertEqual(items[0].is_edge(pivot),
                                      char in 'x┴˄˅<┤├>┬┘┐┌└')
                 elif char in ['+']:
                     self.assertLessEqual(len(items), 2)
                     for item in items:
-                        self.assertIsInstance(item, LineTree)
                         self.assertEqual(item.is_edge(pivot), False)
                 else:
                     self.assertEqual(len(items), 0)
