@@ -17,7 +17,11 @@ from . import grid_view
 
 
 class InteractiveGridView(grid_view.GridView):
-    """The basic view of all mouse modes."""
+    """
+    The basic view of all mouse modes.
+
+
+    """
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
 
@@ -25,22 +29,18 @@ class InteractiveGridView(grid_view.GridView):
         # middle mouse button
         self._mouse_mid_last_pos = None
 
-        # self.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
         self.setTransformationAnchor(QtGui.QGraphicsView.AnchorUnderMouse)
         # self.setResizeAnchor(QtGui.QGraphicsView.AnchorViewCenter)
         # self.setOptimizationFlags(QtGui.QGraphicsView.DontSavePainterState)
-        # self.setAlignment(QtCore.Qt.AlignTop|QtCore.Qt.AlignLeft)
+        self.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
-        self.scale(0.1, 0.1)
+        self.scale(0.15, 0.15)
 
     def mapToSceneGrid(self, pos, y=None):
+        """Rounds mouse position to scene grid."""
         if y is not None:
             pos = QtCore.QPoint(pos, y)
         return self.scene().roundToGrid(self.mapToScene(pos))
-
-    def getScale(self):
-        return QtGui.QStyleOptionGraphicsItem.levelOfDetailFromTransform(
-            self.viewportTransform())
 
     def wheelEvent(self, event):
         super().wheelEvent(event)
@@ -57,7 +57,9 @@ class InteractiveGridView(grid_view.GridView):
         else:
             # scale
             factor = 1.1 ** (event.delta() / 60)
-            new_scale = self.getScale() * factor
+            scale = QtGui.QStyleOptionGraphicsItem.levelOfDetailFromTransform(
+                self.viewportTransform())
+            new_scale = scale * factor
             if 0.0075 < new_scale < 5:
                 self.scale(factor, factor)
 

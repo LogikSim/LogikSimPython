@@ -101,8 +101,10 @@ class SelectionItem(ItemBase):
 
     @QtCore.Slot()
     def onSelectionChanged(self):
+        """Selection in the scene changed."""
         self._invalidate_state()
 
     @QtCore.Slot()
     def onSelectedItemPosChanged(self):
+        """The position of a selected item in the scene changed."""
         self._invalidate_state()

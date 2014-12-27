@@ -18,15 +18,13 @@ class SelectItemsMode(GridViewMouseModeBase):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
 
-    def mouse_enter(self):
-        super().mouse_enter()
-        self.setDragMode(QtGui.QGraphicsView.RubberBandDrag)
-        self.scene().setSelectionAllowed(True)
+    @mouse_mode_filtered
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
 
-    def mouse_leave(self):
-        super().mouse_leave()
-        self.setDragMode(QtGui.QGraphicsView.NoDrag)
-        self.scene().setSelectionAllowed(False)
+    @mouse_mode_filtered
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
 
     @mouse_mode_filtered
     def keyPressEvent(self, event):
@@ -54,3 +52,13 @@ class SelectItemsMode(GridViewMouseModeBase):
         self.scene().actions.execute(
             do, undo, "remove logic item"
         )
+
+    def mouse_enter(self):
+        super().mouse_enter()
+        self.setDragMode(QtGui.QGraphicsView.RubberBandDrag)
+        self.scene().setSelectionAllowed(True)
+
+    def mouse_leave(self):
+        super().mouse_leave()
+        self.setDragMode(QtGui.QGraphicsView.NoDrag)
+        self.scene().setSelectionAllowed(False)

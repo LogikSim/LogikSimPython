@@ -17,20 +17,18 @@ from PySide import QtGui, QtCore
 class LineAnchorIndicator(QtGui.QGraphicsEllipseItem):
     """ visual effect for line anchors while adding lines """
 
-    def __init__(self, *args, **kargs):
-        QtGui.QGraphicsEllipseItem.__init__(self, *args, **kargs)
-        self.setPen(QtGui.QPen(QtCore.Qt.darkGreen))
+    def __init__(self, pos):
+        radius = 10
+        rect = QtCore.QRectF(-radius / 2, -radius / 2, radius, radius)
+        QtGui.QGraphicsEllipseItem.__init__(self, rect)
+        self.setFlag(QtGui.QGraphicsItem.ItemIgnoresTransformations)
+        self.setPos(pos)
 
-    def setWidthF(self, width):
-        if width != self.widthF():
-            pen = self.pen()
-            pen.setWidthF(width)
-            self.setPen(pen)
-
-    def widthF(self):
-        return self.pen().widthF()
+        pen = QtGui.QPen(QtCore.Qt.darkGreen)
+        pen.setWidthF(1.2)
+        self.setPen(pen)
 
     def paint(self, painter, options, widget):
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        QtGui.QGraphicsEllipseItem.paint(self, painter, options, widget)
+        super().paint(painter, options, widget)
         painter.setRenderHint(QtGui.QPainter.Antialiasing, False)

@@ -116,21 +116,14 @@ class InsertLineSubModeBase(LineSubModeBase):
                 self.scene().removeItem(self._line_anchor_indicator)
                 self._line_anchor_indicator = None
         else:
-            scale = self.getScale()
-            size = max(1 / scale * 10, 70)
-            rect = QtCore.QRectF(pos.x() - size / 2, pos.y() - size / 2,
-                                 size, size)
-            pen_width = max(1 / scale, 8)
             if self._line_anchor_indicator is None:
                 # create new
-                item = logicitems.LineAnchorIndicator(rect)
-                item.setWidthF(pen_width)
-                self._line_anchor_indicator = item
+                item = logicitems.LineAnchorIndicator(pos)
                 self.scene().addItem(item)
+                self._line_anchor_indicator = item
             else:
-                # resize existing
-                self._line_anchor_indicator.setRect(rect)
-                self._line_anchor_indicator.setWidthF(pen_width)
+                # move existing
+                self._line_anchor_indicator.setPos(pos)
 
     def _do_start_insert_lines(self, view_pos, anchor=None):
         # find anchor
