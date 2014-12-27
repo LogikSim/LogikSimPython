@@ -79,7 +79,6 @@ class InsertItemMode(GridViewMouseModeBase):
                 do, undo, "insert logic item"
             )
 
-
     def mouse_leave(self):
         super().mouse_leave()
         # cleanup InsertItem

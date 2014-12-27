@@ -235,8 +235,10 @@ class GridScene(QtGui.QGraphicsScene):
     def beginUndoRedoGroup(self):
         """Group all coming item changes into one undo entry."""
         self._undo_redo_group_id += 1
+        assert not self._is_undo_redo_grouping
         self._is_undo_redo_grouping = True
 
     def endUndoRedoGroup(self):
-        """End grouping of movement entries and create undo entry."""
+        """End grouping of undo entries."""
+        assert self._is_undo_redo_grouping
         self._is_undo_redo_grouping = False

@@ -18,7 +18,7 @@ class SelectItemsMode(GridViewMouseModeBase):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
 
-        self._scene = None
+        self._undo_group_scene = None
 
     def mouse_enter(self):
         super().mouse_enter()
@@ -27,8 +27,13 @@ class SelectItemsMode(GridViewMouseModeBase):
 
     def mouse_leave(self):
         super().mouse_leave()
+
         self.setDragMode(QtGui.QGraphicsView.NoDrag)
         self.scene().setSelectionAllowed(False)
+
+        if self._undo_group_scene is not None:
+            self._undo_group_scene.endUndoRedoGroup()
+            self._undo_group_scene = None
 
     def _mask_drag_mode(self, func, mouse_event):
         """
@@ -51,14 +56,15 @@ class SelectItemsMode(GridViewMouseModeBase):
         # call parent with masked drag mode
         self._mask_drag_mode(super().mousePressEvent, event)
 
-        self._scene = self.scene()
-        self._scene.beginUndoRedoGroup()
+        self._undo_group_scene = self.scene()
+        self._undo_group_scene.beginUndoRedoGroup()
 
     @mouse_mode_filtered
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
 
-        self._scene.endUndoRedoGroup()
+        self._undo_group_scene.endUndoRedoGroup()
+        self._undo_group_scene = None
 
     @mouse_mode_filtered
     def keyPressEvent(self, event):

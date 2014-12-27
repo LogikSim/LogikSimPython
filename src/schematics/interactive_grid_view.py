@@ -36,7 +36,7 @@ class InteractiveGridView(grid_view.GridView):
         # self.setOptimizationFlags(QtGui.QGraphicsView.DontSavePainterState)
         self.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
-        self.scale(0.1, 0.1)
+        self.scale(0.12, 0.12)
 
     def mapToSceneGrid(self, pos, y=None):
         """Rounds mouse position to scene grid."""

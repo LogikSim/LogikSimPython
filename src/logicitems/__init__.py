@@ -13,8 +13,9 @@ from .line_edge_indicator import LineEdgeIndicator
 from .linetree import LineTree
 from .logicitem import LogicItem
 from .selection import SelectionItem
+from .resizable_item import ResizableItem
 from .resizehandle import ResizeHandle
 
 __all__ = ('LineAnchorIndicator', 'ConnectorItem', 'ItemBase',
            'LineEdgeIndicator', 'LineTree', 'LogicItem', 'SelectionItem',
-           'ResizeHandle')
+           'ResizableItem', 'ResizeHandle')
