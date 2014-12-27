@@ -57,7 +57,7 @@ class ResizableItem(logicitems.LogicItem):
         scale = self.scene().get_grid_spacing()
         # update body
         self._body_rect = self._to_col_rect(QtCore.QRectF(
-            0, -scale / 2, scale * 2, scale * (self._input_count)))
+            0, -scale * 0.35, scale * 2, scale * (self._input_count - 0.3)))
         # update connectors
         for con in self._connectors:
             con.setParentItem(None)
@@ -83,10 +83,10 @@ class ResizableItem(logicitems.LogicItem):
             scale = self.scene().get_grid_spacing()
             ht = logicitems.ResizeHandle(self, horizontal=False,
                                          resize_callback=self.on_handle_resize)
-            ht.setPos(scale, -scale / 2)
+            ht.setPos(scale, -scale * 0.35)
             hb = logicitems.ResizeHandle(self, horizontal=False,
                                          resize_callback=self.on_handle_resize)
-            hb.setPos(scale, (self._input_count - 0.5) * scale)
+            hb.setPos(scale, (self._input_count - 0.65) * scale)
             self._handles = {'top': ht, 'bottom': hb}
 
     def on_handle_resize(self, handle, delta):
