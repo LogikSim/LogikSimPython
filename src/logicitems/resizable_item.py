@@ -16,8 +16,8 @@ from actions.resize_action import ResizeAction
 
 
 class ResizableItem(logicitems.LogicItem):
-    def __init__(self, input_count):
-        super().__init__()
+    def __init__(self, input_count, parent=None):
+        super().__init__(parent=parent)
         self._input_count = input_count
 
         # internal state
