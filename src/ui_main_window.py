@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created: Sat Dec 27 18:47:27 2014
+# Created: Sat Dec 27 23:17:38 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -67,16 +67,16 @@ class Ui_MainWindow(object):
         self.history_dock_widget.setWidget(self.history_widget)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.history_dock_widget)
         self.component_library_dock_widget = QtGui.QDockWidget(MainWindow)
-        self.component_library_dock_widget.setMinimumSize(QtCore.QSize(176, 300))
+        self.component_library_dock_widget.setMinimumSize(QtCore.QSize(80, 200))
         self.component_library_dock_widget.setFloating(True)
         self.component_library_dock_widget.setObjectName("component_library_dock_widget")
         self.component_library_widget = QtGui.QWidget()
         self.component_library_widget.setObjectName("component_library_widget")
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.component_library_widget)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.treeView = QtGui.QTreeView(self.component_library_widget)
-        self.treeView.setObjectName("treeView")
-        self.verticalLayout_3.addWidget(self.treeView)
+        self.graphicsView = LibraryView(self.component_library_widget)
+        self.graphicsView.setObjectName("graphicsView")
+        self.verticalLayout_3.addWidget(self.graphicsView)
         self.component_library_dock_widget.setWidget(self.component_library_widget)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.component_library_dock_widget)
         self.action_exit = QtGui.QAction(MainWindow)
@@ -119,4 +119,5 @@ class Ui_MainWindow(object):
         self.action_about_qt.setText(QtGui.QApplication.translate("MainWindow", "About &Qt", None, QtGui.QApplication.UnicodeUTF8))
 
 from actions.action_stack_view import ActionStackView
+from schematics.library_view import LibraryView
 import resources_rc

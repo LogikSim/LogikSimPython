@@ -18,7 +18,7 @@ from PySide import QtCore, QtGui
 from schematics.mouse_modes.line_submode.inserting import (
     GetHightowerObjectAtPoint, LineRouteBetweenPoints, EndpointTrees,
     RouteNotFoundException)
-from schematics.grid_scene import GridScene
+from schematics import SimulationScene
 from algorithms import hightower
 from symbols import AndItem
 from logicitems import LineTree
@@ -30,7 +30,7 @@ class TestHightowerObject(unittest.TestCase):
         if not self.app:
             self.app = QtGui.QApplication([])
 
-        self.scene = GridScene()
+        self.scene = SimulationScene()
 
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(
@@ -85,7 +85,7 @@ class TestLineRoute(unittest.TestCase):
         if not self.app:
             self.app = QtGui.QApplication([])
 
-        self.scene = GridScene()
+        self.scene = SimulationScene()
 
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(
@@ -141,7 +141,7 @@ class TestLineRouteGraphical(unittest.TestCase):
         if not self.app:
             self.app = QtGui.QApplication([])
 
-        self.scene = GridScene()
+        self.scene = SimulationScene()
 
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(

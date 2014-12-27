@@ -34,7 +34,6 @@ class InteractiveGridView(grid_view.GridView):
         self.setTransformationAnchor(QtGui.QGraphicsView.AnchorUnderMouse)
         # self.setResizeAnchor(QtGui.QGraphicsView.AnchorViewCenter)
         # self.setOptimizationFlags(QtGui.QGraphicsView.DontSavePainterState)
-        self.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
         self.scale(0.12, 0.12)
 
@@ -43,11 +42,6 @@ class InteractiveGridView(grid_view.GridView):
         if y is not None:
             pos = QtCore.QPoint(pos, y)
         return self.scene().roundToGrid(self.mapToScene(pos))
-
-    def getAbsoluteScale(self):
-        """Get absolute magnification scale of the scene."""
-        return QtGui.QStyleOptionGraphicsItem.levelOfDetailFromTransform(
-            self.viewportTransform())
 
     def wheelEvent(self, event):
         super().wheelEvent(event)

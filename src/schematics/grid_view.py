@@ -13,8 +13,17 @@ from PySide import QtGui, QtCore
 
 
 class GridView(QtGui.QGraphicsView):
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+        self.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
+
+    def getAbsoluteScale(self):
+        """Get absolute magnification scale of the scene."""
+        return QtGui.QStyleOptionGraphicsItem.levelOfDetailFromTransform(
+            self.viewportTransform())
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        # workaround to immediately apply changes after maximize / restore
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self.viewport().update()
+#        # workaround to immediately apply changes after maximize / restore
+#        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+#        self.viewport().update()

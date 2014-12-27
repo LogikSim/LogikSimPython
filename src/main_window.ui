@@ -125,8 +125,8 @@
   <widget class="QDockWidget" name="component_library_dock_widget">
    <property name="minimumSize">
     <size>
-     <width>176</width>
-     <height>300</height>
+     <width>80</width>
+     <height>200</height>
     </size>
    </property>
    <property name="floating">
@@ -141,7 +141,7 @@
    <widget class="QWidget" name="component_library_widget">
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="QTreeView" name="treeView"/>
+      <widget class="LibraryView" name="graphicsView"/>
      </item>
     </layout>
    </widget>
@@ -183,6 +183,11 @@
    <class>ActionStackView</class>
    <extends>QListView</extends>
    <header>actions/action_stack_view/</header>
+  </customwidget>
+  <customwidget>
+   <class>LibraryView</class>
+   <extends>QGraphicsView</extends>
+   <header>schematics/library_view/</header>
   </customwidget>
  </customwidgets>
  <resources>

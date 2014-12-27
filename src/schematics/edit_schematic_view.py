@@ -10,7 +10,7 @@ Defines the schematic view used to create and visualize logic circuits.
 '''
 
 from . import mouse_modes
-from . import grid_scene
+from . import simulation_scene
 
 
 class EditSchematicView(mouse_modes.SelectItemsMode,
@@ -21,5 +21,5 @@ class EditSchematicView(mouse_modes.SelectItemsMode,
 
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
-        self.setScene(grid_scene.GridScene(self))
+        self.setScene(simulation_scene.SimulationScene(self))
         self.setMouseMode(mouse_modes.SelectItemsMode)
