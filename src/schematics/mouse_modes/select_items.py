@@ -9,9 +9,9 @@
 Defines functionality when selecting items.
 '''
 
-from PySide import QtGui
+from PySide import QtGui, QtCore
 
-from .modes_base import GridViewMouseModeBase
+from .modes_base import GridViewMouseModeBase, mouse_mode_filtered
 
 
 class SelectItemsMode(GridViewMouseModeBase):
@@ -27,3 +27,11 @@ class SelectItemsMode(GridViewMouseModeBase):
         super().mouse_leave()
         self.setDragMode(QtGui.QGraphicsView.NoDrag)
         self.scene().setSelectionAllowed(False)
+
+    @mouse_mode_filtered
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            for item in self.scene().selectedItems():
+                self.scene().removeItem(item)
+        else:
+            super().keyPressEvent(event)
