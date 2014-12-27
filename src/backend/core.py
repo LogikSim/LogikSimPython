@@ -79,7 +79,7 @@ class Core:
         while not self._quit:
             (target_clock, target_time) = self._controller.process(self.clock)
 
-            while target_time - time.perf_counter() > 0:
+            while target_time - time.clock() > 0:
                 if not self._process_next_event(target_clock):
                     break
 

@@ -156,7 +156,7 @@ class Controller:
     def _delay_accordingly(self, current_clock):
         scheduling_interval = 0.05  # Seconds till reschedule of process
 
-        elapsed_time = time.perf_counter() - self._last_process_time
+        elapsed_time = time.clock() - self._last_process_time
 
         if elapsed_time < scheduling_interval:
             # FIXME: Not very content with this. Limits our resolution a lot.
@@ -176,7 +176,7 @@ class Controller:
         target_clock = current_clock + \
             self._simulation_rate * scheduling_interval
 
-        self._last_process_time = time.perf_counter()
+        self._last_process_time = time.clock()
         return target_clock, self._last_process_time + scheduling_interval
 
     def propagate_change(self, data):
