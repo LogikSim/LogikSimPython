@@ -16,14 +16,12 @@ class MoveAction(StateAction):
     """Mergeable move action for items."""
     def __init__(self, group_id, item, old_pos, new_pos):
         """
-        Create move action for item.
+        Implement state action for movable items.
 
-        It is assumed that the item is already moved.
-
-        :param group_id: only actions with same undo redo group are merged
-        :param item: scene item being moved
         :param old_pos: old position as QPointF
         :param new_pos: new position as QPointF
+
+        See StateAction for more info.
         """
         super().__init__("moved item", group_id, item, old_pos, new_pos)
 

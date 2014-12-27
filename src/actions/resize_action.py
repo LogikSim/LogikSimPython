@@ -16,16 +16,14 @@ class ResizeAction(StateAction):
     """Mergeable resize action for logic items."""
     def __init__(self, group_id, item, old_size, old_pos, new_size, new_pos):
         """
-        Create resize action for resizable logic items.
+        Implement state action for resizable logic items.
 
-        It is assumed that the item is already resized.
-
-        :param group_id: only actions with same undo redo group are merged
-        :param item: scene item being moved
         :param old_size: old size given as int
         :param old_pos: old position as QPointF
         :param new_size: new size given as int
         :param new_pos: new position as QPointF
+
+        See StateAction for more info.
         """
         super().__init__("resize item", group_id, item, (old_size, old_pos),
                          (new_size, new_pos))

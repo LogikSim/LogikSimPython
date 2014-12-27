@@ -16,6 +16,10 @@ from actions.resize_action import ResizeAction
 
 
 class ResizableItem(logicitems.LogicItem):
+    # item overlap above first and below last input connector in
+    # in grid gap fraction
+    _overlap = 0.37
+
     def __init__(self, input_count):
         super().__init__()
         self._input_count = input_count
@@ -57,7 +61,8 @@ class ResizableItem(logicitems.LogicItem):
         scale = self.scene().get_grid_spacing()
         # update body
         self._body_rect = self._to_col_rect(QtCore.QRectF(
-            0, -scale * 0.35, scale * 2, scale * (self._input_count - 0.3)))
+            0, -scale * self._overlap, scale * 2,
+            scale * (self._input_count - 1 + 2 * self._overlap)))
         # update connectors
         for con in self._connectors:
             con.setParentItem(None)
@@ -83,10 +88,10 @@ class ResizableItem(logicitems.LogicItem):
             scale = self.scene().get_grid_spacing()
             ht = logicitems.ResizeHandle(self, horizontal=False,
                                          resize_callback=self.on_handle_resize)
-            ht.setPos(scale, -scale * 0.35)
+            ht.setPos(scale, -scale * self._overlap)
             hb = logicitems.ResizeHandle(self, horizontal=False,
                                          resize_callback=self.on_handle_resize)
-            hb.setPos(scale, (self._input_count - 0.65) * scale)
+            hb.setPos(scale, (self._input_count - 1 + self._overlap) * scale)
             self._handles = {'top': ht, 'bottom': hb}
 
     def on_handle_resize(self, handle, delta):

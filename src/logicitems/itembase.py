@@ -17,7 +17,7 @@ class ItemBase(QtGui.QGraphicsItem):
     _selection_color_fill = QtGui.QColor(80, 151, 222)
     _selection_color_line = QtGui.QColor(40, 125, 210)
 
-    # collision margin added to all bounding boxes and shapes
+    # collision margin added to all bounding boxes and collision shapes
     # (make sure this is fully representable as double, otherwise we get
     # rounding errors, check with (number).hex() how many digits are taken)
     collision_margin = 2 ** -10
@@ -42,7 +42,12 @@ class ItemBase(QtGui.QGraphicsItem):
         self._is_temp = temp
 
     def is_temporary(self):
-        """Is item temporary."""
+        """
+        Is item temporary.
+
+        Temporary items are not considered in collision detection
+        and do not generate undo/redo actions.
+        """
         return self._is_temp
 
     def _line_to_col_rect(self, line, radius=None):
