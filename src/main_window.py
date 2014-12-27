@@ -80,6 +80,11 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             self.history_dock_widget.toggleViewAction()
         self.menu_view.addAction(self.toggle_history_dock_widget_view_qaction)
 
+        self.toggle_component_library_dock_widget_view_qaction = \
+            self.component_library_dock_widget.toggleViewAction()
+        self.menu_view.addAction(
+            self.toggle_component_library_dock_widget_view_qaction)
+
         s = settings()
         # Restore layout
         self.restoreGeometry(s.main_window_geometry)

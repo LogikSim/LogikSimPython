@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created: Thu Oct 16 22:16:21 2014
+# Created: Sat Dec 27 18:47:27 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PySide import QtCore, QtGui
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
+        MainWindow.resize(867, 606)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/LogikSim.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -31,7 +31,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.tab_widget)
         MainWindow.setCentralWidget(self.central_widget)
         self.menu_bar = QtGui.QMenuBar(MainWindow)
-        self.menu_bar.setGeometry(QtCore.QRect(0, 0, 800, 21))
+        self.menu_bar.setGeometry(QtCore.QRect(0, 0, 867, 21))
         self.menu_bar.setObjectName("menu_bar")
         self.menu_file = QtGui.QMenu(self.menu_bar)
         self.menu_file.setObjectName("menu_file")
@@ -66,6 +66,19 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addWidget(self.action_stack_view)
         self.history_dock_widget.setWidget(self.history_widget)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.history_dock_widget)
+        self.component_library_dock_widget = QtGui.QDockWidget(MainWindow)
+        self.component_library_dock_widget.setMinimumSize(QtCore.QSize(176, 300))
+        self.component_library_dock_widget.setFloating(True)
+        self.component_library_dock_widget.setObjectName("component_library_dock_widget")
+        self.component_library_widget = QtGui.QWidget()
+        self.component_library_widget.setObjectName("component_library_widget")
+        self.verticalLayout_3 = QtGui.QVBoxLayout(self.component_library_widget)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.treeView = QtGui.QTreeView(self.component_library_widget)
+        self.treeView.setObjectName("treeView")
+        self.verticalLayout_3.addWidget(self.treeView)
+        self.component_library_dock_widget.setWidget(self.component_library_widget)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.component_library_dock_widget)
         self.action_exit = QtGui.QAction(MainWindow)
         self.action_exit.setObjectName("action_exit")
         self.action_redo = QtGui.QAction(MainWindow)
@@ -98,6 +111,7 @@ class Ui_MainWindow(object):
         self.menu_help.setTitle(QtGui.QApplication.translate("MainWindow", "&Help", None, QtGui.QApplication.UnicodeUTF8))
         self.tool_bar.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Toolbar", None, QtGui.QApplication.UnicodeUTF8))
         self.history_dock_widget.setWindowTitle(QtGui.QApplication.translate("MainWindow", "History", None, QtGui.QApplication.UnicodeUTF8))
+        self.component_library_dock_widget.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Component Library", None, QtGui.QApplication.UnicodeUTF8))
         self.action_exit.setText(QtGui.QApplication.translate("MainWindow", "&Exit", None, QtGui.QApplication.UnicodeUTF8))
         self.action_redo.setText(QtGui.QApplication.translate("MainWindow", "&Redo", None, QtGui.QApplication.UnicodeUTF8))
         self.action_undo.setText(QtGui.QApplication.translate("MainWindow", "&Undo", None, QtGui.QApplication.UnicodeUTF8))

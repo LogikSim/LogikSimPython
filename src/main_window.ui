@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>867</width>
+    <height>606</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,16 +22,7 @@
     <property name="spacing">
      <number>0</number>
     </property>
-    <property name="leftMargin">
-     <number>0</number>
-    </property>
-    <property name="topMargin">
-     <number>0</number>
-    </property>
-    <property name="rightMargin">
-     <number>0</number>
-    </property>
-    <property name="bottomMargin">
+    <property name="margin">
      <number>0</number>
     </property>
     <item>
@@ -57,7 +48,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>867</width>
      <height>21</height>
     </rect>
    </property>
@@ -127,6 +118,30 @@
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
       <widget class="ActionStackView" name="action_stack_view"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="component_library_dock_widget">
+   <property name="minimumSize">
+    <size>
+     <width>176</width>
+     <height>300</height>
+    </size>
+   </property>
+   <property name="floating">
+    <bool>true</bool>
+   </property>
+   <property name="windowTitle">
+    <string>Component Library</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="component_library_widget">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <item>
+      <widget class="QTreeView" name="treeView"/>
      </item>
     </layout>
    </widget>
