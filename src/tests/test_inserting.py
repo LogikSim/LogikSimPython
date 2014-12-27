@@ -78,6 +78,7 @@ class TestHightowerObject(unittest.TestCase):
 
         self.assertIs(ho((10, 0)), hightower.PassableLine)
 
+
 class TestLineRoute(unittest.TestCase):
     def setUp(self):
         self.app = QtGui.QApplication.instance()
