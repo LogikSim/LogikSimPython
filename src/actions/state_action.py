@@ -13,17 +13,17 @@ from PySide import QtGui
 
 
 class StateAction(QtGui.QUndoCommand):
-    """Mergeable move action for items."""
+    """Mergeable state action for items."""
     def __init__(self, text, group_id, item, old_state, new_state):
         """
-        Create move action for item.
+        Create mergable state transition action for item.
 
-        It is assumed that the item is already moved.
+        It is assumed that the item is already in new state.
 
         :param group_id: only actions with same undo redo group are merged
         :param item: scene item being moved
-        :param old_pos: old state (user defined)
-        :param new_pos: new state (user defined)
+        :param old_state: old state (user defined)
+        :param new_state: new state (user defined)
         """
         super().__init__(text)
         self._group_id = group_id
