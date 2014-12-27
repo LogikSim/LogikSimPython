@@ -12,27 +12,54 @@ Defines functionality when inserting logic items.
 from PySide import QtCore
 
 from .modes_base import GridViewMouseModeBase, mouse_mode_filtered
-import symbols
+from logicitems.itembase import ItemBase
+from backend.components import And
 
 
 class InsertItemMode(GridViewMouseModeBase):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
         # class used to insert new items
-        self._insert_item_class = symbols.AndItem
+        self._insert_item_guid = And.GUID()
         # reference to currently inserted item (used to move it
         # while the mouse button is still pressed)
         self._inserted_item = None
+        self._insertion_pos = None
 
     def mouse_enter(self):
         super().mouse_enter()
 
+    @QtCore.Slot(int, ItemBase)
+    def _instantiated(self, _, instance):
+        if instance.pos() != self._insertion_pos:
+            # TODO: Consider a stronger check
+            return
+
+        self._inserted_item = instance
+
     def insert_item(self, gpos):
-        item = self._insert_item_class()
-        item.setPos(gpos)
-        item.set_temporary(True)
-        self.scene().addItem(item)
-        return item
+        interface = self.scene().get_interface()
+        registry = self.scene().get_registry()
+
+        # FIXME: This function isn't robust nor pretty.
+
+        self._inserted_item = None
+        self._insertion_pos = gpos
+
+        registry.instantiated.connect(self._instantiated)
+        interface.create_element(guid=self._insert_item_guid,
+                                 additional_metadata={'x': gpos.x(),
+                                                      'y': gpos.y()})
+
+        while not self._inserted_item:
+            QtCore.QCoreApplication.processEvents()
+
+        registry.instantiated.disconnect(self._instantiated)
+
+        self._inserted_item.set_temporary(True)
+        self.scene().addItem(self._inserted_item)
+
+        return self._inserted_item
 
     @mouse_mode_filtered
     def mousePressEvent(self, event):

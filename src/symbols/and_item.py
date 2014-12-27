@@ -12,11 +12,25 @@ And logic item with variable number of inputs.
 from PySide import QtCore
 
 from logicitems import ResizableItem
+from backend.simple_element import SimpleElementGuiItem
 
 
-class AndItem(ResizableItem):
-    def __init__(self, input_count=3):
-        super().__init__(input_count)
+class AndItem(ResizableItem, SimpleElementGuiItem):
+    def __init__(self, parent=None, metadata={}):
+        super().__init__(metadata.get('#inputs', 2), parent=parent)
+        SimpleElementGuiItem.__init__(self, metadata)
+        self.setPos(metadata.get('x', 0), metadata.get('y', 0))
+
+    def update(self, metadata):
+        SimpleElementGuiItem.update(self, metadata)
+
+        x = metadata.get('x')
+        if x is not None:
+            self.setX(x)
+
+        y = metadata.get('y')
+        if y is not None:
+            self.setY(y)
 
     def paint(self, painter, options, widget):
         super().paint(painter, options, widget)

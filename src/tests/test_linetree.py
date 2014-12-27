@@ -11,7 +11,7 @@ Test the LineTree implementation.
 
 import unittest
 
-from PySide import QtCore
+from PySide import QtCore, QtGui
 
 from logicitems.linetree import LineTree
 from schematics.grid_scene import GridScene
@@ -148,13 +148,27 @@ class LineTreeGeneralTest(unittest.TestCase):
 
 
 class LineNearestPointTest(unittest.TestCase):
-    def test_nearest_point_horizontal(self):
-        scene = GridScene()
+    def setUp(self):
+        self.app = QtGui.QApplication.instance()
+        if not self.app:
+            self.app = QtGui.QApplication([])
 
+        self.scene = GridScene()
+
+    def tearDown(self):
+        # FIXME: No idea why this workaround is necessary :(
+        self.scene.deleteLater()
+        self.scene._core.quit()
+        self.scene._core_thread.join()
+        self.scene = None
+
+        self.app.processEvents()
+
+    def test_nearest_point_horizontal(self):
         def tsp(x, y):
-            return scene.to_scene_point((x, y))
+            return self.scene.to_scene_point((x, y))
         hor_tree = LineTree([tsp(0, 0), tsp(10, 0)])
-        scene.addItem(hor_tree)
+        self.scene.addItem(hor_tree)
 
         self.assertEqual(
             hor_tree.get_nearest_point(tsp(0, 0)), tsp(0, 0))
@@ -175,12 +189,10 @@ class LineNearestPointTest(unittest.TestCase):
             hor_tree.get_nearest_point(tsp(-10, 10)), tsp(0, 0))
 
     def test_nearest_point_vertical(self):
-        scene = GridScene()
-
         def tsp(x, y):
-            return scene.to_scene_point((x, y))
+            return self.scene.to_scene_point((x, y))
         hor_tree = LineTree([tsp(0, 0), tsp(0, 10)])
-        scene.addItem(hor_tree)
+        self.scene.addItem(hor_tree)
 
         self.assertEqual(
             hor_tree.get_nearest_point(tsp(0, 0)), tsp(0, 0))

@@ -6,9 +6,26 @@
 # be found in the LICENSE.txt file.
 #
 from backend.element import Element, Edge
+from backend.component_library import ComponentType
+from copy import copy
 
 
-class Interconnect(Element):
+class Interconnect(ComponentType):
+    """
+    Connection between elements.
+    """
+    METADATA = {"GUID": "00352520-7cf0-43b7-9449-6fca5be8d6dc",
+                "name": __name__,
+                "description": __doc__}
+
+    @classmethod
+    def instantiate(cls, element_id, parent, additional_metadata={}):
+        metadata = copy(additional_metadata)
+        metadata["id"] = element_id
+        return InterconnectInstance(parent, metadata)
+
+
+class InterconnectInstance(Element):
     """
     Single input multiple output connection between two elements.
 
@@ -19,7 +36,9 @@ class Interconnect(Element):
     """
     PROPAGATION_CONSTANT = 1  # One time unit per length unit
 
-    def __init__(self):
+    def __init__(self, parent, metadata):
+        super().__init__(parent, metadata, Interconnect)
+
         self.endpoints = []
         self.state = False
         self.last_clock = -1
@@ -42,17 +61,18 @@ class Interconnect(Element):
                      input,
                      self.state) for element, input, delay in self.endpoints]
 
-    def connect(self, element, output=0, input=0, connection_length=1):
+    def connect(self, element, output_port=0, input_port=0,
+                connection_length=1):
         """
         Connects an element output to another elements input.
 
         :param element: Element to connect to output (None disconnects output)
-        :param output: This elements output to connect to the input (always 0)
-        :param input: Input on given element to connect to
+        :param output_port: This elements output to connect to the input (=0)
+        :param input_port: Input on given element to connect to
         :param connection_length: Length of the connection for delay calc
         :return: True if successfully connected
         """
-        assert output == 0, "Interconnect only has one output"
+        assert output_port == 0, "Interconnect only has one output"
 
         if element is None:
             # Disconnect everything
@@ -60,16 +80,24 @@ class Interconnect(Element):
             pass
 
         delay = connection_length * self.PROPAGATION_CONSTANT
-        self.endpoints.append((element, input, delay))
+        self.endpoints.append((element, input_port, delay))
+        # FIXME: Kinda misses propagation also mega-mew at connection_length
+        #        get rid of that. This should happen through meta-data updates.
 
-    def edge(self, input, state):
+        return True
+
+    def connected(self, element, output_port=0, input_port=0):
+        # FIXME: Implement this
+        return True
+
+    def edge(self, input_port, state):
         """
         Registers a rising or falling edge on the interconnect.
 
-        :param input: Index of the input
+        :param input_port: Index of the input
         :param state: Value of the input (True/False) at time `when`
         """
-        assert input == 0, "Interconnect does not have multiple inputs."
+        assert input_port == 0, "Interconnect does not have multiple inputs."
 
         self.state = state
 

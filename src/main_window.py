@@ -91,6 +91,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         s.main_window_geometry = self.saveGeometry()
         s.main_window_state = self.saveState()
 
+        event.accept()
+
     def view(self):
         return self._view
 
