@@ -201,21 +201,18 @@ class GridScene(QtGui.QGraphicsScene):
         event.accept()
 
     def onSelectionChanged(self):
-        def set_state(state):
-            if self._single_selected_item is not None and \
-                    self._single_selected_item.scene() is self:
-                assert isinstance(self._single_selected_item,
-                                  logicitems.ItemBase)
-                self._single_selected_item.itemChange(
-                    logicitems.ItemBase.ItemSingleSelectionHasChanged,
-                    state)
+        def set_single_selection_state(item, state):
+            if item is not None and item.scene() is self:
+                assert isinstance(item, logicitems.ItemBase)
+                item.itemChange(
+                    logicitems.ItemBase.ItemSingleSelectionHasChanged, state)
 
         # disable last
-        set_state(False)
+        set_single_selection_state(self._single_selected_item, False)
         # enable new
         sel_items = self.selectedItems()
         if len(sel_items) == 1:
             self._single_selected_item = sel_items[0]
+            set_single_selection_state(self._single_selected_item, True)
         else:
             self._single_selected_item = None
-        set_state(True)
