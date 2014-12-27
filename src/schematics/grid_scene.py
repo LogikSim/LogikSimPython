@@ -27,6 +27,8 @@ class GridScene(QtGui.QGraphicsScene):
         self._allow_item_selection = False
 
         self.actions = ActionStackModel(self.tr("New circuit"), parent=self)
+        self.actions.aboutToUndo.connect(self.onAboutToUndoRedo)
+        self.actions.aboutToRedo.connect(self.onAboutToUndoRedo)
 
         # default values for new scene
         height = 100 * 1000  # golden ratio
@@ -43,7 +45,7 @@ class GridScene(QtGui.QGraphicsScene):
         self._single_selected_item = None
         self.selectionChanged.connect(self.onSelectionChanged)
 
-        # are undo redo events currently grouped
+        # group undo redo events
         self._is_undo_redo_grouping = False
         self._undo_redo_group_id = 0
 
@@ -220,6 +222,10 @@ class GridScene(QtGui.QGraphicsScene):
             set_single_selection_state(self._single_selected_item, True)
         else:
             self._single_selected_item = None
+
+    @QtCore.Slot()
+    def onAboutToUndoRedo(self):
+        self.clearSelection()
 
     def getUndoRedoGroupId(self):
         """
