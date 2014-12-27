@@ -20,7 +20,9 @@ class InteractiveGridView(grid_view.GridView):
     """
     The basic view of all mouse modes.
 
-
+    The class itself implements:
+        - zooming scene with the mouse
+        - dragging and scrolling scene with mouse
     """
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)

@@ -30,6 +30,7 @@ class InsertItemMode(GridViewMouseModeBase):
     def insert_item(self, gpos):
         item = self._insert_item_class()
         item.setPos(gpos)
+        item.set_temporary(True)
         self.scene().addItem(item)
         return item
 
@@ -64,6 +65,10 @@ class InsertItemMode(GridViewMouseModeBase):
             scene = self.scene()
             item = self._inserted_item
 
+            # prevent item from being deleted when switching modes
+            self._inserted_item = None
+            item.set_temporary(False)
+
             def do():
                 scene.addItem(item)
 
@@ -74,8 +79,6 @@ class InsertItemMode(GridViewMouseModeBase):
                 do, undo, "insert logic item"
             )
 
-            # prevent item from being deleted when switching modes
-            self._inserted_item = None
 
     def mouse_leave(self):
         super().mouse_leave()

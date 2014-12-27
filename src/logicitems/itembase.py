@@ -35,6 +35,16 @@ class ItemBase(QtGui.QGraphicsItem):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
 
+        self._is_temp = False  # is temporary
+
+    def set_temporary(self, temp):
+        """Set item to temporary status."""
+        self._is_temp = temp
+
+    def is_temporary(self):
+        """Is item temporary."""
+        return self._is_temp
+
     def _line_to_col_rect(self, line, radius=None):
         """
         Converts QLineF to its collision area.

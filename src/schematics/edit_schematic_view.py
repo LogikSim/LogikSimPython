@@ -17,7 +17,7 @@ class EditSchematicView(mouse_modes.SelectItemsMode,
                         mouse_modes.InsertItemMode,
                         mouse_modes.InsertLineMode,
                         mouse_modes.InsertConnectorMode):
-    """Combines all mouse modes to edit schematics"""
+    """Combines all mouse modes to edit schematics."""
 
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)

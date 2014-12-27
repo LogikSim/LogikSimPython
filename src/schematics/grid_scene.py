@@ -43,6 +43,10 @@ class GridScene(QtGui.QGraphicsScene):
         self._single_selected_item = None
         self.selectionChanged.connect(self.onSelectionChanged)
 
+        # are undo redo events currently grouped
+        self._is_undo_redo_grouping = False
+        self._undo_redo_group_id = 0
+
     def setGridEnabled(self, value):
         assert isinstance(value, bool)
         self._is_grid_enabled = value
@@ -216,3 +220,23 @@ class GridScene(QtGui.QGraphicsScene):
             set_single_selection_state(self._single_selected_item, True)
         else:
             self._single_selected_item = None
+
+    def getUndoRedoGroupId(self):
+        """
+        Get undo redo group id.
+
+        All undo/redo actions with the same group should be merged.
+        """
+        if self._is_undo_redo_grouping:
+            return self._undo_redo_group_id
+        else:
+            return -1
+
+    def beginUndoRedoGroup(self):
+        """Group all coming item changes into one undo entry."""
+        self._undo_redo_group_id += 1
+        self._is_undo_redo_grouping = True
+
+    def endUndoRedoGroup(self):
+        """End grouping of movement entries and create undo entry."""
+        self._is_undo_redo_grouping = False

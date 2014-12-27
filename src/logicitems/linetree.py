@@ -36,8 +36,6 @@ class LineTree(ItemBase):
         """
         super().__init__()
 
-        self._is_temp = False  # is temporary linetree
-
         # defines tree as dict of dict, with key being a tuple (x,y) and
         # value being a dict of children or empty dict. Since there is only
         # one root node, the _tree only contains one key-value pair.
@@ -125,14 +123,6 @@ class LineTree(ItemBase):
         shape_path.addPolygon(poly)
         self._shape = shape_path
         self._rect = bounding_rect
-
-    def set_temporary(self, temp):
-        """Set line tree temporary status."""
-        self._is_temp = temp
-
-    def is_temporary(self):
-        """Is line tree temporary."""
-        return self._is_temp
 
     def _set_path(self, path):
         """

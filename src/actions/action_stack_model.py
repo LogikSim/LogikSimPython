@@ -220,6 +220,12 @@ class ActionStackModel(QtCore.QAbstractListModel):
         return model_push
 
     @_push_action_wrap
+    def push(self, cmd):
+        return self.action_stack.push(cmd)
+
+    push.__doc__ = ActionStack.push.__doc__
+
+    @_push_action_wrap
     def executed(self, redo, undo, description):
         return self.action_stack.executed(redo, undo, description)
 

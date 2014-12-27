@@ -18,6 +18,8 @@ class SelectItemsMode(GridViewMouseModeBase):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
 
+        self._scene = None
+
     def mouse_enter(self):
         super().mouse_enter()
         self.setDragMode(QtGui.QGraphicsView.RubberBandDrag)
@@ -49,9 +51,14 @@ class SelectItemsMode(GridViewMouseModeBase):
         # call parent with masked drag mode
         self._mask_drag_mode(super().mousePressEvent, event)
 
+        self._scene = self.scene()
+        self._scene.beginUndoRedoGroup()
+
     @mouse_mode_filtered
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
+
+        self._scene.endUndoRedoGroup()
 
     @mouse_mode_filtered
     def keyPressEvent(self, event):

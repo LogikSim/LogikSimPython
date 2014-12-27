@@ -33,6 +33,7 @@ class InsertLineMode(ReadyToInsertLineSubMode,
         super().setScene(scene)
 
     @QtCore.Slot()
+    @mouse_mode_filtered
     def onAboutToUndoRedo(self):
         self._abort_line_inserting()
 

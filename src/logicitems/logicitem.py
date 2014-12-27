@@ -12,6 +12,7 @@ Logic items are all items a logic behavior based on inputs and outputs.
 from PySide import QtGui, QtCore
 
 from .itembase import ItemBase
+from actions.move_action import MoveAction
 
 
 class LogicItem(ItemBase):
@@ -32,6 +33,10 @@ class LogicItem(ItemBase):
         # stores bounding rect
         self._bounding_rect_valid = False
         self._bounding_rect = None
+
+    def __repr__(self):
+        return "<{} {} at {}>".format(
+            type(self).__name__, id(self), (self.pos().x(), self.pos().y()))
 
     def _invalidate_bounding_rect(self):
         self.prepareGeometryChange()
@@ -65,6 +70,12 @@ class LogicItem(ItemBase):
                 if self._is_current_position_valid():
                     if self.isSelected():
                         self.scene().selectedItemPosChanged.emit()
+                    # create undo/redo action
+                    if not self.is_temporary():
+                        action = MoveAction(self.scene().getUndoRedoGroupId(),
+                                            self, self._last_position,
+                                            self.pos())
+                        self.scene().actions.push(action)
                 else:
                     self.setPos(self._last_position)
 
