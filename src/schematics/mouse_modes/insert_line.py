@@ -24,7 +24,7 @@ class InsertLineMode(ReadyToInsertLineSubMode,
         super().__init__(*args, **kargs)
 
     def setScene(self, scene):
-        # disconnect / connect undo & redo signals
+        # manage undo/redo signals from scene
         if self.scene() is not None:
             self.scene().actions.aboutToUndo.disconnect(self.onAboutToUndoRedo)
             self.scene().actions.aboutToRedo.disconnect(self.onAboutToUndoRedo)
@@ -53,6 +53,5 @@ class InsertLineMode(ReadyToInsertLineSubMode,
         else:
             super().keyPressEvent(event)
 
-    @mouse_mode_filtered
     def abort_line_inserting(self):
         self.setLinesubMode(ReadyToInsertLineSubMode)
