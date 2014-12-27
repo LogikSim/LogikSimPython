@@ -34,7 +34,7 @@ class InsertLineMode(ReadyToInsertLineSubMode,
 
     @QtCore.Slot()
     def onAboutToUndoRedo(self):
-        self.abort_line_inserting()
+        self._abort_line_inserting()
 
     def mouse_enter(self):
         super().linesub_enter()
@@ -49,9 +49,9 @@ class InsertLineMode(ReadyToInsertLineSubMode,
     @mouse_mode_filtered
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
-            self.abort_line_inserting()
+            self._abort_line_inserting()
         else:
             super().keyPressEvent(event)
 
-    def abort_line_inserting(self):
+    def _abort_line_inserting(self):
         self.setLinesubMode(ReadyToInsertLineSubMode)

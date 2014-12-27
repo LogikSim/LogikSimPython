@@ -31,7 +31,6 @@ class InsertItemMode(GridViewMouseModeBase):
         item = self._insert_item_class()
         item.setPos(gpos)
         self.scene().addItem(item)
-
         return item
 
     @mouse_mode_filtered
@@ -59,20 +58,16 @@ class InsertItemMode(GridViewMouseModeBase):
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
 
-        # left button
+        # left button -> insert item
         if event.button() is QtCore.Qt.LeftButton and \
                 self._inserted_item is not None:
-            # Add undo/redo action
             scene = self.scene()
-            gpos = self._inserted_item.pos()
             item = self._inserted_item
 
             def do():
-                nonlocal item
-                item = self.insert_item(gpos)
+                scene.addItem(item)
 
             def undo():
-                nonlocal item
                 scene.removeItem(item)
 
             self.scene().actions.executed(

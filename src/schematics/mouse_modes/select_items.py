@@ -31,7 +31,26 @@ class SelectItemsMode(GridViewMouseModeBase):
     @mouse_mode_filtered
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Delete:
-            for item in self.scene().selectedItems():
-                self.scene().removeItem(item)
+            self._remove_selected_items()
         else:
             super().keyPressEvent(event)
+
+    def _remove_selected_items(self):
+        sel_items = list(self.scene().selectedItems())
+        scene = self.scene()
+
+        # selection should not be restored
+        for item in sel_items:
+            item.setSelected(False)
+
+        def do():
+            for item in sel_items:
+                scene.removeItem(item)
+
+        def undo():
+            for item in sel_items:
+                scene.addItem(item)
+
+        self.scene().actions.execute(
+            do, undo, "remove logic item"
+        )
