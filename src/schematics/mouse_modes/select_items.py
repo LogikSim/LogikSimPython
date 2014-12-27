@@ -18,9 +18,36 @@ class SelectItemsMode(GridViewMouseModeBase):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
 
+    def mouse_enter(self):
+        super().mouse_enter()
+        self.setDragMode(QtGui.QGraphicsView.RubberBandDrag)
+        self.scene().setSelectionAllowed(True)
+
+    def mouse_leave(self):
+        super().mouse_leave()
+        self.setDragMode(QtGui.QGraphicsView.NoDrag)
+        self.scene().setSelectionAllowed(False)
+
+    def _mask_drag_mode(self, func, mouse_event):
+        """
+        disables rubber band mode when the left mouse button is not pressed,
+        then calls func(mouse_event)
+        """
+        drag_mode = self.dragMode()
+        try:
+            if drag_mode is QtGui.QGraphicsView.RubberBandDrag and \
+                    not mouse_event.button() & QtCore.Qt.LeftButton:
+                # disable rubber band drag
+                self.setDragMode(QtGui.QGraphicsView.NoDrag)
+            return func(mouse_event)
+        finally:
+            # restore old drag mode
+            self.setDragMode(drag_mode)
+
     @mouse_mode_filtered
     def mousePressEvent(self, event):
-        super().mousePressEvent(event)
+        # call parent with masked drag mode
+        self._mask_drag_mode(super().mousePressEvent, event)
 
     @mouse_mode_filtered
     def mouseReleaseEvent(self, event):
@@ -52,13 +79,3 @@ class SelectItemsMode(GridViewMouseModeBase):
         self.scene().actions.execute(
             do, undo, "remove logic item"
         )
-
-    def mouse_enter(self):
-        super().mouse_enter()
-        self.setDragMode(QtGui.QGraphicsView.RubberBandDrag)
-        self.scene().setSelectionAllowed(True)
-
-    def mouse_leave(self):
-        super().mouse_leave()
-        self.setDragMode(QtGui.QGraphicsView.NoDrag)
-        self.scene().setSelectionAllowed(False)
