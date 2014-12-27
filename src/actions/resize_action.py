@@ -27,7 +27,7 @@ class ResizeAction(StateAction):
         :param new_size: new size given as int
         :param new_pos: new position as QPointF
         """
-        super().__init__("moved items", group_id, item, (old_size, old_pos),
+        super().__init__("resize item", group_id, item, (old_size, old_pos),
                          (new_size, new_pos))
 
     def redo_item_state(self, item, state):

@@ -25,7 +25,7 @@ class MoveAction(StateAction):
         :param old_pos: old position as QPointF
         :param new_pos: new position as QPointF
         """
-        super().__init__("moved items", group_id, item, old_pos, new_pos)
+        super().__init__("moved item", group_id, item, old_pos, new_pos)
 
     def redo_item_state(self, item, pos):
         item.set_temporary(True)
