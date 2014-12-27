@@ -71,12 +71,9 @@ class GridScene(QtGui.QGraphicsScene):
         self._is_undo_redo_grouping = False
         self._undo_redo_group_id = 0
 
-        print("Init")
         # Join threads on destruct (mustn't be a slot on this object)
         self.destroyed.connect(lambda: [self._core.quit(),
-                                        print("Destroy"),
-                                        self._core_thread.join(),
-                                        print("Joined")])
+                                        self._core_thread.join()])
 
     def get_interface(self):
         return self._interface
