@@ -96,3 +96,17 @@ def perform_on_modal(what):
     active = app.activeModalWidget()
     if active:
         what(active)
+
+
+def drain_queue(q):
+    """
+    Drains the given queue and returns its contents as a list.
+
+    :param q: Queue to drain
+    :return: List with queue contents.
+    """
+    items = []
+    while not q.empty():
+        items.append(q.get_nowait())
+
+    return items

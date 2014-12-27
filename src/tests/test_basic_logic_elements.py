@@ -6,8 +6,10 @@
 # be found in the LICENSE.txt file.
 #
 import unittest
+
+from tests.mocks import ElementParentMock
 from backend.simple_element import OutEdge
-from backend.basic_logic_elements import And, Or, Xor
+from backend.components.basic_logic_elements import And, Or, Xor
 
 
 class BasicLogicElementTest(unittest.TestCase):
@@ -16,8 +18,9 @@ class BasicLogicElementTest(unittest.TestCase):
     """
 
     def test_and(self):
+        p = ElementParentMock()
         # Create two pin and
-        e = And()
+        e = And.instantiate(0, p)
         self.assertSequenceEqual((0, 0), e.input_states)
         self.assertSequenceEqual((0,), e.output_states)
 
@@ -52,8 +55,9 @@ class BasicLogicElementTest(unittest.TestCase):
         self.assertSequenceEqual((0, 1), e.input_states)
 
     def test_or(self):
+        p = ElementParentMock()
         # Create two pin or
-        e = Or()
+        e = Or.instantiate(0, p)
         self.assertSequenceEqual((0, 0), e.input_states)
         self.assertSequenceEqual((0,), e.output_states)
 
@@ -87,8 +91,9 @@ class BasicLogicElementTest(unittest.TestCase):
         self.assertSequenceEqual((0,), e.output_states)
 
     def test_xor(self):
+        p = ElementParentMock()
         # Create two pin or
-        e = Xor()
+        e = Xor.instantiate(0, p)
         self.assertSequenceEqual((0, 0), e.input_states)
         self.assertSequenceEqual((0,), e.output_states)
 

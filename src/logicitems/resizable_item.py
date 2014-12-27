@@ -20,8 +20,8 @@ class ResizableItem(logicitems.LogicItem):
     # in grid gap fraction
     _overlap = 0.37
 
-    def __init__(self, input_count):
-        super().__init__()
+    def __init__(self, input_count, parent=None):
+        super().__init__(parent=parent)
         self._input_count = input_count
 
         # internal state

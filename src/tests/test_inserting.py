@@ -13,7 +13,7 @@ Test the scene logic for inserting lines.
 
 import unittest
 
-from PySide import QtCore
+from PySide import QtCore, QtGui
 
 from schematics.mouse_modes.line_submode.inserting import (
     GetHightowerObjectAtPoint, LineRouteBetweenPoints, EndpointTrees,
@@ -25,10 +25,25 @@ from logicitems import LineTree
 
 
 class TestHightowerObject(unittest.TestCase):
+    def setUp(self):
+        self.app = QtGui.QApplication.instance()
+        if not self.app:
+            self.app = QtGui.QApplication([])
+
+        self.scene = GridScene()
+
+    def tearDown(self):
+        # FIXME: No idea why this workaround is necessary :(
+        self.scene.deleteLater()
+        self.scene._core.quit()
+        self.scene._core_thread.join()
+        self.scene = None
+
+        self.app.processEvents()
+
     def test_empty_scene(self):
-        scene = GridScene()
         trees = EndpointTrees(None, None)
-        ho = GetHightowerObjectAtPoint(scene, (0, 0), (10, 10), trees)
+        ho = GetHightowerObjectAtPoint(self.scene, (0, 0), (10, 10), trees)
 
         self.assertIs(ho((0, 0)), None)
         self.assertIs(ho((10, 0)), None)
@@ -36,12 +51,11 @@ class TestHightowerObject(unittest.TestCase):
         self.assertIs(ho((10, 10)), None)
 
     def test_colision_add_item(self):
-        scene = GridScene()
         and_item = AndItem()
-        and_item.setPos(scene.to_scene_point((2, 2)))
-        scene.addItem(and_item)
+        and_item.setPos(self.scene.to_scene_point((2, 2)))
+        self.scene.addItem(and_item)
         trees = EndpointTrees(None, None)
-        ho = GetHightowerObjectAtPoint(scene, (0, 0), (10, 10), trees)
+        ho = GetHightowerObjectAtPoint(self.scene, (0, 0), (10, 10), trees)
 
         self.assertIs(ho((0, 0)), None)
         self.assertIs(ho((10, 0)), None)
@@ -49,14 +63,12 @@ class TestHightowerObject(unittest.TestCase):
         self.assertIs(ho((2, 2)), hightower.Solid)
 
     def test_colision_line_tree(self):
-        scene = GridScene()
-
         def tsp(x, y):
-            return scene.to_scene_point((x, y))
+            return self.scene.to_scene_point((x, y))
         tree = LineTree([tsp(5, 0), tsp(15, 0)])
-        scene.addItem(tree)
+        self.scene.addItem(tree)
         trees = EndpointTrees(None, None)
-        ho = GetHightowerObjectAtPoint(scene, (0, 0), (10, 10), trees)
+        ho = GetHightowerObjectAtPoint(self.scene, (0, 0), (10, 10), trees)
 
         self.assertIs(ho((0, 0)), None)
         self.assertIs(ho((5, 5)), None)
@@ -68,23 +80,41 @@ class TestHightowerObject(unittest.TestCase):
 
 
 class TestLineRoute(unittest.TestCase):
-    def test_horizontal_line(self):
-        scene = GridScene()
+    def setUp(self):
+        self.app = QtGui.QApplication.instance()
+        if not self.app:
+            self.app = QtGui.QApplication([])
 
+        self.scene = GridScene()
+
+    def tearDown(self):
+        # FIXME: No idea why this workaround is necessary :(
+        self.scene.deleteLater()
+        self.scene._core.quit()
+        self.scene._core_thread.join()
+        self.scene = None
+
+        self.app.processEvents()
+
+    def test_horizontal_line(self):
         def tsp(x, y):
-            return scene.to_scene_point((x, y))
-        line_route = LineRouteBetweenPoints(scene, tsp(5, 10), tsp(15, 10))
+            return self.scene.to_scene_point((x, y))
+        line_route = LineRouteBetweenPoints(self.scene,
+                                            tsp(5, 10),
+                                            tsp(15, 10))
         line_route.route()
         line_route.do_temp_insert()
 
         # check line count & temp
-        trees = [item for item in scene.items() if isinstance(item, LineTree)]
+        trees = [item for item in self.scene.items() if isinstance(item,
+                                                                   LineTree)]
         self.assertEqual(len(trees), 1)
         self.assertTrue(trees[0].is_temporary())
 
         # insert & check line count & temp
         line_route.do_insert()
-        trees = [item for item in scene.items() if isinstance(item, LineTree)]
+        trees = [item for item in self.scene.items() if isinstance(item,
+                                                                   LineTree)]
         self.assertEqual(len(trees), 1)
         self.assertFalse(trees[0].is_temporary())
 
@@ -106,6 +136,22 @@ class TestLineRoute(unittest.TestCase):
 
 
 class TestLineRouteGraphical(unittest.TestCase):
+    def setUp(self):
+        self.app = QtGui.QApplication.instance()
+        if not self.app:
+            self.app = QtGui.QApplication([])
+
+        self.scene = GridScene()
+
+    def tearDown(self):
+        # FIXME: No idea why this workaround is necessary :(
+        self.scene.deleteLater()
+        self.scene._core.quit()
+        self.scene._core_thread.join()
+        self.scene = None
+
+        self.app.processEvents()
+
     def fill_scene(self, scene, input_area):
         lines = input_area.split('\n')
 
@@ -149,7 +195,6 @@ class TestLineRouteGraphical(unittest.TestCase):
                                 scene.removeItem(item)
 
     def to_positions(self, scene, position_area):
-        scene = GridScene()
         lines = position_area.split('\n')
 
         for y, line in enumerate(lines):
@@ -209,10 +254,9 @@ class TestLineRouteGraphical(unittest.TestCase):
         :param view_result: open scene with resulting grid for debugging
 
         """
-        scene = GridScene()
-        self.fill_scene(scene, input_area)
-        start, end = self.to_positions(scene, position_area)
-        line_route = LineRouteBetweenPoints(scene, start, end)
+        self.fill_scene(self.scene, input_area)
+        start, end = self.to_positions(self.scene, position_area)
+        line_route = LineRouteBetweenPoints(self.scene, start, end)
         try:
             line_route.route()
         except RouteNotFoundException:
@@ -227,13 +271,13 @@ class TestLineRouteGraphical(unittest.TestCase):
             if app is None:
                 app = QtGui.QApplication(sys.argv)
             view = schematics.EditSchematicView()
-            view.setScene(scene)
+            view.setScene(self.scene)
             view.show()
             view.ensureVisible(QtCore.QRectF(0, 0, 0, 0))
             view.setMouseMode(schematics.mouse_modes.InsertLineMode)
             app.exec_()
 
-        self.verify_output_data(scene, output_area)
+        self.verify_output_data(self.scene, output_area)
 
     def test_horizontal_line(self):
         # ┴˄˅<┤├>┬-|┘┐┌└

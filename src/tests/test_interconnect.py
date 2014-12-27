@@ -5,8 +5,10 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 import unittest
-from backend.interconnect import Interconnect
+
+from backend.components.interconnect import Interconnect
 from backend.element import Edge
+from tests.mocks import ElementParentMock
 
 
 class InterconnectTest(unittest.TestCase):
@@ -15,13 +17,15 @@ class InterconnectTest(unittest.TestCase):
     """
 
     def test_empty_interconnect(self):
-        empty = Interconnect()
+        p = ElementParentMock()
+        empty = Interconnect.instantiate(0, p)
         empty.edge(0, True)
         self.assertListEqual([], empty.clock(0))
         self.assertTrue(empty.state)
 
     def test_edge_forward(self):
-        i = Interconnect()
+        p = ElementParentMock()
+        i = Interconnect.instantiate(0, p)
 
         class Foo:
             pass
@@ -29,8 +33,8 @@ class InterconnectTest(unittest.TestCase):
         a = Foo()
         b = Foo()
 
-        i.connect(a, input=0)
-        i.connect(b, input=2, connection_length=10)
+        i.connect(a, input_port=0)
+        i.connect(b, input_port=2, connection_length=10)
 
         i.edge(0, False)
         self.assertListEqual([Edge(1, a, 0, False),

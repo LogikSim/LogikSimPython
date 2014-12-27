@@ -14,6 +14,14 @@ from PySide import QtGui, QtCore
 from actions.action_stack_model import ActionStackModel
 import logicitems
 
+from backend.core import Core
+from backend.controller import Controller
+from backend.component_library import get_library
+from threading import Thread
+from logging import getLogger
+from logicitems.item_registry import ItemRegistry
+from symbols.and_item import AndItem
+
 
 class GridScene(QtGui.QGraphicsScene):
     # signals position or shape change of any selected item
@@ -22,9 +30,23 @@ class GridScene(QtGui.QGraphicsScene):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
         # draw grid?
+        self.log = getLogger("scene")
+
         self._is_grid_enabled = True
-        # can items be selected in this scenen?
+        # can items be selected in this scene?
         self._allow_item_selection = False
+
+        # Setup simulation backend for this scene
+        self._core = Core()
+        self._controller = Controller(self._core, get_library())
+        self._interface = self._controller.get_interface()
+
+        self._registry = ItemRegistry(self._controller, self)
+        self._registry.register_type(AndItem)
+        self._registry.start_handling()
+
+        self._core_thread = Thread(target=self._core.run)
+        self._core_thread.start()
 
         self.actions = ActionStackModel(self.tr("New circuit"), parent=self)
         self.actions.aboutToUndo.connect(self.onAboutToUndoRedo)
@@ -48,6 +70,16 @@ class GridScene(QtGui.QGraphicsScene):
         # group undo redo events
         self._is_undo_redo_grouping = False
         self._undo_redo_group_id = 0
+
+        # Join threads on destruct (mustn't be a slot on this object)
+        self.destroyed.connect(lambda: [self._core.quit(),
+                                        self._core_thread.join()])
+
+    def get_interface(self):
+        return self._interface
+
+    def get_registry(self):
+        return self._registry
 
     def setGridEnabled(self, value):
         assert isinstance(value, bool)

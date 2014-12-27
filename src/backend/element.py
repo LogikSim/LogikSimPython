@@ -6,6 +6,8 @@
 # be found in the LICENSE.txt file.
 #
 from backend.event import Event
+from backend.component_library import ComponentInstance
+from abc import abstractmethod
 
 
 class Edge(Event):
@@ -21,7 +23,7 @@ class Edge(Event):
         :param input: Index of the input the signal edge will occur on
         :param state: Signal value after the edge (True/False) at time `when`
         """
-        super().__init__(when, id(element), self._process)
+        super().__init__(when, id(element))
         self.element = element
         self.input = input
         self.state = state
@@ -36,7 +38,7 @@ class Edge(Event):
             and self.state == other.state \
             and self.when == other.when
 
-    def _process(self, last):
+    def process(self, last):
         """Edge only knows handler functions so this function implements one"""
         self.element.edge(self.input, self.state)
 
@@ -49,21 +51,25 @@ class Edge(Event):
         return self.element.clock(self.when)
 
 
-class Element(object):
+class Element(ComponentInstance):
     """
     Baseclass for all Elements that are part of the simulation.
     """
+    def __init__(self, parent, metadata, component_type):
+        super().__init__(parent, metadata, component_type)
 
-    def edge(self, input, state):
+    @abstractmethod
+    def edge(self, input_port, state):
         """
         Handles a rising or falling edge on one of the elements inputs.
 
-        :param input: Index of the input
+        :param input_port: Index of the input
         :param state: Value of the input (True/False) at time `when`
         :return: List of none or more future Event s
         """
-        assert False, "Elements must implement input edge handling"
+        pass
 
+    @abstractmethod
     def clock(self, when):
         """
         Triggered when all egdes for a point in time have been received.
@@ -71,30 +77,45 @@ class Element(object):
         :param when: Point in time
         :return: List of none or more future Event s
         """
-        assert False, "Elements must implement clock handling"
+        pass
 
+    @abstractmethod
     def reset(self, when):
         """
         Emulates an input reset resulting in edge events for every output.
         :return: Edge events for every output.
         """
-        assert False, "Elements must implement reset handling"
+        pass
 
-    def connect(self, element, output=0, input=0):
+    @abstractmethod
+    def connect(self, element, output_port=0, input_port=0):
         """
         Connects an element output to another elements input.
 
         :param element: Element to connect to output (None disconnects output)
-        :param output: This elements output to connect to the input
-        :param input: Input on given element to connect to
+        :param output_port: This elements output to connect to the input
+        :param input_port: Input on given element to connect to
         :return: True if successfully connected
         """
-        assert False, "Elements must implement output connection handling"
+        pass
 
-    def disconnect(self, output):
+    @abstractmethod
+    def connected(self, element, output_port=0, input_port=0):
+        """
+        Notifies an element of another elements output connected to one of its
+        inputs.
+
+        :param element: Element connected to this one
+        :param output_port: Output of the element connected to this one
+        :param input_port: Input of this element connected to
+        :return: True if connection was accepted
+        """
+        pass
+
+    def disconnect(self, output_port):
         """
         Disconnects the given output.
-        :param output: Output index.
+        :param output_port: Output index.
         :return: True if successful
         """
-        return self.connect(None, output)
+        return self.connect(None, output_port)
