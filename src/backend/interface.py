@@ -77,19 +77,22 @@ class Interface:
         """
         self._channel_out = channel_out
 
-    def schedule_edge(self, element_id, input, state):
+    def schedule_edge(self, element_id, input, state, delay):
         """
-        Schedules a signal transition
+        Schedules a signal transition in the future.
+
         :param element_id: Element to schedule signal transition on
         :param input: Input pin index
         :param state: State to transition to
+        :param delay: Time in simulation units to delay edge
         """
         self._channel_out.put(
             {
                 'action': 'edge',
                 'id': element_id,
                 'input': input,
-                'state': state
+                'state': state,
+                'delay': delay
             }
         )
 

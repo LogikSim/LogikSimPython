@@ -8,6 +8,7 @@
 import multiprocessing
 from backend.interface import Interface
 from backend.component_library import ComponentRoot
+from backend.element import Edge
 import time
 from logging import getLogger
 
@@ -40,7 +41,8 @@ class Controller(ComponentRoot):
         self._action_handlers = {
             'create': self._on_create,
             'update': self._on_update,
-            'delete': self._on_update,
+            'delete': self._on_delete,
+            'edge': self._on_edge,
             'query': self._on_query,
             'connect': self._on_connect,
             'disconnect': self._on_disconnect,
@@ -91,11 +93,26 @@ class Controller(ComponentRoot):
 
         for element_id in deleted_elements:
             del self.elements[element_id]
-            # Since the element can't effectively self-destruct propagate
-            # this event after removing them from the controller
-            self.propagate_change({'id': element_id, 'GUID': None})
 
         self.log.info("Delete %s", command)
+
+    def _on_edge(self, command):
+        """
+        Triggers an edge at a point in the future.
+
+        :param command: Command of the form:
+            { 'action': 'edge',
+               'id': element_id,
+               'input': input,
+               'state': state,
+               'delay': delay }
+        """
+        element = self.elements[command['id']]
+        core = self.get_core()
+        core.schedule(Edge(core.clock + command['delay'],
+                           element,
+                           command['input'],
+                           command['state']))
 
     def _on_query(self, command):
         uid = command['id']
