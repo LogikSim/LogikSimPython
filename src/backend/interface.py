@@ -47,7 +47,7 @@ class Handler:
         Calls handle once for each request.
         :return: True if no more updates to handle. False if some remain.
         """
-        assert self._channel_in is not None,\
+        assert self._channel_in is not None, \
             "Handler must be connected to controller"
 
         while not self._channel_in.empty() and \
@@ -104,7 +104,10 @@ class Interface:
         :param additional_metadata: Additional meta-data to create element with
         :return: ID of the element after its creation
         """
-        element_id = random.getrandbits(64)
+
+        element_id = additional_metadata.get('id')
+        if element_id is None:
+            element_id = random.getrandbits(64)
 
         self._channel_out.put(
             {

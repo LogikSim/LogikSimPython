@@ -37,29 +37,17 @@ class InsertItemMode(GridViewMouseModeBase):
         self._inserted_item = instance
 
     def insert_item(self, gpos):
-        interface = self.scene().get_interface()
-        registry = self.scene().get_registry()
+        registry = self.scene().registry()
 
-        # FIXME: This function isn't robust nor pretty.
-
-        self._inserted_item = None
-        self._inserted_id = gpos
-
-        registry.instantiated.connect(self._instantiated)
-        self._inserted_id = interface.create_element(
-            guid=self._insert_item_guid,
+        item = registry.instantiate_frontend_item(
+            backend_guid=self._insert_item_guid,
             additional_metadata={'x': gpos.x(),
                                  'y': gpos.y()})
 
-        while not self._inserted_item:
-            QtCore.QCoreApplication.processEvents()
+        item.set_temporary(True)
+        self.scene().addItem(item)
 
-        registry.instantiated.disconnect(self._instantiated)
-
-        self._inserted_item.set_temporary(True)
-        self.scene().addItem(self._inserted_item)
-
-        return self._inserted_item
+        return item
 
     @mouse_mode_filtered
     def mousePressEvent(self, event):

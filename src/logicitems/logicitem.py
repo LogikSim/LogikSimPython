@@ -11,19 +11,19 @@ Logic items are all items a logic behavior based on inputs and outputs.
 
 from PySide import QtGui, QtCore
 
-from .itembase import ItemBase
+from .insertable_item import InsertableItem
 from actions.move_action import MoveAction
 
 
-class LogicItem(ItemBase, QtGui.QGraphicsLayoutItem):
+class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
     """
     Defines logic item base class.
 
     All children must implement the methods: ownBoundingRect, paint
     """
-    def __init__(self, *args, **kargs):
-        ItemBase.__init__(self, *args, **kargs)
-        QtGui.QGraphicsLayoutItem.__init__(self, *args, **kargs)
+    def __init__(self, parent=None, metadata={}):
+        InsertableItem.__init__(self, parent, metadata)
+        QtGui.QGraphicsLayoutItem.__init__(self, parent)
 
         # self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)

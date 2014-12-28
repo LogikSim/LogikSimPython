@@ -287,7 +287,7 @@ class ComponentLibrary(object):
         :param component_type: Component type to register
         """
         guid = component_type.GUID()
-        assert guid not in self.component_types,\
+        assert guid not in self.component_types, \
             "Tried to register {0} {1} a second time".format(component_type,
                                                              guid)
 

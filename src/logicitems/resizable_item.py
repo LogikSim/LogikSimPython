@@ -20,15 +20,23 @@ class ResizableItem(logicitems.LogicItem):
     # in grid gap fraction
     _overlap = 0.37
 
-    def __init__(self, input_count, parent=None):
-        super().__init__(parent=parent)
-        self._input_count = input_count
+    def __init__(self, parent=None, metadata={}):
+        super().__init__(parent=parent, metadata=metadata)
+
+        self._input_count = metadata.get('#inputs', 2)
 
         # internal state
         self._show_handles = False
         self._body_rect = QtCore.QRectF(0, 0, 0, 0)
         self._connectors = []
         self._handles = {}
+
+    def update(self, metadata):
+        super().update(metadata)
+
+        input_count = metadata.get('#inputs')
+        if input_count is not None:
+            self.set_input_count_and_pos(input_count)
 
     def get_input_count(self):
         return self._input_count

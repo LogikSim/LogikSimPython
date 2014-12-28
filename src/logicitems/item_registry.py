@@ -51,7 +51,7 @@ class ItemRegistry(QtCore.QObject):
         assert issubclass(item_type, ItemBase), \
             "Item type must be derived from ItemBase"
 
-        guid = item_type.GUID()
+        guid = item_type.GUI_GUID()
         assert guid not in self._item_types, \
             "Tried to register {0} {1} a second time".format(item_type,
                                                              guid)
@@ -78,7 +78,7 @@ class ItemRegistry(QtCore.QObject):
         The element will still be registered in this registry but no
         instantiated signal will be emitted for it.
 
-        :param backend_guid: Backend element GUID to instantiate
+        :param backend_guid: Backend element GUID to instantiate.
         :param additional_metadata: Additional metadata to pass
         :return: Element instance
         """

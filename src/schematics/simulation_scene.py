@@ -36,12 +36,15 @@ class SimulationScene(grid_scene.GridScene):
         self._core_thread = Thread(target=self._core.run)
         self._core_thread.start()
 
+        # get all components
+        self._interface.enumerate_components()
+
         # Join threads on destruct (mustn't be a slot on this object)
         self.destroyed.connect(lambda: [self._core.quit(),
                                         self._core_thread.join()])
 
-    def get_interface(self):
+    def interface(self):
         return self._interface
 
-    def get_registry(self):
+    def registry(self):
         return self._registry
