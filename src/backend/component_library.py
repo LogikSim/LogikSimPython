@@ -277,7 +277,6 @@ class ComponentLibrary(object):
         Creates a new component library instance with no types registered.
         """
         self.component_types = {}
-        self.components = {}
 
     def register(self, component_type):
         """
@@ -312,8 +311,6 @@ class ComponentLibrary(object):
                                                           parent,
                                                           additional_metadata)
 
-        self.components[component_id] = instance
-
         return instance
 
     def enumerate_types(self):
@@ -322,22 +319,6 @@ class ComponentLibrary(object):
                  registered to this library.
         """
         return [t.get_metadata() for t in self.component_types.values()]
-
-    def destruct(self, component_id):
-        """
-        Triggers the simulation related destruction of the component instance
-        with the given id.
-
-        :param component_id: ID of the component to destruct
-        :return: False if component instance didn't exist.
-        """
-
-        component = self.components.get(component_id)
-        if not component:
-            return False
-
-        component.destruct()
-        return True
 
 global_component_library = ComponentLibrary()
 
