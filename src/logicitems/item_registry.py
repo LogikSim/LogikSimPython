@@ -145,8 +145,9 @@ class ItemRegistry(QtCore.QObject):
             elif not update.get('GUID', True):
                 # GUID is None, item was deleted, remove from registry and
                 # notify slots
+                item = self._items[uid]
                 del self._items[uid]
-                self.deleted.emit(update['id'])
+                self.deleted.emit(item)
             else:
                 # Simple update
                 item.update(update)
