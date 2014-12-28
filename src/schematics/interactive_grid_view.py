@@ -35,6 +35,9 @@ class InteractiveGridView(grid_view.GridView):
         # self.setResizeAnchor(QtGui.QGraphicsView.AnchorViewCenter)
         # self.setOptimizationFlags(QtGui.QGraphicsView.DontSavePainterState)
 
+        self.setAcceptDrops(True)
+        self._drop_item = None
+
         self.scale(0.12, 0.12)
 
     def mapToSceneGrid(self, pos, y=None):
@@ -100,3 +103,40 @@ class InteractiveGridView(grid_view.GridView):
                 event.button() is QtCore.Qt.MiddleButton:
             self._mouse_mid_last_pos = None
             self.unsetCursor()
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat('application/x-components'):
+            self.scene().clearSelection()
+
+            # create item
+            input_count = int(str(event.mimeData().data(
+                'application/x-components')))
+            import symbols
+            gpos = self.mapToSceneGrid(event.pos())
+            item = symbols.AndItem(metadata={'#inputs': input_count,
+                                             'x': gpos.x(),
+                                             'y': gpos.y()})
+            item.set_temporary(True)
+            self.scene().addItem(item)
+            self._drop_item = item
+
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event):
+        # move item
+        gpos = self.mapToSceneGrid(event.pos())
+        self._drop_item.setPos(gpos)
+
+        event.acceptProposedAction()
+
+    def dragLeaveEvent(self, event):
+        # delete item
+        self.scene().removeItem(self._drop_item)
+        self._drop_item = None
+
+    def dropEvent(self, event):
+        # mark as persistent
+        self._drop_item.set_temporary(False)
+        self._drop_item = None
+
+        event.acceptProposedAction()

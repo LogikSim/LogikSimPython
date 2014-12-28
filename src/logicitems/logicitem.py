@@ -53,7 +53,7 @@ class LogicItem(ItemBase, QtGui.QGraphicsLayoutItem):
         self._bounding_rect_valid = False
 
     def _is_current_position_valid(self):
-        pass
+        return True
 
     def ownBoundingRect(self):
         """ bounding rect of LogicItem without considering children """
@@ -72,10 +72,7 @@ class LogicItem(ItemBase, QtGui.QGraphicsLayoutItem):
             #
             # round position to grid point
             if change == QtGui.QGraphicsItem.ItemPositionChange:
-                if self._is_current_position_valid():
-                    self._last_position = self.pos()
-                else:
-                    self._last_position = None
+                self._last_position = self.pos()
                 return self.scene().roundToGrid(value)
             elif change == QtGui.QGraphicsItem.ItemPositionHasChanged:
                 if self._is_current_position_valid():
@@ -88,8 +85,7 @@ class LogicItem(ItemBase, QtGui.QGraphicsLayoutItem):
                                             self.pos())
                         self.scene().actions.push(action)
                 else:
-                    if self._last_position is not None:
-                        self.setPos(self._last_position)
+                    self.setPos(self._last_position)
 
             #
             # only selectable when allowed by scene

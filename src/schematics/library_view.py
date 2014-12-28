@@ -10,11 +10,13 @@ The item list view is used to show all available logic elements.
 '''
 
 import math
+import collections
 
 from PySide import QtGui, QtCore
 
 import schematics
 from symbols import AndItem
+from logicitems import LogicItem
 
 
 class ItemListScene(schematics.GridScene):
@@ -40,6 +42,8 @@ class ItemListScene(schematics.GridScene):
         self._col_count = None
         # stores all inserted items
         self._items = []
+        self._col_width = {}
+        self._row_height = {}
 
     def roundToGrid(self, pos, y=None):
         if y is not None:
@@ -63,17 +67,26 @@ class ItemListScene(schematics.GridScene):
         grid = self.get_grid_spacing()
         layout.setSpacing(grid * self._tile_spacing)
 
+        self._col_width = collections.defaultdict(int)
+        self._row_height = collections.defaultdict(int)
+
         next_index = 0, 0
         for item in self._items:
             row, col = next_index
+
+            size = item.sizeHint(QtCore.Qt.MinimumSize, QtCore.QSizeF(0, 0))
+            self._col_width[col] = max(self._col_width[col],
+                                       size.width() / grid)
+            self._row_height[row] = max(self._row_height[row],
+                                        size.height() / grid)
             layout.addItem(item, row, col, QtCore.Qt.AlignCenter)
+
             col += 1
             next_index = row + col // self._col_count, col % self._col_count
 
         self._top_widget.updateGeometry()
         self.setSceneRect(QtCore.QRectF(self._top_widget.pos(),
                                         self._top_widget.size()))
-
 
     def add_item(self, item_class):
         # add item to scene
@@ -90,6 +103,26 @@ class ItemListScene(schematics.GridScene):
 
         self._rebuild_layout()
 
+    def get_item_at_pos(self, pos):
+        """Returns item in tile or None at given position."""
+        gpos = pos / self.get_grid_spacing()
+
+        def get_tile_index(grid_coord, size_list):
+            tile_start = self._tile_margin
+            for index in size_list:
+                if tile_start <= grid_coord <= tile_start + size_list[index]:
+                    return index
+                tile_start += size_list[index] + self._tile_spacing
+
+        row = get_tile_index(gpos.y(), self._row_height)
+        col = get_tile_index(gpos.x(), self._col_width)
+
+        if row is None or col is None:
+            return None
+        try:
+            return self._items[row * self._col_count + col]
+        except IndexError:
+            return None
 
 
 class LibraryView(schematics.GridView):
@@ -101,9 +134,24 @@ class LibraryView(schematics.GridView):
         self.setTransformationAnchor(QtGui.QGraphicsView.NoAnchor)
 
         self.setInteractive(False)
+        # self.setAcceptDrops(True)
 
         for _ in range(10):
             self.scene().add_item(AndItem)  # TestRect)
+
+    def mousePressEvent(self, event):
+        # get item in tile
+        item = self.scene().get_item_at_pos(self.mapToScene(event.pos()))
+        if item is None:
+            return
+
+        mimeData = QtCore.QMimeData()
+        mimeData.setData('application/x-components', str(item._input_count))
+
+        drag = QtGui.QDrag(self)
+        drag.setMimeData(mimeData)
+
+        drag.exec_()
 
     def resizeEvent(self, event):
         size_w, size_h = event.size().width(), event.size().height()
