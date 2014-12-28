@@ -56,15 +56,22 @@ class SelectItemsMode(GridViewMouseModeBase):
         # call parent with masked drag mode
         self._mask_drag_mode(super().mousePressEvent, event)
 
-        self._undo_group_scene = self.scene()
-        self._undo_group_scene.beginUndoRedoGroup()
+        if event.button() == QtCore.Qt.LeftButton:
+            self._undo_group_scene = self.scene()
+            self._undo_group_scene.beginUndoRedoGroup()
+
+    @mouse_mode_filtered
+    def mouseDoubleClickEvent(self, event):
+        self.mousePressEvent(event)
 
     @mouse_mode_filtered
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
 
-        self._undo_group_scene.endUndoRedoGroup()
-        self._undo_group_scene = None
+        if event.button() == QtCore.Qt.LeftButton and \
+                self._undo_group_scene is not None:
+            self._undo_group_scene.endUndoRedoGroup()
+            self._undo_group_scene = None
 
     @mouse_mode_filtered
     def keyPressEvent(self, event):
