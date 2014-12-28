@@ -24,15 +24,14 @@ class InsertItemMode(GridViewMouseModeBase):
         # reference to currently inserted item (used to move it
         # while the mouse button is still pressed)
         self._inserted_item = None
-        self._insertion_pos = None
+        self._inserted_id = None
 
     def mouse_enter(self):
         super().mouse_enter()
 
-    @QtCore.Slot(int, ItemBase)
-    def _instantiated(self, _, instance):
-        if instance.pos() != self._insertion_pos:
-            # TODO: Consider a stronger check
+    @QtCore.Slot(ItemBase)
+    def _instantiated(self, instance):
+        if instance.id() != self._inserted_id:
             return
 
         self._inserted_item = instance
@@ -44,12 +43,13 @@ class InsertItemMode(GridViewMouseModeBase):
         # FIXME: This function isn't robust nor pretty.
 
         self._inserted_item = None
-        self._insertion_pos = gpos
+        self._inserted_id = gpos
 
         registry.instantiated.connect(self._instantiated)
-        interface.create_element(guid=self._insert_item_guid,
-                                 additional_metadata={'x': gpos.x(),
-                                                      'y': gpos.y()})
+        self._inserted_id = interface.create_element(
+            guid=self._insert_item_guid,
+            additional_metadata={'x': gpos.x(),
+                                 'y': gpos.y()})
 
         while not self._inserted_item:
             QtCore.QCoreApplication.processEvents()

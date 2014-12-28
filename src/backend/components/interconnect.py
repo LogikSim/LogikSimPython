@@ -15,8 +15,8 @@ class Interconnect(ComponentType):
     Connection between elements.
     """
     METADATA = {"GUID": "00352520-7cf0-43b7-9449-6fca5be8d6dc",
-                "name": __name__,
-                "description": __doc__}
+                "name": "Interconnect",
+                "description": "Represents connections between elements"}
 
     @classmethod
     def instantiate(cls, element_id, parent, additional_metadata={}):

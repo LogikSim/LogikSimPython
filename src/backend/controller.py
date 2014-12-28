@@ -43,6 +43,7 @@ class Controller:
             'query': self._on_query,
             'connect': self._on_connect,
             'disconnect': self._on_disconnect,
+            'enumerate_components': self._on_enumerate_components,
             'quit': self._on_quit
         }
 
@@ -64,12 +65,14 @@ class Controller:
     def _on_create(self, command):
         parent = self.elements.get(command.get("parent"))
         guid = command['GUID']
+        element_id = command['id']
+
         element = self._library.instantiate(
             guid,
+            element_id,
             parent if parent else self,
             command['metadata'])
 
-        element_id = element.id()
         self.elements[element_id] = element
         self.log.info("Instantiated %s as %d", guid, element_id)
 
@@ -127,6 +130,14 @@ class Controller:
         self.log.info("Disconnected port %d of %d",
                       command['source_id'],
                       command['source_port'])
+
+    def _on_enumerate_components(self, command):
+        self._channel_out.put({
+            'action': 'enumerate_components',
+            'data': self._library.enumerate_types()
+        })
+
+        self.log.info("Enumerated component types")
 
     def _on_quit(self, command):
         self.log.info("Asked to quit")
@@ -187,7 +198,10 @@ class Controller:
 
         :param data: metadata update message.
         """
-        self._channel_out.put(data)
+        self._channel_out.put({
+            'action': 'change',
+            'data': data
+        })
 
     def get_library(self):
         """

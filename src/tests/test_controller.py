@@ -42,13 +42,15 @@ class ControllerTest(unittest.TestCase):
     """
 
     def test_element_creation(self):
-        id_counter = 0
+        inst_counter = 0
+        ids = []
 
-        def instantiate_mock(guid, parent, metadata):
-            nonlocal id_counter
-            id_counter += 1
+        def instantiate_mock(guid, el_id, parent, metadata):
+            nonlocal inst_counter
+            inst_counter += 1
+            ids.append(el_id)
             return ElementMock({'GUID': guid,
-                                'id': id_counter})
+                                'id': el_id})
 
         library_emu = CallTrack(tracked_member="instantiate",
                                 result_fu=instantiate_mock)
@@ -63,23 +65,23 @@ class ControllerTest(unittest.TestCase):
         try_repeatedly(lambda: not ctrl.get_channel_in().empty())
         ctrl.process(0)
 
-        self.assertListEqual([("FOO", ctrl, {}),
-                              ("BAR", ctrl, {})], library_emu())
+        self.assertListEqual([("FOO", ids[0], ctrl, {}),
+                              ("BAR", ids[1], ctrl, {})], library_emu())
 
-        self.assertEqual(id_counter, 2)
+        self.assertEqual(inst_counter, 2)
 
     def test_element_update(self):
-        id_counter = 0
+        ids = []
         data = {}
 
-        def instantiate_mock(guid, parent, metadata):
-            nonlocal id_counter
+        def instantiate_mock(guid, el_id, parent, metadata):
             nonlocal data
+            nonlocal ids
 
-            id_counter += 1
+            ids.append(el_id)
 
             data = {'GUID': guid,
-                    'id': id_counter,
+                    'id': el_id,
                     'foo': 'bar',
                     'a': 'b'}
 
@@ -92,16 +94,18 @@ class ControllerTest(unittest.TestCase):
         i = ctrl.get_interface()
 
         i.create_element("FOO")
-        i.update_element(1, {'foo': 'buz',
-                             'bernd': 'bread'})
-
-        # Work around multiprocessing.Queue insertion delay
         try_repeatedly(lambda: not ctrl.get_channel_in().empty())
         ctrl.process(0)
 
-        self.assertEqual(1, id_counter)
+        i.update_element(ids[0], {'foo': 'buz',
+                                  'bernd': 'bread'})
+
+        try_repeatedly(lambda: not ctrl.get_channel_in().empty())
+        ctrl.process(0)
+
+        self.assertEqual(1, len(ids))
         self.assertDictEqual({'GUID': 'FOO',
-                              'id': 1,
+                              'id': ids[0],
                               'foo': 'buz',
                               'bernd': 'bread',
                               'a': 'b'}, data)
@@ -121,8 +125,9 @@ class ControllerTest(unittest.TestCase):
         # Work around multiprocessing.Queue insertion delay
         try_repeatedly(lambda: not ctrl.get_channel_out().empty())
 
-        self.assertListEqual([{'id': 1,
-                               'foo': 'bar'}],
+        self.assertListEqual([{'action': 'change',
+                               'data': {'id': 1,
+                                        'foo': 'bar'}}],
                              drain_queue(ctrl.get_channel_out()))
 
         # def get_library(self):
@@ -145,16 +150,13 @@ class ControllerTest(unittest.TestCase):
                 updates.append(update)
                 return True
 
-        id_counter = 0
         root = None
 
-        def instantiate_mock(guid, parent, metadata):
-            nonlocal id_counter
+        def instantiate_mock(guid, el_id, parent, metadata):
             nonlocal root
             root = parent
-            id_counter += 1
             return ElementMock({'GUID': guid,
-                                'id': id_counter})
+                                'id': el_id})
 
         handler = HandlerMock()
         library_emu = CallTrack(tracked_member="instantiate",
@@ -177,5 +179,7 @@ class ControllerTest(unittest.TestCase):
         try_repeatedly(lambda: not ctrl.get_channel_out().empty())
         handler.poll()
 
-        self.assertListEqual([{'foo': 'bar'},
-                              {'fiz': 'buz'}], updates)
+        self.assertListEqual([{'action': 'change',
+                               'data': {'foo': 'bar'}},
+                              {'action': 'change',
+                               'data': {'fiz': 'buz'}}], updates)

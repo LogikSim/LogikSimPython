@@ -53,7 +53,6 @@ class ComponentInstance(metaclass=ABCMeta):
         can employ filtering.
 
         :param data: metadata update message.
-        :return:
         """
         self.parent.propagate_change(data)
 
@@ -112,7 +111,6 @@ class ComponentInstance(metaclass=ABCMeta):
 class ComponentLibrary(object):
     def __init__(self):
         self.component_types = {}
-        self.id_counter = 0
         self.elements = {}
 
     def register(self, component_type):
@@ -123,17 +121,23 @@ class ComponentLibrary(object):
 
         self.component_types[guid] = component_type
 
-    def instantiate(self, guid, parent, additional_metadata={}):
+    def instantiate(self, guid, component_id, parent, additional_metadata={}):
         assert guid in self.component_types
 
-        instance = self.component_types[guid].instantiate(self.id_counter,
+        instance = self.component_types[guid].instantiate(component_id,
                                                           parent,
                                                           additional_metadata)
 
-        self.elements[self.id_counter] = instance
-        self.id_counter += 1
+        self.elements[component_id] = instance
 
         return instance
+
+    def enumerate_types(self):
+        """
+        :return: Returns a list of type metadata with one entry for each type
+                 registered to this library.
+        """
+        return [t.get_metadata() for t in self.component_types.values()]
 
     def destruct(self, id):
         element = self.elements.get(id)

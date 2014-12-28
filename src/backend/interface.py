@@ -6,6 +6,7 @@
 # be found in the LICENSE.txt file.
 #
 import queue
+import random
 
 
 class Handler:
@@ -101,13 +102,31 @@ class Interface:
         :param guid: Type of element to create
         :param parent: Optional parent element id
         :param additional_metadata: Additional meta-data to create element with
+        :return: ID of the element after its creation
         """
+        element_id = random.getrandbits(64)
+
         self._channel_out.put(
             {
                 'action': 'create',
                 'GUID': guid,
+                'id': element_id,
                 'parent': parent,
                 'metadata': additional_metadata
+            }
+        )
+
+        return element_id
+
+    def enumerate_components(self):
+        """
+        Asks the backend to enumerate all component GUIDs registered
+        with the backend. The reply not only includes the GUIDs but
+        also the corresponding ComponentType metadata.
+        """
+        self._channel_out.put(
+            {
+                'action': 'enumerate_components'
             }
         )
 

@@ -8,6 +8,7 @@
 from backend.element import Element
 from backend.component_library import ComponentType
 from copy import copy
+import random
 
 
 class InputOutputBank(ComponentType):
@@ -107,8 +108,14 @@ class CompoundElementInstance(Element):
         super().__init__(parent, metadata, CompoundElement)
 
         lib = self.get_library()
-        self.input_bank = lib.instantiate(InputOutputBank.GUID(), self)
-        self.output_bank = lib.instantiate(InputOutputBank.GUID(), self)
+
+        rand = random.Random(self.id())
+        self.input_bank = lib.instantiate(InputOutputBank.GUID(),
+                                          rand.getrandbits(64),
+                                          self)
+        self.output_bank = lib.instantiate(InputOutputBank.GUID(),
+                                           rand.getrandbits(64),
+                                           self)
 
     def __str__(self):
         return "CompoundElement(name={0})"\
