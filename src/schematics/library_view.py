@@ -14,38 +14,30 @@ import math
 from PySide import QtGui, QtCore
 
 import schematics
-
-
-class TestRect(QtGui.QGraphicsRectItem, QtGui.QGraphicsLayoutItem):
-    def __init__(self, *args, **kargs):
-        QtGui.QGraphicsRectItem.__init__(self, *args, **kargs)
-        QtGui.QGraphicsLayoutItem.__init__(self, *args, **kargs)
-
-        self.setRect(0, 0, 100, 100)
-        self.setPen(QtGui.QPen(QtCore.Qt.black))
-        self.setBrush(QtCore.Qt.white)
-
-    def setGeometry(self, rect):
-        self.setRect(rect)
-
-    def sizeHint(self, which, constraint):
-        return self.rect().size()
+from symbols import AndItem
 
 
 class ItemListScene(schematics.GridScene):
     def __init__(self, *args, **kargs):
         super(ItemListScene, self).__init__(*args, **kargs)
+
         self.set_grid_enabled(False)
 
         # top level widget is needed to layout all other items
         self._top_widget = QtGui.QGraphicsWidget()
         self.addItem(self._top_widget)
-        # self._top_widget.setGeometry(0, 0, 250, 250)
+        margin = self.get_grid_spacing() / 2
+        self._top_widget.setContentsMargins(*[margin] * 4)
 
         # number of columns visible
         self._col_count = None
         # stores all inserted items
         self._items = []
+
+    def roundToGrid(self, pos, y=None):
+        if y is not None:
+            pos = QtCore.QPointF(pos, y)
+        return pos
 
     def get_col_count(self, cols):
         return self._col_count
@@ -61,6 +53,7 @@ class ItemListScene(schematics.GridScene):
 
         layout = QtGui.QGraphicsGridLayout()
         self._top_widget.setLayout(layout)  # widget takes ownership of layout
+        layout.setSpacing(self.get_grid_spacing())
 
         next_index = 0, 0
         for item in self._items:
@@ -70,10 +63,12 @@ class ItemListScene(schematics.GridScene):
             next_index = row + col // self._col_count, col % self._col_count
 
         self._top_widget.updateGeometry()
-        self.setSceneRect(self.itemsBoundingRect())
+        self.setSceneRect(QtCore.QRectF(self._top_widget.pos(),
+                                        self._top_widget.size()))
 
     def add_item(self, item_class):
         item = item_class()
+        item.set_temporary(True)
         self.addItem(item)
         self._items.append(item)
         self._rebuild_layout()
@@ -86,7 +81,7 @@ class LibraryView(schematics.GridView):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 
         for _ in range(10):
-            self.scene().add_item(TestRect)
+            self.scene().add_item(AndItem)  # TestRect)
 
     def resizeEvent(self, event):
         size_w, size_h = event.size().width(), event.size().height()

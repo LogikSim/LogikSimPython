@@ -98,6 +98,7 @@ class GridScene(QtGui.QGraphicsScene):
         if self._is_grid_enabled:
             self._draw_grid(painter, rect)
         else:
+            painter.setPen(QtCore.Qt.white)
             painter.setBrush(QtCore.Qt.white)
             painter.drawRect(rect)
 

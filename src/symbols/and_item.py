@@ -17,8 +17,9 @@ from backend.simple_element import SimpleElementGuiItem
 
 class AndItem(ResizableItem, SimpleElementGuiItem):
     def __init__(self, parent=None, metadata={}):
-        super().__init__(metadata.get('#inputs', 2), parent=parent)
+        ResizableItem.__init__(self, metadata.get('#inputs', 2), parent=parent)
         SimpleElementGuiItem.__init__(self, metadata)
+
         self.setPos(metadata.get('x', 0), metadata.get('y', 0))
 
     def update(self, metadata):

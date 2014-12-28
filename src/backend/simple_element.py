@@ -46,6 +46,10 @@ class SimpleElementGuiItem:
     """
     Default GUI element for displaying simple elements.
     """
+    def __init__(self, metadata={}):
+        # TODO: Implement this as an actual GUI element ofc ;)
+        self._cached_metadata = metadata
+
     @classmethod
     def GUID(cls):
         return "3BFA39F9-C6A8-46AA-8D03-3B951B4D5FB2"
@@ -55,10 +59,6 @@ class SimpleElementGuiItem:
 
     def update(self, metadata):
         self._cached_metadata.update(metadata)
-
-    def __init__(self, metadata={}):
-        # TODO: Implement this as an actual GUI element ofc ;)
-        self._cached_metadata = metadata
 
 
 class SimpleElement(Element):

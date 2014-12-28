@@ -15,14 +15,16 @@ from .itembase import ItemBase
 from actions.move_action import MoveAction
 
 
-class LogicItem(ItemBase):
+class LogicItem(ItemBase, QtGui.QGraphicsLayoutItem):
     """
     Defines logic item base class.
 
     All children must implement the methods: ownBoundingRect, paint
     """
     def __init__(self, *args, **kargs):
-        super().__init__(*args, **kargs)
+        ItemBase.__init__(self, *args, **kargs)
+        QtGui.QGraphicsLayoutItem.__init__(self, *args, **kargs)
+
         # self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
         self.setFlag(QtGui.QGraphicsItem.ItemSendsGeometryChanges)
@@ -34,6 +36,12 @@ class LogicItem(ItemBase):
         self._bounding_rect_valid = False
         self._bounding_rect = None
 
+    def setGeometry(self, rect):
+        self.setPos(rect.topLeft() - self.selectionRect().topLeft())
+
+    def sizeHint(self, which, constraint):
+        return self.selectionRect().size()
+
     def __repr__(self):
         return "<{} {} at {}>".format(
             type(self).__name__, id(self), (self.pos().x(), self.pos().y()))
@@ -43,6 +51,7 @@ class LogicItem(ItemBase):
         self._bounding_rect_valid = False
 
     def _is_current_position_valid(self):
+        # check if we are still in scene
         origin = self.mapToScene(QtCore.QPointF(0, 0))
         bound_rect = self.boundingRect().translated(origin)
         return self.scene().sceneRect().contains(bound_rect)
