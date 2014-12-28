@@ -37,10 +37,13 @@ class LogicItem(ItemBase, QtGui.QGraphicsLayoutItem):
         self._bounding_rect = None
 
     def setGeometry(self, rect):
-        self.setPos(rect.topLeft() - self.selectionRect().topLeft())
+        scene_offset = self.mapToScene(self.selectionRect().topLeft()) - \
+            self.mapToScene(QtCore.QPointF(0, 0))
+        self.setPos(rect.topLeft() - scene_offset)
 
     def sizeHint(self, which, constraint):
-        return self.selectionRect().size()
+        return self.mapToScene(self.selectionRect()).boundingRect().size()
+        # return self.selectionRect().size()
 
     def __repr__(self):
         return "<{} {} at {}>".format(
@@ -73,7 +76,10 @@ class LogicItem(ItemBase, QtGui.QGraphicsLayoutItem):
             #
             # round position to grid point
             if change == QtGui.QGraphicsItem.ItemPositionChange:
-                self._last_position = self.pos()
+                if self._is_current_position_valid():
+                    self._last_position = self.pos()
+                else:
+                    self._last_position = None
                 return self.scene().roundToGrid(value)
             elif change == QtGui.QGraphicsItem.ItemPositionHasChanged:
                 if self._is_current_position_valid():
@@ -86,7 +92,8 @@ class LogicItem(ItemBase, QtGui.QGraphicsLayoutItem):
                                             self.pos())
                         self.scene().actions.push(action)
                 else:
-                    self.setPos(self._last_position)
+                    if self._last_position is not None:
+                        self.setPos(self._last_position)
 
             #
             # only selectable when allowed by scene

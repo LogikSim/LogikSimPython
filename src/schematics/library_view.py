@@ -18,6 +18,9 @@ from symbols import AndItem
 
 
 class ItemListScene(schematics.GridScene):
+    # tile size of preview in grid points
+    _tile_size = 5
+
     def __init__(self, *args, **kargs):
         super(ItemListScene, self).__init__(*args, **kargs)
 
@@ -58,7 +61,7 @@ class ItemListScene(schematics.GridScene):
         next_index = 0, 0
         for item in self._items:
             row, col = next_index
-            layout.addItem(item, row, col)  # QtCore.Qt.AlignCenter)
+            layout.addItem(item, row, col, QtCore.Qt.AlignCenter)
             col += 1
             next_index = row + col // self._col_count, col % self._col_count
 
@@ -67,11 +70,20 @@ class ItemListScene(schematics.GridScene):
                                         self._top_widget.size()))
 
     def add_item(self, item_class):
-        item = item_class()
+        # add item to scene
+        item = item_class(metadata={'#inputs': len(self._items) + 2})
         item.set_temporary(True)
         self.addItem(item)
         self._items.append(item)
+
+        # scale item to tile
+        rect = item.boundingRect()
+        tile_size = self.get_grid_spacing() * self._tile_size
+        scale = min(1, tile_size / rect.width(), tile_size / rect.height())
+        item.setScale(scale)
+
         self._rebuild_layout()
+
 
 
 class LibraryView(schematics.GridView):
@@ -79,6 +91,8 @@ class LibraryView(schematics.GridView):
         super().__init__(*args, **kargs)
         self.setScene(ItemListScene(self))
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+
+        self.setInteractive(False)
 
         for _ in range(10):
             self.scene().add_item(AndItem)  # TestRect)
