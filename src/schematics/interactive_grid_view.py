@@ -135,8 +135,22 @@ class InteractiveGridView(grid_view.GridView):
         self._drop_item = None
 
     def dropEvent(self, event):
+        scene = self.scene()
+        item = self._drop_item
+
         # mark as persistent
         self._drop_item.set_temporary(False)
         self._drop_item = None
+
+        # create UndoRedo action
+        def do():
+            scene.addItem(item)
+
+        def undo():
+            scene.removeItem(item)
+
+        self.scene().actions.executed(
+            do, undo, "insert logic item"
+        )
 
         event.acceptProposedAction()
