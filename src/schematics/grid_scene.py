@@ -11,8 +11,16 @@ Defines scene that contain all the parts of the schematics.
 
 from logging import getLogger
 
+from threading import Thread
+
 from PySide import QtGui, QtCore
 
+
+from backend.core import Core
+from backend.controller import Controller
+from backend.component_library import get_library
+from logicitems.item_registry import ItemRegistry
+from symbols.and_item import AndItem
 from actions.action_stack_model import ActionStackModel
 import logicitems
 
@@ -35,6 +43,15 @@ class GridScene(QtGui.QGraphicsScene):
         self.actions.aboutToUndo.connect(self.onAboutToUndoRedo)
         self.actions.aboutToRedo.connect(self.onAboutToUndoRedo)
 
+        # Simulation backend for this scene
+        self._core = None
+        self._controller = None
+        self._interface = None
+        self._registry = None
+        self._core_thread = None
+
+        self._setup_backend()
+
         # default values for new scene
         height = 100 * 1000  # golden ratio
         self.setSceneRect(0, 0, height * (1 + 5 ** 0.5) / 2, height)
@@ -53,6 +70,32 @@ class GridScene(QtGui.QGraphicsScene):
         # group undo redo events
         self._is_undo_redo_grouping = False
         self._undo_redo_group_id = 0
+
+    def _setup_backend(self):
+        """Setup simulation backend for this scene."""
+        self._core = Core()
+        self._controller = Controller(self._core, get_library())
+        self._interface = self._controller.get_interface()
+
+        self._registry = ItemRegistry(self._controller, self)
+        self._registry.register_type(AndItem)
+        self._registry.start_handling()
+
+        self._core_thread = Thread(target=self._core.run)
+        self._core_thread.start()
+
+        # fetch all components
+        self._interface.enumerate_components()
+
+        # Join threads on destruct (mustn't be a slot on this object)
+        self.destroyed.connect(lambda: [self._core.quit(),
+                                        self._core_thread.join()])
+
+    def interface(self):
+        return self._interface
+
+    def registry(self):
+        return self._registry
 
     def set_grid_enabled(self, value):
         assert isinstance(value, bool)

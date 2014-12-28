@@ -92,6 +92,23 @@ class ItemListScene(schematics.GridScene):
         self._selected_tile = None
         self._hovered_tile = None
 
+        # register on enumeration complete
+        self.registry().enumeration_complete.connect(self.on_new_components)
+        # fetch all components
+        self._interface.enumerate_components()
+
+    def on_new_components(self, components=[]):
+        for item in components:
+            guid = item['GUID']
+            name = item.get('name', '<unset>')
+            description = item.get('description', '<unset>')
+            # print(guid, name, description)
+
+            item = self.registry().instantiate_frontend_item(guid)
+
+        # for _ in range(100):
+        #    self.scene().add_item(AndItem)  # TestRect)
+
     def roundToGrid(self, pos, y=None):
         if y is not None:
             pos = QtCore.QPointF(pos, y)
@@ -261,9 +278,6 @@ class LibraryView(schematics.GridView):
 
         self._layout_horizont = False
         self._drag_start_pos = None
-
-        for _ in range(100):
-            self.scene().add_item(AndItem)  # TestRect)
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:

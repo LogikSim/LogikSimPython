@@ -16,7 +16,5 @@ from .edit_schematic_view import EditSchematicView
 from .edit_symbol_view import EditSymbolView
 from .grid_view import GridView
 from .grid_scene import GridScene
-from .simulation_scene import SimulationScene
 
-__all__ = ('EditSchematicView', 'EditSymbolView', 'GridView', 'GridScene',
-           'SimulationScene')
+__all__ = ('EditSchematicView', 'EditSymbolView', 'GridView', 'GridScene')
