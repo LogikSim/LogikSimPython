@@ -7,11 +7,12 @@
 #
 import multiprocessing
 from backend.interface import Interface
+from backend.component_library import ComponentRoot
 import time
 from logging import getLogger
 
 
-class Controller:
+class Controller(ComponentRoot):
     """
     Class managing control and observation based aspects of the simulation.
     This includes enabling instantiating, modifying, destroying as well as
@@ -192,7 +193,7 @@ class Controller:
 
     def propagate_change(self, data):
         """
-        Function for propagating events up into the simulation frontend.
+        Function for propagating changes up into the simulation frontend.
         Propagation follows child-parent-relationships so parent elements
         can employ filtering.
 
@@ -212,7 +213,7 @@ class Controller:
     def child_added(self, child):
         """
         Top level elements of the simulation will register themselves
-        with they controller using this function.
+        with the controller using this function.
 
         :param child:
         :return:
