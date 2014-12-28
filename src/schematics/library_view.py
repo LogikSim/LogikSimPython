@@ -14,7 +14,6 @@ import collections
 
 from PySide import QtGui, QtCore
 
-import logicitems
 import schematics
 from symbols import AndItem
 
@@ -262,7 +261,7 @@ class LibraryView(schematics.GridView):
         self._layout_horizont = False
         self._drag_start_pos = None
 
-        for _ in range(10):
+        for _ in range(100):
             self.scene().add_item(AndItem)  # TestRect)
 
     def mousePressEvent(self, event):
