@@ -11,6 +11,7 @@ Contains mocks helpful for creating unit tests.
 '''
 
 from PySide import QtCore
+from backend.component_library import ComponentRoot
 
 
 class SettingsMock:
@@ -55,7 +56,7 @@ class ModelIndexMock:
         return self._valid
 
 
-class ElementParentMock:
+class ElementRootMock(ComponentRoot):
     def __init__(self, library=None):
         self.library = library
         self.history = []

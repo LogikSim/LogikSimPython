@@ -10,7 +10,7 @@ import unittest
 from backend.components.compound_element import CompoundElement
 from backend.components.interconnect import Interconnect
 from backend.component_library import get_library
-from tests.mocks import ElementParentMock
+from tests.mocks import ElementRootMock
 
 
 class CompoundElementTest(unittest.TestCase):
@@ -19,7 +19,7 @@ class CompoundElementTest(unittest.TestCase):
     """
 
     def test_pass_through(self):
-        p = ElementParentMock(get_library())
+        p = ElementRootMock(get_library())
         e = CompoundElement.instantiate(0, p)
 
         e.input_bank.connect(e.output_bank, 0, 1)
