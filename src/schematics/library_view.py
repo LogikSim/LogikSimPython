@@ -254,9 +254,10 @@ class LibraryView(schematics.GridView):
         self.setScene(ItemListScene(self))
 
         self.setTransformationAnchor(QtGui.QGraphicsView.NoAnchor)
-
-        self.setInteractive(False)
         self.setAcceptDrops(True)
+
+        # we don't want our items to recieve any mouse events
+        self.setInteractive(False)
 
         self._layout_horizont = False
         self._drag_start_pos = None

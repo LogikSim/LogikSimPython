@@ -42,6 +42,6 @@ class ComponentLibraryTests(unittest.TestCase):
 
         types = lib.enumerate_types()
 
-        self.assertEquals(2, len(types))
+        self.assertEqual(2, len(types))
         self.assertIn(And.get_metadata(), types)
         self.assertIn(Xor.get_metadata(), types)

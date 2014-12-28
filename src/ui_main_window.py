@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created: Sun Dec 28 07:13:07 2014
+# Created: Sun Dec 28 21:20:16 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -74,9 +74,9 @@ class Ui_MainWindow(object):
         self.component_library_widget.setObjectName("component_library_widget")
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.component_library_widget)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.graphicsView = LibraryView(self.component_library_widget)
-        self.graphicsView.setObjectName("graphicsView")
-        self.verticalLayout_3.addWidget(self.graphicsView)
+        self.library_view = LibraryView(self.component_library_widget)
+        self.library_view.setObjectName("library_view")
+        self.verticalLayout_3.addWidget(self.library_view)
         self.component_library_dock_widget.setWidget(self.component_library_widget)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.component_library_dock_widget)
         self.action_exit = QtGui.QAction(MainWindow)
@@ -118,6 +118,6 @@ class Ui_MainWindow(object):
         self.action_about.setText(QtGui.QApplication.translate("MainWindow", "&About", None, QtGui.QApplication.UnicodeUTF8))
         self.action_about_qt.setText(QtGui.QApplication.translate("MainWindow", "About &Qt", None, QtGui.QApplication.UnicodeUTF8))
 
-from schematics.library_view import LibraryView
 from actions.action_stack_view import ActionStackView
+from schematics.library_view import LibraryView
 import resources_rc

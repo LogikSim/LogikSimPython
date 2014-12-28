@@ -141,7 +141,7 @@
    <widget class="QWidget" name="component_library_widget">
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="LibraryView" name="graphicsView"/>
+      <widget class="LibraryView" name="library_view"/>
      </item>
     </layout>
    </widget>
