@@ -20,13 +20,28 @@ class ComponentLibraryTests(unittest.TestCase):
     def test_component_instantiation(self):
         p = ElementParentMock()
         lib = cl.get_library()
-        a = lib.instantiate(And.GUID(), p)
+        a = lib.instantiate(And.GUID(), 0, p)
         self.assertEqual("And", a.get_metadata_field("name"))
 
-        x = lib.instantiate(Xor.GUID(), p)
+        x = lib.instantiate(Xor.GUID(), 1, p)
         self.assertEqual("Xor", x.get_metadata_field("name"))
 
     def test_invalid_behavior(self):
         lib = cl.get_library()
 
-        self.assertRaises(AssertionError, lib.instantiate, "UNOBTAINIUM", None)
+        self.assertRaises(AssertionError,
+                          lib.instantiate,
+                          "UNOBTAINIUM",
+                          10,
+                          None)
+
+    def test_type_enumeration(self):
+        lib = cl.ComponentLibrary()
+        lib.register(And)
+        lib.register(Xor)
+
+        types = lib.enumerate_types()
+
+        self.assertEquals(2, len(types))
+        self.assertIn(And.get_metadata(), types)
+        self.assertIn(Xor.get_metadata(), types)
