@@ -20,6 +20,10 @@ from symbols import AndItem
 class ItemListScene(schematics.GridScene):
     # tile size of preview in grid points
     _tile_size = 5
+    # tile margin in grid points
+    _tile_margin = 0.5
+    # tile spacing in grid points
+    _tile_spacing = 1
 
     def __init__(self, *args, **kargs):
         super(ItemListScene, self).__init__(*args, **kargs)
@@ -29,7 +33,7 @@ class ItemListScene(schematics.GridScene):
         # top level widget is needed to layout all other items
         self._top_widget = QtGui.QGraphicsWidget()
         self.addItem(self._top_widget)
-        margin = self.get_grid_spacing() / 2
+        margin = self.get_grid_spacing() * self._tile_margin
         self._top_widget.setContentsMargins(*[margin] * 4)
 
         # number of columns visible
@@ -56,7 +60,8 @@ class ItemListScene(schematics.GridScene):
 
         layout = QtGui.QGraphicsGridLayout()
         self._top_widget.setLayout(layout)  # widget takes ownership of layout
-        layout.setSpacing(self.get_grid_spacing())
+        grid = self.get_grid_spacing()
+        layout.setSpacing(grid * self._tile_spacing)
 
         next_index = 0, 0
         for item in self._items:
@@ -68,6 +73,7 @@ class ItemListScene(schematics.GridScene):
         self._top_widget.updateGeometry()
         self.setSceneRect(QtCore.QRectF(self._top_widget.pos(),
                                         self._top_widget.size()))
+
 
     def add_item(self, item_class):
         # add item to scene
@@ -90,7 +96,9 @@ class LibraryView(schematics.GridView):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
         self.setScene(ItemListScene(self))
+
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setTransformationAnchor(QtGui.QGraphicsView.NoAnchor)
 
         self.setInteractive(False)
 

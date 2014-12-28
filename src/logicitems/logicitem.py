@@ -43,7 +43,6 @@ class LogicItem(ItemBase, QtGui.QGraphicsLayoutItem):
 
     def sizeHint(self, which, constraint):
         return self.mapToScene(self.selectionRect()).boundingRect().size()
-        # return self.selectionRect().size()
 
     def __repr__(self):
         return "<{} {} at {}>".format(
@@ -54,10 +53,7 @@ class LogicItem(ItemBase, QtGui.QGraphicsLayoutItem):
         self._bounding_rect_valid = False
 
     def _is_current_position_valid(self):
-        # check if we are still in scene
-        origin = self.mapToScene(QtCore.QPointF(0, 0))
-        bound_rect = self.boundingRect().translated(origin)
-        return self.scene().sceneRect().contains(bound_rect)
+        pass
 
     def ownBoundingRect(self):
         """ bounding rect of LogicItem without considering children """
