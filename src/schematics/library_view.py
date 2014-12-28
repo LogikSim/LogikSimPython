@@ -16,7 +16,6 @@ from PySide import QtGui, QtCore
 
 import schematics
 from symbols import AndItem
-from logicitems import LogicItem
 
 
 class ItemListScene(schematics.GridScene):
@@ -40,6 +39,8 @@ class ItemListScene(schematics.GridScene):
 
         # number of columns visible
         self._col_count = None
+        self._row_count = None
+        self._layout_horizont = False
         # stores all inserted items
         self._items = []
         self._col_width = {}
@@ -50,17 +51,22 @@ class ItemListScene(schematics.GridScene):
             pos = QtCore.QPointF(pos, y)
         return pos
 
-    def get_col_count(self, cols):
-        return self._col_count
-
-    def set_col_count(self, cols):
-        assert isinstance(cols, int) and cols > 0
+    def restrict_to_cols(self, cols):
         self._col_count = cols
+        self._layout_horizont = False
+        self._rebuild_layout()
+
+    def restrict_to_rows(self, rows):
+        self._row_count = rows
+        self._layout_horizont = True
         self._rebuild_layout()
 
     def _rebuild_layout(self):
-        if self._col_count is None:
+        if self._col_count is None and self._row_count is None:
             return
+
+        if self._layout_horizont:
+            self._col_count = math.ceil(len(self._items) / self._row_count)
 
         layout = QtGui.QGraphicsGridLayout()
         self._top_widget.setLayout(layout)  # widget takes ownership of layout
@@ -90,7 +96,7 @@ class ItemListScene(schematics.GridScene):
 
     def add_item(self, item_class):
         # add item to scene
-        item = item_class(metadata={'#inputs': len(self._items) + 2})
+        item = item_class(metadata={'#inputs': len(self._items) % 10 + 2})
         item.set_temporary(True)
         self.addItem(item)
         self._items.append(item)
@@ -130,13 +136,14 @@ class LibraryView(schematics.GridView):
         super().__init__(*args, **kargs)
         self.setScene(ItemListScene(self))
 
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setTransformationAnchor(QtGui.QGraphicsView.NoAnchor)
 
         self.setInteractive(False)
         # self.setAcceptDrops(True)
 
-        for _ in range(10):
+        self._layout_horizont = False
+
+        for _ in range(100):
             self.scene().add_item(AndItem)  # TestRect)
 
     def mousePressEvent(self, event):
@@ -153,21 +160,92 @@ class LibraryView(schematics.GridView):
 
         drag.exec_()
 
-    def resizeEvent(self, event):
-        size_w, size_h = event.size().width(), event.size().height()
-        full_width = size_w
+    def wheelEvent(self, event):
+        if self._layout_horizont:
+            # create event with horizontal wheel orientation
+            fake_evt = QtGui.QWheelEvent(
+                event.pos(), event.globalPos(), event.delta(), event.buttons(),
+                event.modifiers(), QtCore.Qt.Orientation.Horizontal)
+            super().wheelEvent(fake_evt)
+        else:
+            super().wheelEvent(event)
+
+    def get_full_size(self, resize_event):
+        """Get size without scrollbars."""
+        full_width = resize_event.size().width()
         if self.verticalScrollBar().isVisible():
             full_width += self.verticalScrollBar().width()
-        scroll_width = full_width - self.verticalScrollBar().width()
 
-        # set number of cols
-        cols = max(1, full_width // 50)
-        self.scene().set_col_count(cols)
+        full_height = resize_event.size().height()
+        if self.horizontalScrollBar().isVisible():
+            full_height += self.horizontalScrollBar().height()
+
+        return QtCore.QSize(full_width, full_height)
+
+    def resizeEvent(self, event):
+        print(event.size().height(), self.size().height(),
+              self.get_full_size(event).height())
+        full_size = self.get_full_size(event)
+        self._layout_horizont = full_size.width() > full_size.height()
+        if self._layout_horizont:
+            self.resizeEvent_horizontal(event)
+        else:
+            self.resizeEvent_vertical(event)
+
+    def resizeEvent_horizontal(self, event):
+        size_w, size_h = event.size().width(), event.size().height()
+
+        full_height = self.get_full_size(event).height()
+        scroll_height = full_height - self.horizontalScrollBar().height()
+
+        # set number of rows
+        rows = max(1, (full_height - 10) // 50)
+        self.scene().restrict_to_rows(rows)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+
         scene_w, scene_h = (self.scene().sceneRect().width(),
                             self.scene().sceneRect().height())
 
+        def get_preferred_scale(height):
+            return height / scene_h
+
+        def fit_width(height):
+            scale = get_preferred_scale(height)  # width / scene_w
+            width = math.ceil(scene_w * scale)
+            return width <= size_w
+
+        # scrollbar recursion (not fit without, but fit with scrollbar)
+        if not fit_width(full_height) and fit_width(scroll_height):
+            # fit height --> largest scale, such that no scrollbar is shown
+            new_scale = size_w / scene_w
+        else:
+            # fit width
+            new_scale = get_preferred_scale(size_h)
+
+        rel_scale = new_scale / self.getAbsoluteScale()
+        self.scale(rel_scale, rel_scale)
+
+    def resizeEvent_vertical(self, event):
+        size_w, size_h = event.size().width(), event.size().height()
+
+        full_width = self.get_full_size(event).width()
+        scroll_width = full_width - self.verticalScrollBar().width()
+
+        # set number of cols
+        cols = max(1, (full_width - 10) // 50)
+        self.scene().restrict_to_cols(cols)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+
+        scene_w, scene_h = (self.scene().sceneRect().width(),
+                            self.scene().sceneRect().height())
+
+        def get_preferred_scale(width):
+            return width / scene_w
+
         def fit_height(width):
-            scale = width / scene_w
+            scale = get_preferred_scale(width)  # width / scene_w
             height = math.ceil(scene_h * scale)
             return height <= size_h
 
@@ -177,7 +255,8 @@ class LibraryView(schematics.GridView):
             new_scale = size_h / scene_h
         else:
             # fit width
-            new_scale = size_w / scene_w
+            new_scale = get_preferred_scale(size_w)
 
         rel_scale = new_scale / self.getAbsoluteScale()
         self.scale(rel_scale, rel_scale)
+
