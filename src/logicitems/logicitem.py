@@ -50,7 +50,7 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
 
     def selectionRect(self):
         """
-        return rect used for selection.
+        Implements selectionRect
 
         By default returns own combined with child bounding rects.
         """

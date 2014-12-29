@@ -27,4 +27,4 @@ def load_all_symbols():
 
 from symbols.text_item import TextItem
 
-__all__ = ('AndItem',)
+__all__ = ('TextItem',)

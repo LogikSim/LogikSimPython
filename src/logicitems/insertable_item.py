@@ -15,7 +15,28 @@ from .itembase import ItemBase
 from actions.move_action import MoveAction
 
 
-class InsertableItem(ItemBase):
+class InsertableRegistry(type(ItemBase)):
+    """Keeps track of all derived classes of InsertableItem."""
+    _insertable_classes = []
+
+    def __init__(self, *args, **kargs):
+        type(ItemBase).__init__(self, *args, **kargs)
+
+        # register types that implement GUI_GUID
+        try:
+            self.GUI_GUID()
+        except NotImplementedError:
+            pass
+        else:
+            InsertableRegistry._insertable_classes.append(self)
+
+    @classmethod
+    def get_insertable_classes(self):
+        """Returns all insertable classes with defined GUI_GUID."""
+        return InsertableRegistry._insertable_classes
+
+
+class InsertableItem(ItemBase, metaclass=InsertableRegistry):
     """
     Insertable items have a position and are backed by a backend instance.
     """
@@ -37,14 +58,18 @@ class InsertableItem(ItemBase):
         # contains last valid position
         self._last_position = None
 
-    def GUID(self):
-        """Return GUID of this instance."""
-        return self._cached_metadata['GUID']
+    def selectionRect(self):
+        """Return rect used for selection."""
+        raise NotImplementedError
 
     @classmethod
     def GUI_GUID(cls):
         """Return GUI_GUID of this class."""
         raise NotImplementedError
+
+    def GUID(self):
+        """Return GUID of this instance."""
+        return self._cached_metadata['GUID']
 
     def id(self):
         """Return id, used to communicate with backend."""

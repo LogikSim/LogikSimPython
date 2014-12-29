@@ -17,6 +17,7 @@ from .itembase import ItemBase
 from .line_edge_indicator import LineEdgeIndicator
 
 
+# TODO: make LineTree an insertable item
 class LineTree(ItemBase):
     """ A tree of connected lines """
 
@@ -34,6 +35,7 @@ class LineTree(ItemBase):
 
         :param path: Initial path given as list of QtCore.QPointF.
         """
+        # TODO: implement parent
         super().__init__()
 
         # defines tree as dict of dict, with key being a tuple (x,y) and
@@ -48,6 +50,10 @@ class LineTree(ItemBase):
         self._edge_indicators = []  # list of LineEdgeIndicators
 
         self._set_path(path)
+
+    @classmethod
+    def GUI_GUID(cls):
+        return "00352520-7cf0-43b7-9449-6fca5be8d6dc"
 
     def _update_tree(self):
         """

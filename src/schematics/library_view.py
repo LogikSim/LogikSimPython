@@ -17,6 +17,7 @@ from PySide import QtGui, QtCore
 
 import schematics
 from logicitems.item_registry import GuiTypeNotFoundException
+from logicitems.logicitem import LogicItem
 
 
 class TileItem(QtGui.QGraphicsRectItem):
@@ -120,7 +121,8 @@ class ItemListScene(schematics.GridScene):
             except GuiTypeNotFoundException:
                 pass
             else:
-                self._add_item(item, name, description)
+                if isinstance(item, LogicItem):
+                    self._add_item(item, name, description)
 
     def _add_item(self, item, name, description):
         # add item to scene
