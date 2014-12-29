@@ -10,7 +10,7 @@ from copy import copy
 
 from backend.simple_element import SimpleElement
 from backend.component_library import ComponentType
-from symbols import AndItem
+from symbols import TextItem
 
 
 class And(ComponentType):
@@ -18,9 +18,10 @@ class And(ComponentType):
     Simple AND gate.
     """
     METADATA = {"GUID": "7793F2A0-B313-4489-ABF3-8570ECDFE3EE",
-                "GUI-GUID": AndItem.GUI_GUID(),  # Override GUI item
+                "GUI-GUID": TextItem.GUI_GUID(),  # Override GUI item
                 "name": "And",
                 "description": "And logic gate",
+                "text": "&",
                 "#inputs": 2,
                 "#outputs": 1,
                 "delay": 1}
@@ -43,8 +44,9 @@ class Or(ComponentType):
     Simple OR gate.
     """
     METADATA = {"GUID": "43DD02B5-968D-488B-BAF5-FC63B7C928E7",
-                "GUI-GUID": AndItem.GUI_GUID(),  # Override GUI item
+                "GUI-GUID": TextItem.GUI_GUID(),  # Override GUI item
                 "name": "Or",
+                "text": "≥1",
                 "description": "Or logic gate",
                 "#inputs": 2,
                 "#outputs": 1,
@@ -68,8 +70,9 @@ class Xor(ComponentType):
     Simple XOR gate.
     """
     METADATA = {"GUID": "61E01C17-D81E-4F49-B665-01B1C519B8C6",
-                "GUI-GUID": AndItem.GUI_GUID(),  # Override GUI item
+                "GUI-GUID": TextItem.GUI_GUID(),  # Override GUI item
                 "name": "Xor",
+                "text": "=1",
                 "description": "Xor logic gate",
                 "#inputs": 2,
                 "#outputs": 1,
@@ -93,7 +96,7 @@ class Nand(ComponentType):
     Simple Nand gate.
     """
     METADATA = {"GUID": "B50A8E0D-319C-4DB9-87A3-61F6F3EAC4D8",
-                "GUI-GUID": AndItem.GUI_GUID(),  # Override GUI item
+                "GUI-GUID": TextItem.GUI_GUID(),  # Override GUI item
                 "name": "Nand",
                 "description": "Nand logic gate",
                 "#inputs": 2,
@@ -118,7 +121,7 @@ class Nor(ComponentType):
     Simple Nor gate.
     """
     METADATA = {"GUID": "B634DF23-0994-46E0-AF52-A99D35F3231C",
-                "GUI-GUID": AndItem.GUI_GUID(),  # Override GUI item
+                "GUI-GUID": TextItem.GUI_GUID(),  # Override GUI item
                 "name": "Nor",
                 "description": "Nor logic gate",
                 "#inputs": 2,

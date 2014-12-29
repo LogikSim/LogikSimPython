@@ -114,16 +114,9 @@ class InteractiveGridView(grid_view.GridView):
             metadata = json.loads(str(event.mimeData().data(
                 'application/x-components')))
 
-
             # delete positions in metadata
-            try:
-                del metadata['x']
-            except KeyError:
-                pass
-            try:
-                del metadata['y']
-            except KeyError:
-                pass
+            metadata.pop('x', None)
+            metadata.pop('y', None)
 
             # create item
             item = self.scene().registry().instantiate_frontend_item(

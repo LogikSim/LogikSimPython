@@ -137,7 +137,6 @@ class InsertableItem(ItemBase):
             elif change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
                 self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, value)
 
-
         return super().itemChange(change, value)
 
     def hoverMoveEvent(self, event):

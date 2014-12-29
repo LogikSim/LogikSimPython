@@ -25,6 +25,6 @@ def load_all_symbols():
 
 # until it works we load them manually
 
-from .and_item import AndItem
+from symbols.text_item import TextItem
 
 __all__ = ('AndItem',)

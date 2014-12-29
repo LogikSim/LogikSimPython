@@ -14,14 +14,15 @@ from PySide import QtCore
 from logicitems import ResizableItem
 
 
-class AndItem(ResizableItem):
+class TextItem(ResizableItem):
     def paint(self, painter, options, widget):
         super().paint(painter, options, widget)
 
+        label = self.metadata().get("text", "--")
         font = painter.font()
         font.setPointSizeF(self.scene().get_grid_spacing() * 0.8)
         painter.setFont(font)
-        painter.drawText(self.boundingRect(), QtCore.Qt.AlignCenter, '&')
+        painter.drawText(self.boundingRect(), QtCore.Qt.AlignCenter, label)
 
     @classmethod
     def GUI_GUID(cls):

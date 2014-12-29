@@ -20,7 +20,7 @@ from backend.core import Core
 from backend.controller import Controller
 from backend.component_library import get_library
 from logicitems.item_registry import ItemRegistry
-from symbols.and_item import AndItem
+from symbols import TextItem
 from actions.action_stack_model import ActionStackModel
 import logicitems
 
@@ -78,7 +78,7 @@ class GridScene(QtGui.QGraphicsScene):
         self._interface = self._controller.get_interface()
 
         self._registry = ItemRegistry(self._controller, self)
-        self._registry.register_type(AndItem)
+        self._registry.register_type(TextItem)
         self._registry.start_handling()
 
         self._core_thread = Thread(target=self._core.run)
