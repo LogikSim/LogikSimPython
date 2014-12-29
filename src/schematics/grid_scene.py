@@ -78,7 +78,7 @@ class GridScene(QtGui.QGraphicsScene):
         self._interface = self._controller.get_interface()
 
         self._registry = ItemRegistry(self._controller, self)
-        for cls in InsertableRegistry.get_insertable_classes():
+        for cls in InsertableRegistry.get_insertable_types():
             self._registry.register_type(cls)
         self._registry.start_handling()
 

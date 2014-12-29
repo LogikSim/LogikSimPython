@@ -16,8 +16,8 @@ from actions.move_action import MoveAction
 
 
 class InsertableRegistry(type(ItemBase)):
-    """Keeps track of all derived classes of InsertableItem."""
-    _insertable_classes = []
+    """Keeps track of all derived types of InsertableItem."""
+    _insertable_types = []
 
     def __init__(self, *args, **kargs):
         type(ItemBase).__init__(self, *args, **kargs)
@@ -28,12 +28,12 @@ class InsertableRegistry(type(ItemBase)):
         except NotImplementedError:
             pass
         else:
-            InsertableRegistry._insertable_classes.append(self)
+            InsertableRegistry._insertable_types.append(self)
 
     @classmethod
-    def get_insertable_classes(self):
-        """Returns all insertable classes with defined GUI_GUID."""
-        return InsertableRegistry._insertable_classes
+    def get_insertable_types(self):
+        """Returns all insertable types with valid GUI_GUID."""
+        return InsertableRegistry._insertable_types
 
 
 class InsertableItem(ItemBase, metaclass=InsertableRegistry):
