@@ -89,8 +89,9 @@ class ItemRegistry(QtCore.QObject):
         """
         metadata = copy(self._backend_types[backend_guid])
         metadata.update(additional_metadata)
-        if 'id' not in metadata:
-            metadata['id'] = random.getrandbits(64)
+        # always generate new id, we don't want to have two
+        # objects with the same id
+        metadata['id'] = random.getrandbits(64)
 
         return self._instantiate_for(metadata,
                                      announce=False)
