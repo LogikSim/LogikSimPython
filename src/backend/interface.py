@@ -7,6 +7,7 @@
 #
 import queue
 import random
+from backend.component_library import gen_component_id
 
 
 class Handler:
@@ -77,6 +78,15 @@ class Interface:
         """
         self._channel_out = channel_out
 
+    @classmethod
+    def _gen_request_id(cls):
+        """
+        Generates a unique request id that will be included in replies
+        from the backend that result from the request.
+        :return: Unique id
+        """
+        return random.getrandbits(128)
+
     def schedule_edge(self, element_id, input, state, delay):
         """
         Schedules a signal transition in the future.
@@ -110,7 +120,7 @@ class Interface:
 
         element_id = additional_metadata.get('id')
         if element_id is None:
-            element_id = random.getrandbits(64)
+            element_id = gen_component_id()
 
         self._channel_out.put(
             {
@@ -123,6 +133,45 @@ class Interface:
         )
 
         return element_id
+
+    def serialize(self, ids=None):
+        """
+        Schedules full serialization of the given list of element IDs.
+        :param ids: List of IDs. If non everything is serialized.
+        :return: Request id
+        """
+        request_id = self._gen_request_id()
+
+        request = {
+            'action': 'serialize',
+            'request-id': request_id
+        }
+
+        if ids is not None:
+            request['ids'] = ids
+
+        self._channel_out.put(request)
+
+        return request_id
+
+    def deserialize(self, serialization):
+        """
+        Schedules deserialization.
+
+        :param serialization: Output of previous serialize call.
+        :return: Request id
+        """
+        request_id = self._gen_request_id()
+
+        self._channel_out.put(
+            {
+                'action': 'deserialize',
+                'data': serialization,
+                'request-id': request_id
+            }
+        )
+
+        return request_id
 
     def enumerate_components(self):
         """

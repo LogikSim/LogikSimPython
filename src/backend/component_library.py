@@ -42,6 +42,19 @@ Example use:
 
 from abc import ABCMeta, abstractmethod
 from copy import copy
+import random
+
+
+def gen_component_id():
+    """
+    Generates a 128bit unique id that can be used in component instantiation.
+    The excessive bit length is chosen so that the IDs can be generated as
+    random numbers outside of the backend with practically no chance of
+    collisions.
+
+    :return: New id
+    """
+    return random.getrandbits(128)
 
 
 class ComponentType(object):
@@ -160,6 +173,12 @@ class ComponentInstance(metaclass=ABCMeta):
         :param child: Child to add.
         """
         self._children.append(child)
+
+    def get_children(self):
+        """
+        :return: List of children of this component
+        """
+        return self._children
 
     def id(self):
         """

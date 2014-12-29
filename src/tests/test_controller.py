@@ -9,6 +9,8 @@ import unittest
 from backend.controller import Controller
 from backend.interface import Handler
 from tests.helpers import CallTrack, drain_queue, try_repeatedly
+from backend.component_library import ComponentLibrary
+from backend.components import And, Nand
 
 
 class ElementMock:
@@ -183,3 +185,72 @@ class ControllerTest(unittest.TestCase):
                                'data': {'foo': 'bar'}},
                               {'action': 'change',
                                'data': {'fiz': 'buz'}}], updates)
+
+
+class ControllerSerializationTest(unittest.TestCase):
+    def setUp(self):
+        cl = ComponentLibrary()
+        cl.register(And)
+        cl.register(Nand)
+
+        self.ctrl = Controller(core=CoreMock(), library=cl)
+        self.interface = self.ctrl.get_interface()
+
+    def test_empty_serialization(self):
+        rid = self.interface.serialize()
+        try_repeatedly(lambda: not self.ctrl.get_channel_in().empty())
+        self.ctrl.process(0)
+        try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
+        msg = drain_queue(self.ctrl.get_channel_out())
+        self.assertEqual(1, len(msg))
+        self.assertDictEqual({'action': 'serialization',
+                              'in-reply-to': rid,
+                              'data': []}, msg[0])
+
+    def test_empty_deserialization(self):
+        rid = self.interface.deserialize([])
+        try_repeatedly(lambda: not self.ctrl.get_channel_in().empty())
+        self.ctrl.process(0)
+        try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
+        msg = drain_queue(self.ctrl.get_channel_out())
+        self.assertEqual(2, len(msg))
+        self.assertDictEqual({'action': 'deserialization-start',
+                              'in-reply-to': rid}, msg[0])
+        self.assertDictEqual({'action': 'deserialization-end',
+                              'in-reply-to': rid,
+                              'ids': []}, msg[1])
+
+    def test_serialization_framing(self):
+        # Create some nested elements
+        a1 = self.interface.create_element(And.GUID())
+        a2 = self.interface.create_element(And.GUID(), a1)
+        a3 = self.interface.create_element(And.GUID(), a1)
+        self.interface.connect(a2, 0, a3, 1)
+        self.interface.create_element(And.GUID(), a3)
+
+        # Serialize them (ordering guarantees they exist)
+        rid = self.interface.serialize()
+
+        try_repeatedly(lambda: not self.ctrl.get_channel_in().empty())
+        self.ctrl.process(0)
+        try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
+
+        msg = drain_queue(self.ctrl.get_channel_out())
+        data = msg[-1]
+
+        self.assertEqual('serialization', data['action'])
+        self.assertEqual(rid, data['in-reply-to'])
+
+        rid = self.interface.deserialize(data['data'])
+
+        try_repeatedly(lambda: not self.ctrl.get_channel_in().empty())
+        self.ctrl.process(1)
+        try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
+
+        msg = drain_queue(self.ctrl.get_channel_out())
+
+        self.assertEqual('deserialization-start', msg[0]['action'])
+        self.assertEqual(rid, msg[0]['in-reply-to'])
+
+        self.assertEqual('deserialization-end', msg[-1]['action'])
+        self.assertEqual(rid, msg[-1]['in-reply-to'])

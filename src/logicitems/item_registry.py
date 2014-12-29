@@ -7,9 +7,10 @@
 #
 from PySide import QtCore
 from backend.interface import Handler
+from backend.component_library import gen_component_id
 from logicitems.itembase import ItemBase
+from logging import getLogger
 from copy import copy
-import random
 
 
 class GuiTypeNotFoundException(Exception):
@@ -36,6 +37,8 @@ class ItemRegistry(QtCore.QObject):
         """
         super().__init__(parent)
 
+        self.log = getLogger("registry")
+
         self._item_types = {}  # GUID -> item type
         self._backend_types = {}  # GUID -> metadata associations
 
@@ -49,7 +52,10 @@ class ItemRegistry(QtCore.QObject):
 
         self._handlers = {
             'change': self._on_change,
-            'enumerate_components': self._on_enumerate_components
+            'enumerate_components': self._on_enumerate_components,
+            'serialization': self._on_serialization,
+            'deserialization-start': self._on_deserialization_start,
+            'deserialization-end': self._on_deserialization_complete
         }
 
     def register_type(self, item_type):
@@ -91,7 +97,7 @@ class ItemRegistry(QtCore.QObject):
         metadata.update(additional_metadata)
         # always generate new id, we don't want to have two
         # objects with the same id
-        metadata['id'] = random.getrandbits(64)
+        metadata['id'] = gen_component_id()
 
         return self._instantiate_for(metadata,
                                      announce=False)
@@ -132,7 +138,11 @@ class ItemRegistry(QtCore.QObject):
                        have an action field.
         """
         action = update['action']
-        self._handlers[action](update)
+        handler = self._handlers.get(action)
+        if not handler:
+            self.log.warning("No handler for action %s: %s", action, update)
+        else:
+            handler(update)
 
     def _on_change(self, action):
         """
@@ -185,6 +195,27 @@ class ItemRegistry(QtCore.QObject):
 
         self.enumeration_complete.emit(action['data'])
 
+    def _on_serialization(self, action):
+        """
+        Emits the serialized signal.
+        :param action: Free form dict
+        """
+        self.serialization_complete.emit(action['in-reply-to'],
+                                         action['data'])
+
+    def _on_deserialization_start(self, action):
+        """
+        Emits the deserialization start signal
+        """
+        self.deserialization_start.emit(action['in-reply-to'])
+
+    def _on_deserialization_complete(self, action):
+        """
+        Emits the deserialization end signal
+        """
+        self.deserialization_complete.emit(action['in-reply-to'],
+                                           action['ids'])
+
     # Emitted on item creation triggered from the backend (item)
     instantiated = QtCore.Signal(ItemBase)
     # Emitted on item update triggered from the backend (item, update)
@@ -197,6 +228,12 @@ class ItemRegistry(QtCore.QObject):
     disconnected = QtCore.Signal(ItemBase, int)
     # Emitted when backend type enumeration completes (list of metadata sets)
     enumeration_complete = QtCore.Signal(list)
+    # Emitted when a serialization request completes (request id, dump)
+    serialization_complete = QtCore.Signal(object, object)
+    # Emitted when a deserialization request starts (req. id)
+    deserialization_start = QtCore.Signal(object)
+    # Emitted when a deserialization request completes (req. id, list of ids)
+    deserialization_complete = QtCore.Signal(object, list)
 
 
 class ItemRegistryHandler(QtCore.QThread, Handler):
@@ -219,7 +256,9 @@ class ItemRegistryHandler(QtCore.QThread, Handler):
     @QtCore.Slot()
     def quit(self, blocking=False):
         self._quit = True
-        self.wait()
+
+        if blocking:
+            self.wait()
 
     def handle(self, update):
         self.update.emit(update)

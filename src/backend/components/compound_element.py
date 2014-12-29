@@ -109,12 +109,12 @@ class CompoundElementInstance(Element):
 
         lib = self.get_library()
 
-        rand = random.Random(self.id())
+        rand = random.Random(self.id())  # FIXME: This isn't a good idea...
         self.input_bank = lib.instantiate(InputOutputBank.GUID(),
-                                          rand.getrandbits(64),
+                                          rand.getrandbits(128),
                                           self)
         self.output_bank = lib.instantiate(InputOutputBank.GUID(),
-                                           rand.getrandbits(64),
+                                           rand.getrandbits(128),
                                            self)
 
     def __str__(self):

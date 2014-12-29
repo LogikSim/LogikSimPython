@@ -69,15 +69,29 @@ class SimpleElement(Element):
         self.input_states = array('i', [False] * input_count)
         self.output_states = array('i', [False] * output_count)
 
-        self.set_metadata_field('inputs', list(self.input_states), False)
-        self.set_metadata_field('outputs', list(self.output_states), False)
+        self.set_metadata_field('input-states',
+                                list(self.input_states), False)
+        self.set_metadata_field('output-states',
+                                list(self.output_states), False)
 
         self.outputs = [(None, 0)] * output_count
         self.inputs = [(None, 0)] * input_count
 
+        self.set_metadata_field('inputs',
+                                self._con_to_data(self.inputs),
+                                False)
+
+        self.set_metadata_field('outputs',
+                                self._con_to_data(self.outputs),
+                                False)
+
         self.delay = delay
         self.logic_function = logic_function
         self.last_clock = -1
+
+    @classmethod
+    def _con_to_data(cls, connections):
+        return [((e.id() if e else None), c) for e, c in connections]
 
     def reset(self, when):
         """
@@ -111,7 +125,7 @@ class SimpleElement(Element):
 
         self.input_states[input_port] = state  # Inputs apply immediately
 
-        self.set_metadata_field('inputs', list(self.input_states))
+        self.set_metadata_field('input-states', list(self.input_states))
 
     def clock(self, when):
         """
@@ -148,6 +162,7 @@ class SimpleElement(Element):
             return False
 
         self.outputs[output_port] = (element, input_port)
+        self.set_metadata_field('outputs', self._con_to_data(self.outputs))
 
         self.propagate_change({
             'source_id': self.id(),
@@ -169,9 +184,12 @@ class SimpleElement(Element):
         """
         if not element:
             self.inputs[input_port] = (None, 0)
-            return True
+        else:
+            self.inputs[input_port] = (element, output_port)
 
-        self.inputs[input_port] = (element, output_port)
+        self.set_metadata_field('inputs', self._con_to_data(self.inputs))
+
+        return True
 
     def destruct(self):
         # Drop all in and outbound connections first
@@ -200,7 +218,7 @@ class SimpleElement(Element):
             return []
 
         self.output_states[output] = state
-        self.set_metadata_field('outputs', list(self.output_states))
+        self.set_metadata_field('output-states', list(self.output_states))
 
         element, input = self.outputs[output]
         if element is None:

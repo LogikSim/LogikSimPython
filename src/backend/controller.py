@@ -7,7 +7,7 @@
 #
 import multiprocessing
 from backend.interface import Interface
-from backend.component_library import ComponentRoot
+from backend.component_library import ComponentRoot, gen_component_id
 from backend.element import Edge
 import time
 from logging import getLogger
@@ -42,6 +42,8 @@ class Controller(ComponentRoot):
             'create': self._on_create,
             'update': self._on_update,
             'delete': self._on_delete,
+            'serialize': self._on_serialize,
+            'deserialize': self._on_deserialize,
             'edge': self._on_edge,
             'query': self._on_query,
             'connect': self._on_connect,
@@ -95,6 +97,89 @@ class Controller(ComponentRoot):
             del self.elements[element_id]
 
         self.log.info("Delete %s", command)
+
+    def _on_serialize(self, command):
+        elements = self._top_level_elements
+        element_ids = command.get('ids')
+        if element_ids is not None:
+            elements = [self.elements[uid] for uid in element_ids]
+
+        def _serialize(element):
+            """
+            Serialize element and instead of having a list of ids as children
+            insert the serialized children themselves into the list.
+            """
+            data = element.get_metadata()
+            data['children'] = [_serialize(c) for c in element.get_children()]
+            return data
+
+        serialization = [_serialize(element) for element in elements]
+
+        self._channel_out.put({
+            'action': 'serialization',
+            'in-reply-to': command.get('request-id'),
+            'data': serialization
+        })
+
+        self.log.info("Serialized %s", [e.id() for e in elements])
+
+    def _on_deserialize(self, command):
+        serialization = command['data']
+
+        id_mappings = {}  # old id -> new id
+        elements = {}  # new id -> element
+        connections = {}  # element -> connections
+
+        self._channel_out.put({
+            'action': 'deserialization-start',
+            'in-reply-to': command.get('request-id'),
+        })
+
+        def _deserialize(datasets):
+            for data in datasets:
+                element_id = gen_component_id()
+                id_mappings[data['id']] = element_id
+
+                # Remove elements we have to rewrite or recreate at
+                # later stages
+                children = data.pop('children')
+                del data['inputs']
+                outgoing = data.pop('outputs')
+
+                parent = elements.get(id_mappings.get(data.get('parent')))
+
+                element = self._library.instantiate(
+                    data['GUID'],
+                    element_id,
+                    parent if parent else self,
+                    data)
+
+                element.updated()
+
+                elements[element_id] = element
+                connections[element] = outgoing
+
+                _deserialize(children)
+
+        _deserialize(serialization)
+
+        for element, connections in connections.items():
+            for (out_port, (old_target, in_port)) in enumerate(connections):
+                if old_target is None:
+                    continue
+
+                target = elements.get(id_mappings.get(old_target))
+                if target:
+                    # Only reconnect if target was part of serialization
+                    element.connect(target, out_port, in_port)
+
+        self._channel_out.put({
+            'action': 'deserialization-end',
+            'in-reply-to': command.get('request-id'),
+            'ids': list(elements.keys())
+        })
+
+        self.log.info("Deserialized %s", list(elements.keys()))
 
     def _on_edge(self, command):
         """
