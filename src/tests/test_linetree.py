@@ -160,6 +160,7 @@ class LineNearestPointTest(unittest.TestCase):
         self.scene.deleteLater()
         self.scene._core.quit()
         self.scene._core_thread.join()
+        self.scene._registry._registry_handler.quit(True)
         self.scene = None
 
         self.app.processEvents()

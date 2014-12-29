@@ -221,8 +221,16 @@ class MainWindowTest(unittest.TestCase):
 
     def tearDown(self):
         self.mw.close()
-        self.mw.deleteLater()
+
         self.mw._view.scene()._core.quit()  # FIXME: Stupid workaround
+        self.mw._view.scene()._core_thread.join()
         self.mw._view.scene()._registry._registry_handler.quit(True)
+
+        self.mw.library_view.scene()._core.quit()
+        self.mw.library_view.scene()._core_thread.join()
+        self.mw.library_view.scene()._registry._registry_handler.quit(True)
+
+        self.mw.deleteLater()
+
         self.mw = None
         self.app.processEvents()
