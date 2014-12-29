@@ -33,12 +33,13 @@ class TestHightowerObject(unittest.TestCase):
 
         # wait until all types have been enumerated
         complete = False
+
         def set_complete(*args):
             nonlocal complete
             complete = True
         self.scene.registry().enumeration_complete.connect(set_complete)
         self.scene.interface().enumerate_components()
-        import time
+
         while not complete:
             self.app.processEvents()
         self.scene.registry().enumeration_complete.disconnect(set_complete)
