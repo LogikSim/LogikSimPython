@@ -12,6 +12,11 @@ from copy import copy
 import random
 
 
+class GuiTypeNotFoundException(Exception):
+    def __init__(self, metadata):
+        super().__init__("Have no item type that matches {0}".format(metadata))
+
+
 class ItemRegistry(QtCore.QObject):
     """
     The item registry is the front-end counterpart to the backends component
@@ -104,7 +109,8 @@ class ItemRegistry(QtCore.QObject):
         """
         guid = metadata.get("GUI-GUID") or metadata.get("GUID")
         item_type = self._item_types.get(guid)
-        assert item_type, "Have no item type that matches {0}".format(metadata)
+        if not item_type:
+            raise GuiTypeNotFoundException(metadata)
 
         parent = self._items.get(metadata.get("parent"))
 

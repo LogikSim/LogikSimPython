@@ -11,6 +11,8 @@ Implements interactive view for GridScene supporting dragging and zooming.
 It can further support additional mouse_modes.
 '''
 
+import json
+
 from PySide import QtGui, QtCore
 
 from . import grid_view
@@ -109,13 +111,16 @@ class InteractiveGridView(grid_view.GridView):
             self.scene().clearSelection()
 
             # create item
-            input_count = int(str(event.mimeData().data(
+            metadata = json.loads(str(event.mimeData().data(
                 'application/x-components')))
-            import symbols
+
             gpos = self.mapToSceneGrid(event.pos())
-            item = symbols.AndItem(metadata={'#inputs': input_count,
-                                             'x': gpos.x(),
-                                             'y': gpos.y()})
+            metadata['x'] = gpos.x()
+            metadata['y'] = gpos.y()
+
+            item = self.scene().registry().instantiate_frontend_item(
+                backend_guid=metadata['GUID'],
+                additional_metadata=metadata)
             item.set_temporary(True)
             self.scene().addItem(item)
             self._drop_item = item
@@ -150,7 +155,7 @@ class InteractiveGridView(grid_view.GridView):
             scene.removeItem(item)
 
         self.scene().actions.executed(
-            do, undo, "insert logic item"
+            do, undo, "Insert {} item".format(item.name())
         )
 
         event.acceptProposedAction()

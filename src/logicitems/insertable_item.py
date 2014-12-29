@@ -13,6 +13,7 @@ from PySide import QtGui
 
 from .itembase import ItemBase
 
+
 class InsertableItem(ItemBase):
     """
     Insertable items have a position and are backed by a backend instance.
@@ -39,13 +40,18 @@ class InsertableItem(ItemBase):
         """Return id, used to communicate with backend."""
         return self._cached_metadata['id']
 
+    def name(self):
+        """Return name."""
+        return self._cached_metadata.get('name', '<name>')
+
     def metadata(self):
-        """Return all metadata."""
+        """Return the complete metadata."""
         return self._cached_metadata
 
     def update(self, metadata):
         self._cached_metadata.update(metadata)
 
+        return
         x = metadata.get('x')
         if x is not None:
             self.setX(x)

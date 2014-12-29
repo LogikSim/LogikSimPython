@@ -33,6 +33,7 @@ class ResizableItem(logicitems.LogicItem):
 
     def update(self, metadata):
         super().update(metadata)
+        return
 
         input_count = metadata.get('#inputs')
         if input_count is not None:
@@ -43,7 +44,7 @@ class ResizableItem(logicitems.LogicItem):
 
     def set_input_count_and_pos(self, new_input_count, new_position=None):
         # create undo redo event
-        if not self.is_temporary():
+        if not self.is_temporary() and self.scene() is not None:
             action = ResizeAction(self.scene().getUndoRedoGroupId(), self,
                                   self.get_input_count(), self.pos(),
                                   new_input_count, new_position)
@@ -64,7 +65,9 @@ class ResizableItem(logicitems.LogicItem):
             self._update_resize_tool_handles()
 
     def _update_state(self):
-        assert self.scene() is not None
+        if self.scene() is None:
+            return
+
         self._invalidate_bounding_rect()
         scale = self.scene().get_grid_spacing()
         # update body

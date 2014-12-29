@@ -14,7 +14,7 @@ import unittest
 from PySide import QtCore, QtGui
 
 from logicitems.linetree import LineTree
-from schematics import SimulationScene
+from schematics import GridScene
 
 
 class LineTreeRerootTest(unittest.TestCase):
@@ -153,7 +153,7 @@ class LineNearestPointTest(unittest.TestCase):
         if not self.app:
             self.app = QtGui.QApplication([])
 
-        self.scene = SimulationScene()
+        self.scene = GridScene()
 
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(

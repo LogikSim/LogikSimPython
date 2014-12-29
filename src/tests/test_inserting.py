@@ -18,9 +18,8 @@ from PySide import QtCore, QtGui
 from schematics.mouse_modes.line_submode.inserting import (
     GetHightowerObjectAtPoint, LineRouteBetweenPoints, EndpointTrees,
     RouteNotFoundException)
-from schematics import SimulationScene
+from schematics import GridScene
 from algorithms import hightower
-from symbols import AndItem
 from logicitems import LineTree
 
 
@@ -30,7 +29,19 @@ class TestHightowerObject(unittest.TestCase):
         if not self.app:
             self.app = QtGui.QApplication([])
 
-        self.scene = SimulationScene()
+        self.scene = GridScene()
+
+        # wait until all types have been enumerated
+        complete = False
+        def set_complete(*args):
+            nonlocal complete
+            complete = True
+        self.scene.registry().enumeration_complete.connect(set_complete)
+        self.scene.interface().enumerate_components()
+        import time
+        while not complete:
+            self.app.processEvents()
+        self.scene.registry().enumeration_complete.disconnect(set_complete)
 
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(
@@ -51,7 +62,8 @@ class TestHightowerObject(unittest.TestCase):
         self.assertIs(ho((10, 10)), None)
 
     def test_colision_add_item(self):
-        and_item = AndItem()
+        and_item = self.scene.registry().instantiate_frontend_item(
+            "7793F2A0-B313-4489-ABF3-8570ECDFE3EE")
         and_item.setPos(self.scene.to_scene_point((2, 2)))
         self.scene.addItem(and_item)
         trees = EndpointTrees(None, None)
@@ -85,7 +97,7 @@ class TestLineRoute(unittest.TestCase):
         if not self.app:
             self.app = QtGui.QApplication([])
 
-        self.scene = SimulationScene()
+        self.scene = GridScene()
 
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(
@@ -141,7 +153,7 @@ class TestLineRouteGraphical(unittest.TestCase):
         if not self.app:
             self.app = QtGui.QApplication([])
 
-        self.scene = SimulationScene()
+        self.scene = GridScene()
 
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(

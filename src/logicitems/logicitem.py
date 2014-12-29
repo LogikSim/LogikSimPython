@@ -52,9 +52,6 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
         self.prepareGeometryChange()
         self._bounding_rect_valid = False
 
-    def _is_current_position_valid(self):
-        return True
-
     def ownBoundingRect(self):
         """ bounding rect of LogicItem without considering children """
         raise NotImplementedError
@@ -67,6 +64,9 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
         """
         return self.boundingRect().united(self.childrenBoundingRect())
 
+    def _is_current_position_valid(self):
+        return True
+
     def itemChange(self, change, value):
         if self.scene() is not None:
             #
@@ -75,6 +75,7 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
                 self._last_position = self.pos()
                 return self.scene().roundToGrid(value)
             elif change == QtGui.QGraphicsItem.ItemPositionHasChanged:
+                # TODO: move position handling to InsertableItem
                 if self._is_current_position_valid():
                     if self.isSelected():
                         self.scene().selectedItemPosChanged.emit()

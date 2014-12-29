@@ -11,22 +11,24 @@ The item list view is used to show all available logic elements.
 
 import math
 import collections
+import json
 
 from PySide import QtGui, QtCore
 
 import schematics
-from symbols import AndItem
+from logicitems.item_registry import GuiTypeNotFoundException
 
 
 class TileItem(QtGui.QGraphicsRectItem):
-    def __init__(self, *args, overlapp=0, **kargs):
-        super().__init__(*args, **kargs)
+    def __init__(self, x, y, width, height, name, description, overlapp=0):
+        super().__init__(x, y, width, height)
 
         # set rect
         new_rect = self.rect().adjusted(-overlapp, -overlapp,
                                         2 * overlapp, 2 * overlapp)
         self.setRect(new_rect)
 
+        self.setToolTip(description)
         self.setZValue(1)
         # self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
 
@@ -85,6 +87,8 @@ class ItemListScene(schematics.GridScene):
         self._layout_horizont = False
         # stores all inserted items
         self._items = []
+        self._item_names = []
+        self._item_descriptions = []
         self._col_width = {}
         self._row_height = {}
         self._tiles = []
@@ -98,16 +102,41 @@ class ItemListScene(schematics.GridScene):
         self._interface.enumerate_components()
 
     def on_new_components(self, components=[]):
-        for item in components:
-            guid = item['GUID']
-            name = item.get('name', '<unset>')
-            description = item.get('description', '<unset>')
-            # print(guid, name, description)
+        # delete existing items
+        for item in self._items:
+            self.removeItem(item)
+        self._items = []
+        self._item_names = []
+        self._item_descriptions = []
 
-            item = self.registry().instantiate_frontend_item(guid)
+        # add new items
+        for comp_data in components:
+            guid = comp_data['GUID']
+            name = comp_data.get('name', '<unset>')
+            description = comp_data.get('description', '<unset>')
 
-        # for _ in range(100):
-        #    self.scene().add_item(AndItem)  # TestRect)
+            try:
+                item = self.registry().instantiate_frontend_item(guid)
+            except GuiTypeNotFoundException:
+                pass
+            else:
+                self._add_item(item, name, description)
+
+    def _add_item(self, item, name, description):
+        # add item to scene
+        # item.set_temporary(True)
+        self.addItem(item)
+        self._items.append(item)
+        self._item_names.append(name)
+        self._item_descriptions.append(description)
+
+        # scale item to tile
+        rect = item.boundingRect()
+        tile_size = self.get_grid_spacing() * self._tile_size
+        scale = min(1, tile_size / rect.width(), tile_size / rect.height())
+        item.setScale(scale)
+
+        self._rebuild_layout()
 
     def roundToGrid(self, pos, y=None):
         if y is not None:
@@ -172,6 +201,7 @@ class ItemListScene(schematics.GridScene):
             self.removeItem(tile)
         self._tiles = []
 
+        i = 0
         grid = self.get_grid_spacing()
         row_start = self._tile_margin
         for row in self._row_height:
@@ -181,11 +211,14 @@ class ItemListScene(schematics.GridScene):
                                 row_start * grid,
                                 self._col_width[col] * grid,
                                 self._row_height[row] * grid,
+                                self._item_names[i],
+                                self._item_descriptions[i],
                                 overlapp=self._tile_selection_overlapp * grid)
                 self.addItem(tile)
                 self._tiles.append(tile)
                 if len(self._tiles) == len(self._items):
                     break
+                i += 1
                 col_start += self._col_width[col] + self._tile_spacing
             row_start += self._row_height[row] + self._tile_spacing
 
@@ -193,21 +226,6 @@ class ItemListScene(schematics.GridScene):
             self._tiles[sel_index].setSelected(True)
             self._selected_tile = self._tiles[sel_index]
             self._hovered_tile = None
-
-    def add_item(self, item_class):
-        # add item to scene
-        item = item_class(metadata={'#inputs': len(self._items) % 10 + 2})
-        item.set_temporary(True)
-        self.addItem(item)
-        self._items.append(item)
-
-        # scale item to tile
-        rect = item.boundingRect()
-        tile_size = self.get_grid_spacing() * self._tile_size
-        scale = min(1, tile_size / rect.width(), tile_size / rect.height())
-        item.setScale(scale)
-
-        self._rebuild_layout()
 
     def _index_at_pos(self, pos):
         """Returns item in tile or None at given position."""
@@ -307,7 +325,8 @@ class LibraryView(schematics.GridView):
         self.scene().select_item(gpos)
 
         mimeData = QtCore.QMimeData()
-        mimeData.setData('application/x-components', str(item._input_count))
+        mimeData.setData('application/x-components',
+                         json.dumps(item.metadata()))
 
         drag = QtGui.QDrag(self)
         drag.setMimeData(mimeData)
