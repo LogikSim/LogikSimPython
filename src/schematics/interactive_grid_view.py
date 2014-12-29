@@ -114,14 +114,23 @@ class InteractiveGridView(grid_view.GridView):
             metadata = json.loads(str(event.mimeData().data(
                 'application/x-components')))
 
-            gpos = self.mapToSceneGrid(event.pos())
-            metadata['x'] = gpos.x()
-            metadata['y'] = gpos.y()
 
+            # delete positions in metadata
+            try:
+                del metadata['x']
+            except KeyError:
+                pass
+            try:
+                del metadata['y']
+            except KeyError:
+                pass
+
+            # create item
             item = self.scene().registry().instantiate_frontend_item(
                 backend_guid=metadata['GUID'],
                 additional_metadata=metadata)
             item.set_temporary(True)
+            item.setPos(self.mapToSceneGrid(event.pos()))
             self.scene().addItem(item)
             self._drop_item = item
 

@@ -9,9 +9,10 @@
 Insertable items are items that are backed by a backend instance.
 '''
 
-from PySide import QtGui
+from PySide import QtGui, QtCore
 
 from .itembase import ItemBase
+from actions.move_action import MoveAction
 
 
 class InsertableItem(ItemBase):
@@ -21,11 +22,20 @@ class InsertableItem(ItemBase):
     def __init__(self, parent=None, metadata={}):
         super().__init__(parent)
 
+        # self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
+        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
+        self.setFlag(QtGui.QGraphicsItem.ItemSendsGeometryChanges)
+        self.setAcceptHoverEvents(True)
+
+        # set position
         self.setX(metadata.get('x', 0))
         self.setY(metadata.get('y', 0))
 
         self._cached_metadata = metadata
         self._registered_scene = None
+
+        # contains last valid position
+        self._last_position = None
 
     def GUID(self):
         """Return GUID of this instance."""
@@ -51,13 +61,12 @@ class InsertableItem(ItemBase):
     def update(self, metadata):
         self._cached_metadata.update(metadata)
 
-        return
         x = metadata.get('x')
-        if x is not None:
+        if x is not None and x != self.x():
             self.setX(x)
 
         y = metadata.get('y')
-        if y is not None:
+        if y is not None and y != self.y():
             self.setY(y)
 
     def set_temporary(self, temp):
@@ -89,9 +98,67 @@ class InsertableItem(ItemBase):
                 additional_metadata=self.metadata())
             self._registered_scene = scene
 
+    def _on_item_position_has_changed(self, new_pos):
+        """Notification from scene that position has changed."""
+        if new_pos == self._last_position:
+            return
+
+        # notify selection change
+        if self.isSelected():
+            self.scene().selectedItemPosChanged.emit()
+
+        if not self.is_temporary():
+            # create undo/redo action
+            action = MoveAction(self.scene().getUndoRedoGroupId(),
+                                self, self._last_position, new_pos)
+            self.scene().actions.push(action)
+            # notify backend
+            # self.scene().interface().update_element(
+            #     self.id(), {'x': new_pos.x(), 'y': new_pos.y()})
+
     def itemChange(self, change, value):
+        # re-register on scene change
         if change is QtGui.QGraphicsItem.ItemSceneHasChanged:
-            # re-register
             self._unregister()
             self._register()
+
+        if self.scene() is not None:
+            # round position to grid point
+            if change == QtGui.QGraphicsItem.ItemPositionChange:
+                self._last_position = self.pos()
+                return self.scene().roundToGrid(value)
+            # handle position changes
+            elif change == QtGui.QGraphicsItem.ItemPositionHasChanged:
+                self._on_item_position_has_changed(value)
+            # only selectable when allowed by scene
+            elif change == QtGui.QGraphicsItem.ItemSelectedChange:
+                return value and self.scene().selectionAllowed()
+            # only movable when selected
+            elif change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
+                self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, value)
+
+
         return super().itemChange(change, value)
+
+    def hoverMoveEvent(self, event):
+        super().hoverMoveEvent(event)
+        self.setCursor(QtCore.Qt.SizeAllCursor if self.isSelected() else
+                       QtCore.Qt.ArrowCursor)
+
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        self.setCursor(QtCore.Qt.SizeAllCursor if self.isSelected() else
+                       QtCore.Qt.ArrowCursor)
+
+    def mouseReleaseEvent(self, event):
+        """
+        default implementation of QGraphicsItem selects the current item
+        if any mouse button is released, limit this behaviour to the
+        left mouse button.
+        """
+        if not event.button() is QtCore.Qt.LeftButton:
+            # default implementation changes selection when following is true:
+            # event->scenePos() == event->buttonDownScenePos(Qt::LeftButton)
+            event.setButtonDownScenePos(
+                QtCore.Qt.LeftButton, event.scenePos() + QtCore.QPointF(1, 1))
+        return QtGui.QGraphicsItem.mouseReleaseEvent(self, event)

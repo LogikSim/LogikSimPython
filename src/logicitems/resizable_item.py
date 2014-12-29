@@ -33,10 +33,9 @@ class ResizableItem(logicitems.LogicItem):
 
     def update(self, metadata):
         super().update(metadata)
-        return
 
         input_count = metadata.get('#inputs')
-        if input_count is not None:
+        if input_count is not None and input_count != self.get_input_count():
             self.set_input_count_and_pos(input_count)
 
     def get_input_count(self):

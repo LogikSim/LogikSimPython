@@ -39,12 +39,9 @@ class InsertItemMode(GridViewMouseModeBase):
     def insert_item(self, gpos):
         registry = self.scene().registry()
 
-        item = registry.instantiate_frontend_item(
-            backend_guid=self._insert_item_guid,
-            additional_metadata={'x': gpos.x(),
-                                 'y': gpos.y()})
-
+        item = registry.instantiate_frontend_item(self._insert_item_guid)
         item.set_temporary(True)
+        item.setPos(gpos)
         self.scene().addItem(item)
 
         return item
