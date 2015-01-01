@@ -98,7 +98,7 @@ def perform_on_modal(what):
         what(active)
 
 
-def drain_queue(q):
+def drain_queue(q, filter_function=lambda x: True):
     """
     Drains the given queue and returns its contents as a list.
 
@@ -109,7 +109,7 @@ def drain_queue(q):
     while not q.empty():
         items.append(q.get_nowait())
 
-    return items
+    return list(filter(filter_function, items))
 
 
 def wait_until_registry_enumerated(scene, app):

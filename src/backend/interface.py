@@ -98,7 +98,7 @@ class Interface:
         """
         self._channel_out.put(
             {
-                'action': 'edge',
+                'type': 'edge',
                 'id': element_id,
                 'input': input,
                 'state': state,
@@ -124,7 +124,7 @@ class Interface:
 
         self._channel_out.put(
             {
-                'action': 'create',
+                'type': 'create',
                 'GUID': guid,
                 'id': element_id,
                 'parent': parent,
@@ -143,7 +143,7 @@ class Interface:
         request_id = self._gen_request_id()
 
         request = {
-            'action': 'serialize',
+            'type': 'serialize',
             'request-id': request_id
         }
 
@@ -165,7 +165,7 @@ class Interface:
 
         self._channel_out.put(
             {
-                'action': 'deserialize',
+                'type': 'deserialize',
                 'data': serialization,
                 'request-id': request_id
             }
@@ -178,17 +178,24 @@ class Interface:
         Asks the backend to enumerate all component GUIDs registered
         with the backend. The reply not only includes the GUIDs but
         also the corresponding ComponentType metadata.
+
+        :return: Request id
         """
+        request_id = self._gen_request_id()
+
         self._channel_out.put(
             {
-                'action': 'enumerate_components'
+                'type': 'enumerate_components',
+                'request-id': request_id
             }
         )
+
+        return request_id
 
     def update_element(self, element_id, changed_metadata={}):
         self._channel_out.put(
             {
-                'action': 'update',
+                'type': 'update',
                 'id': element_id,
                 'metadata': changed_metadata
             }
@@ -197,7 +204,7 @@ class Interface:
     def delete_element(self, element_id):
         self._channel_out.put(
             {
-                'action': 'delete',
+                'type': 'delete',
                 'id': element_id
             }
         )
@@ -205,7 +212,7 @@ class Interface:
     def request_element_information(self, element_id):
         self._channel_out.put(
             {
-                'action': 'query',
+                'type': 'query',
                 'id': element_id
             }
         )
@@ -213,7 +220,7 @@ class Interface:
     def connect(self, source_id, source_port, sink_id, sink_port):
         self._channel_out.put(
             {
-                'action': 'connect',
+                'type': 'connect',
                 'source_id': source_id,
                 'source_port': source_port,
                 'sink_id': sink_id,
@@ -224,7 +231,7 @@ class Interface:
     def disconnect(self, source_id, source_port):
         self._channel_out.put(
             {
-                'action': 'disconnect',
+                'type': 'disconnect',
                 'source_id': source_id,
                 'source_port': source_port
             }
@@ -233,6 +240,6 @@ class Interface:
     def exit(self):
         self._channel_out.put(
             {
-                'action': 'quit'
+                'type': 'quit'
             }
         )

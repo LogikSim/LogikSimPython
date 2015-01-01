@@ -62,6 +62,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
         self.action_stack_view.setModel(actions)
 
+        scene._registry.tick.connect(self._on_tick)
+
         # Prepend undo/redo QActions to menu_edit
         first_menu_edit_qaction = (
             self.menu_edit.actions()[0]
@@ -100,6 +102,15 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
     def view(self):
         return self._view
+
+    @QtCore.Slot(object)
+    def _on_tick(self, clock):
+        """
+        Debugging handler that displays the current backend clock in
+        the status bar. We'll want to remove this sooner or later.
+        """
+        self.status_bar.showMessage(str("Simulation time: {0:.2f}"
+                                        .format(clock)))
 
     @QtCore.Slot()
     def on_action_about_triggered(self):

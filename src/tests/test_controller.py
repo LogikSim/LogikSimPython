@@ -34,6 +34,9 @@ class ElementMock:
 
 
 class CoreMock:
+    def __init__(self):
+        self.clock = 0
+
     def set_controller(self, controller):
         pass
 
@@ -127,7 +130,8 @@ class ControllerTest(unittest.TestCase):
         # Work around multiprocessing.Queue insertion delay
         try_repeatedly(lambda: not ctrl.get_channel_out().empty())
 
-        self.assertListEqual([{'action': 'change',
+        self.assertListEqual([{'type': 'change',
+                               'clock': 0,
                                'data': {'id': 1,
                                         'foo': 'bar'}}],
                              drain_queue(ctrl.get_channel_out()))
@@ -149,7 +153,8 @@ class ControllerTest(unittest.TestCase):
 
         class HandlerMock(Handler):
             def handle(self, update):
-                updates.append(update)
+                if update['type'] != 'alive':
+                    updates.append(update)
                 return True
 
         root = None
@@ -181,9 +186,11 @@ class ControllerTest(unittest.TestCase):
         try_repeatedly(lambda: not ctrl.get_channel_out().empty())
         handler.poll()
 
-        self.assertListEqual([{'action': 'change',
+        self.assertListEqual([{'type': 'change',
+                               'clock': 0,
                                'data': {'foo': 'bar'}},
-                              {'action': 'change',
+                              {'type': 'change',
+                               'clock': 0,
                                'data': {'fiz': 'buz'}}], updates)
 
 
@@ -201,10 +208,12 @@ class ControllerSerializationTest(unittest.TestCase):
         try_repeatedly(lambda: not self.ctrl.get_channel_in().empty())
         self.ctrl.process(0)
         try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
-        msg = drain_queue(self.ctrl.get_channel_out())
+        msg = drain_queue(self.ctrl.get_channel_out(),
+                          lambda m: m['type'] != 'alive')
         self.assertEqual(1, len(msg))
-        self.assertDictEqual({'action': 'serialization',
+        self.assertDictEqual({'type': 'serialization',
                               'in-reply-to': rid,
+                              'clock': 0,
                               'data': []}, msg[0])
 
     def test_empty_deserialization(self):
@@ -212,11 +221,14 @@ class ControllerSerializationTest(unittest.TestCase):
         try_repeatedly(lambda: not self.ctrl.get_channel_in().empty())
         self.ctrl.process(0)
         try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
-        msg = drain_queue(self.ctrl.get_channel_out())
+        msg = drain_queue(self.ctrl.get_channel_out(),
+                          lambda m: m['type'] != 'alive')
         self.assertEqual(2, len(msg))
-        self.assertDictEqual({'action': 'deserialization-start',
+        self.assertDictEqual({'type': 'deserialization-start',
+                              'clock': 0,
                               'in-reply-to': rid}, msg[0])
-        self.assertDictEqual({'action': 'deserialization-end',
+        self.assertDictEqual({'type': 'deserialization-end',
+                              'clock': 0,
                               'in-reply-to': rid,
                               'ids': []}, msg[1])
 
@@ -235,10 +247,11 @@ class ControllerSerializationTest(unittest.TestCase):
         self.ctrl.process(0)
         try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
 
-        msg = drain_queue(self.ctrl.get_channel_out())
+        msg = drain_queue(self.ctrl.get_channel_out(),
+                          lambda m: m['type'] != 'alive')
         data = msg[-1]
 
-        self.assertEqual('serialization', data['action'])
+        self.assertEqual('serialization', data['type'])
         self.assertEqual(rid, data['in-reply-to'])
 
         rid = self.interface.deserialize(data['data'])
@@ -247,10 +260,11 @@ class ControllerSerializationTest(unittest.TestCase):
         self.ctrl.process(1)
         try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
 
-        msg = drain_queue(self.ctrl.get_channel_out())
+        msg = drain_queue(self.ctrl.get_channel_out(),
+                          lambda m: m['type'] != 'alive')
 
-        self.assertEqual('deserialization-start', msg[0]['action'])
+        self.assertEqual('deserialization-start', msg[0]['type'])
         self.assertEqual(rid, msg[0]['in-reply-to'])
 
-        self.assertEqual('deserialization-end', msg[-1]['action'])
+        self.assertEqual('deserialization-end', msg[-1]['type'])
         self.assertEqual(rid, msg[-1]['in-reply-to'])

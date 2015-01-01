@@ -125,8 +125,6 @@ class SimpleElement(Element):
 
         self.input_states[input_port] = state  # Inputs apply immediately
 
-        self.set_metadata_field('input-states', list(self.input_states))
-
     def clock(self, when):
         """
         Triggered when all egdes for a point in time have been received.
@@ -136,6 +134,8 @@ class SimpleElement(Element):
         """
         assert self.last_clock != when, "Repeated clock for {0}".format(when)
         self.last_clock = when
+
+        self.set_metadata_field('input-states', list(self.input_states))
 
         future_output = self.logic_function(self.input_states)
 

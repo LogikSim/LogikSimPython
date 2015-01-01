@@ -44,6 +44,8 @@ class ItemRegistry(QtCore.QObject):
 
         self._items = {}  # Remembers backend id -> item associations
 
+        self.clock = -1  # Backend clock
+
         self._registry_handler = ItemRegistryHandler(self)
         self._registry_handler.update.connect(self.handle_backend_update)
         controller.connect_handler(self._registry_handler)
@@ -51,6 +53,7 @@ class ItemRegistry(QtCore.QObject):
         self.destroyed.connect(lambda: self._registry_handler.quit(True))
 
         self._handlers = {
+            'alive': self._on_alive,
             'change': self._on_change,
             'enumerate_components': self._on_enumerate_components,
             'serialization': self._on_serialization,
@@ -135,24 +138,39 @@ class ItemRegistry(QtCore.QObject):
         Dispatches incoming backend updates to corresponding handlers.
 
         :param update: Free form dictionary with update. Only guaranteed to
-                       have an action field.
+                       have basic framing.
         """
-        action = update['action']
-        handler = self._handlers.get(action)
+        message_type = update['type']
+        new_clock = update['clock']
+        if new_clock != self.clock:
+            assert new_clock > self.clock
+            self.tick.emit(new_clock)
+            self.clock = new_clock
+
+        handler = self._handlers.get(message_type)
         if not handler:
-            self.log.warning("No handler for action %s: %s", action, update)
+            self.log.warning("No handler for message_type %s: %s",
+                             message_type,
+                             update)
         else:
             handler(update)
 
-    def _on_change(self, action):
+    def _on_alive(self, message):
+        """
+        The backend sends alive messages from time to time so we know it's
+        still ready to process.
+        """
+        pass
+
+    def _on_change(self, message):
         """
         Reacts to change updates. These are sent by the backend for backend
         element changes (creation, update, deletion) as well connectivity
         changes.
 
-        :param action: Free form dict.
+        :param message: Free form dict.
         """
-        update = action['data']
+        update = message['data']
         uid = update.get('id')
         if uid is not None:
             # Item related message
@@ -181,40 +199,40 @@ class ItemRegistry(QtCore.QObject):
             else:
                 self.disconnected.emit(source, source_port)
 
-    def _on_enumerate_components(self, action):
+    def _on_enumerate_components(self, message):
         """
         Emits the enumeration_complete signal for enumeration_complete updates
         from the backend.
 
-        :param action: Free form dict
+        :param message: Free form dict
         """
         self._backend_types = {}
-        for backend_type in action['data']:
+        for backend_type in message['data']:
             guid = backend_type['GUID']
             self._backend_types[guid] = backend_type
 
-        self.enumeration_complete.emit(action['data'])
+        self.enumeration_complete.emit(message['data'])
 
-    def _on_serialization(self, action):
+    def _on_serialization(self, message):
         """
         Emits the serialized signal.
-        :param action: Free form dict
+        :param message: Free form dict
         """
-        self.serialization_complete.emit(action['in-reply-to'],
-                                         action['data'])
+        self.serialization_complete.emit(message['in-reply-to'],
+                                         message['data'])
 
-    def _on_deserialization_start(self, action):
+    def _on_deserialization_start(self, message):
         """
         Emits the deserialization start signal
         """
-        self.deserialization_start.emit(action['in-reply-to'])
+        self.deserialization_start.emit(message['in-reply-to'])
 
-    def _on_deserialization_complete(self, action):
+    def _on_deserialization_complete(self, message):
         """
         Emits the deserialization end signal
         """
-        self.deserialization_complete.emit(action['in-reply-to'],
-                                           action['ids'])
+        self.deserialization_complete.emit(message['in-reply-to'],
+                                           message['ids'])
 
     # Emitted on item creation triggered from the backend (item)
     instantiated = QtCore.Signal(ItemBase)
@@ -234,6 +252,8 @@ class ItemRegistry(QtCore.QObject):
     deserialization_start = QtCore.Signal(object)
     # Emitted when a deserialization request completes (req. id, list of ids)
     deserialization_complete = QtCore.Signal(object, list)
+    # Emitted when the backend simulation time changed (new clock)
+    tick = QtCore.Signal(object)
 
 
 class ItemRegistryHandler(QtCore.QThread, Handler):

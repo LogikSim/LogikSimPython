@@ -38,7 +38,7 @@ class Controller(ComponentRoot):
         self._simulation_rate = 1  # Ratio between SUs and wall-clock time
         self._last_process_time = 0  # Remembers last process return time
 
-        self._action_handlers = {
+        self._message_handlers = {
             'create': self._on_create,
             'update': self._on_update,
             'delete': self._on_delete,
@@ -116,11 +116,8 @@ class Controller(ComponentRoot):
 
         serialization = [_serialize(element) for element in elements]
 
-        self._channel_out.put({
-            'action': 'serialization',
-            'in-reply-to': command.get('request-id'),
-            'data': serialization
-        })
+        self._post_to_frontend('serialization', {'data': serialization},
+                               command.get('request-id'))
 
         self.log.info("Serialized %s", [e.id() for e in elements])
 
@@ -131,10 +128,8 @@ class Controller(ComponentRoot):
         elements = {}  # new id -> element
         connections = {}  # element -> connections
 
-        self._channel_out.put({
-            'action': 'deserialization-start',
-            'in-reply-to': command.get('request-id'),
-        })
+        self._post_to_frontend('deserialization-start',
+                               in_reply_to=command.get('request-id'))
 
         def _deserialize(datasets):
             for data in datasets:
@@ -174,11 +169,9 @@ class Controller(ComponentRoot):
                     # Only reconnect if target was part of serialization
                     element.connect(target, out_port, in_port)
 
-        self._channel_out.put({
-            'action': 'deserialization-end',
-            'in-reply-to': command.get('request-id'),
-            'ids': list(elements.keys())
-        })
+        self._post_to_frontend('deserialization-end',
+                               {'ids': list(elements.keys())},
+                               command.get('request-id'))
 
         self.log.info("Deserialized %s", list(elements.keys()))
 
@@ -187,11 +180,11 @@ class Controller(ComponentRoot):
         Triggers an edge at a point in the future.
 
         :param command: Command of the form:
-            { 'action': 'edge',
-               'id': element_id,
-               'input': input,
-               'state': state,
-               'delay': delay }
+            { 'type': 'edge',
+              'id': element_id,
+              'input': input,
+              'state': state,
+              'delay': delay }
         """
         element = self.elements[command['id']]
         core = self.get_core()
@@ -236,10 +229,9 @@ class Controller(ComponentRoot):
                       command['source_port'])
 
     def _on_enumerate_components(self, command):
-        self._channel_out.put({
-            'action': 'enumerate_components',
-            'data': self._library.enumerate_types()
-        })
+        self._post_to_frontend('enumerate_components',
+                               {'data': self._library.enumerate_types()},
+                               command.get('request-id'))
 
         self.log.info("Enumerated component types")
 
@@ -259,12 +251,15 @@ class Controller(ComponentRoot):
         while not self._channel_in.empty():  # Many chances. Race ok
             command = self._channel_in.get_nowait()  # Single consumer
 
-            action = command.get('action')
-            handler = self._action_handlers.get(action)
+            message_type = command.get('type')
+            handler = self._message_handlers.get(message_type)
             if not handler:
-                raise TypeError("Unknown action type {0}".format(action))
+                raise TypeError("Unknown message type {0}"
+                                .format(message_type))
 
             handler(command)
+
+        self._post_to_frontend('alive')
 
         return self._delay_accordingly(current_clock)
 
@@ -302,10 +297,30 @@ class Controller(ComponentRoot):
 
         :param data: metadata update message.
         """
-        self._channel_out.put({
-            'action': 'change',
-            'data': data
-        })
+        self._post_to_frontend('change', {'data': data})
+
+    def _post_to_frontend(self,
+                          message_type,
+                          additional_fields={},
+                          in_reply_to=None):
+        """
+        Places a message to the frontend queue using the default framing.
+
+        :param message_type: Type of the message being sent
+        :param additional_fields: Message specific data fields
+        :param in_reply_to: If given marks message as in reply to request id
+        """
+        message = {
+            'type': message_type,
+            'clock': self.get_core().clock,  # Only always current clock
+        }
+
+        if in_reply_to is not None:
+            message['in-reply-to'] = in_reply_to
+
+        message.update(additional_fields)
+
+        self._channel_out.put(message)
 
     def get_library(self):
         """

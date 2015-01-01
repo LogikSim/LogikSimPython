@@ -16,7 +16,7 @@ class Core:
     def __init__(self):
         self.event_queue = PriorityQueue()
 
-        self.clock = -1
+        self.clock = 0
         self.retired_events = 0
         self.group = None
 
