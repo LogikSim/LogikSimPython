@@ -15,13 +15,14 @@ from .itembase import ItemBase
 
 
 class ConnectorItem(ItemBase):
-    def __init__(self, parent, start, anchor):
+    def __init__(self, parent, start, anchor, is_input):
         """
         anchor is the position, at which lines can connect to
         """
         super().__init__(parent)
 
         self._line = QtCore.QLineF(start, anchor)
+        self._is_input = is_input
 
         self._bounding_rect_valid = False
         self._bounding_rect = None
@@ -30,18 +31,22 @@ class ConnectorItem(ItemBase):
         self.prepareGeometryChange()
         self._bounding_rect_valid = False
 
+    def connect(self, linetree):
+        """Connect output connector to linetree."""
+        self.parentItem().connect(linetree)
+
+    def is_input(self):
+        """Returns True if connector is an input."""
+        return self._is_input
+
     def is_valid(self):
-        """
-        returns weather the given connector has valid shape.
-        """
+        """Returns True if connector has valid shape."""
         if self.scene() is None:
             return False
         return self._line.length() == self.scene().get_grid_spacing()
 
     def anchorPoint(self):
-        """
-        returns position where lines can connect to
-        """
+        """Returns position where lines can connect to."""
         return self.mapToScene(self._line.p2())
 
     def setLine(self, start, anchor):

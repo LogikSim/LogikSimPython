@@ -103,6 +103,11 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         """Return name."""
         return self._cached_metadata.get('name', '<name>')
 
+    def __repr__(self):
+        return "<{} 0x{:x} at {}>".format(
+            type(self).__name__, id(self),
+            (self.pos().x(), self.pos().y()))
+
     def metadata(self):
         """Return the complete metadata."""
         return self._cached_metadata
@@ -174,6 +179,7 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         if self._registered_scene is not None:
             self._registered_scene.interface().delete_element(self.id())
             self._registered_scene = None
+            self.on_registration_status_changed()
 
     def _register(self):
         """Create new backend instance."""
@@ -184,8 +190,13 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
                 parent=None,
                 additional_metadata=self.metadata())
             self._registered_scene = scene
+            self.on_registration_status_changed()
 
-    def _is_regsitered(self):
+    def on_registration_status_changed(self):
+        """Called when registration status changed."""
+        pass
+
+    def is_registered(self):
         return self._registered_scene is not None
 
     def _notify_backend(self, metadata):
@@ -193,7 +204,7 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         # apply locally
         self._cached_metadata.update(metadata)
         # notify backend
-        if self._is_regsitered() and not self._in_metadata_update:
+        if self.is_registered() and not self._in_metadata_update:
             self.scene().interface().update_element(
                 self.id(), metadata)
 
@@ -217,7 +228,6 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         """Notification that position has changed."""
         if new_pos == self._last_position:
             return
-        self._last_position = new_pos
 
         # notify selection change
         if self.isSelected():
@@ -231,6 +241,8 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
 
         # notify backend
         self._notify_backend({'x': new_pos.x(), 'y': new_pos.y()})
+
+        self._last_position = new_pos
 
     def itemChange(self, change, value):
         # re-register on scene change

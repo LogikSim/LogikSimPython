@@ -28,7 +28,6 @@ class ResizableItem(logicitems.LogicItem):
         self._input_count = None
         self._show_handles = False
         self._body_rect = QtCore.QRectF(0, 0, 0, 0)
-        self._connectors = []
         self._handles = {}
 
         super().__init__(parent=parent, metadata=metadata)
@@ -81,22 +80,28 @@ class ResizableItem(logicitems.LogicItem):
         self._body_rect = self._to_col_rect(QtCore.QRectF(
             0, -scale * self._overlap, scale * 2,
             scale * (self._input_count - 1 + 2 * self._overlap)))
+
         # update connectors
-        for con in self._connectors:
+        for con in self._inputs + self._outputs:
             con.setParentItem(None)
-        self._connectors = []
+        self._inpts = []
+        self._outputs = []
+        # inputs
         for i in range(self._input_count):
-            # inputs
             con = logicitems.ConnectorItem(
-                self, QtCore.QPointF(0, scale * (i)),
-                QtCore.QPointF(-scale, scale * (i)))
-            self._connectors.append(con)
+                parent=self,
+                start=QtCore.QPointF(0, scale * (i)),
+                anchor=QtCore.QPointF(-scale, scale * (i)),
+                is_input=True)
+            self._inputs.append(con)
         # output
         mid_point = int((self._input_count - 1) / 2)
         con = logicitems.ConnectorItem(
-            self, QtCore.QPointF(2 * scale, scale * (mid_point)),
-            QtCore.QPointF(3 * scale, scale * (mid_point)))
-        self._connectors.append(con)
+            parent=self,
+            start=QtCore.QPointF(2 * scale, scale * (mid_point)),
+            anchor=QtCore.QPointF(3 * scale, scale * (mid_point)),
+            is_input=False)
+        self._outputs.append(con)
 
     def _update_resize_tool_handles(self):
         for handle in self._handles.values():
@@ -148,7 +153,7 @@ class ResizableItem(logicitems.LogicItem):
 
     def selectionRect(self):
         rect = self.ownBoundingRect()
-        for con in self._connectors:
+        for con in self._inputs + self._outputs:
             rect = rect.united(con.boundingRect())
         return rect
 

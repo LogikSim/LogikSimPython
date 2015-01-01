@@ -28,6 +28,28 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
         self._bounding_rect_valid = False
         self._bounding_rect = None
 
+        # store inputs and outputs connectors
+        self._inputs = []
+        self._outputs = []
+
+    def connect(self, linetree):
+        """Connect output to linetree and returns True on success."""
+        if not self.is_registered():
+            return False
+
+        for con_item in self._outputs:
+            if linetree.contains(con_item.anchorPoint()):
+                break
+        else:
+            raise Exception("No output found to connect to linetree.")
+
+        # setup connection in backend
+        out_index = self._outputs.index(con_item)
+        self.scene().interface().connect(
+            self.id(), out_index, linetree.id(), 0)
+
+        return True
+
     def setGeometry(self, rect):
         scene_offset = self.mapToScene(self.selectionRect().topLeft()) - \
             self.mapToScene(QtCore.QPointF(0, 0))
@@ -35,10 +57,6 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
 
     def sizeHint(self, which, constraint):
         return self.mapToScene(self.selectionRect()).boundingRect().size()
-
-    def __repr__(self):
-        return "<{} {} at {}>".format(
-            type(self).__name__, id(self), (self.pos().x(), self.pos().y()))
 
     def _invalidate_bounding_rect(self):
         self.prepareGeometryChange()

@@ -15,6 +15,7 @@ from PySide import QtGui, QtCore
 
 from .insertable_item import InsertableItem
 from .line_edge_indicator import LineEdgeIndicator
+from .connector import ConnectorItem
 
 
 class LineTree(InsertableItem):
@@ -46,6 +47,8 @@ class LineTree(InsertableItem):
         self._shape = None  # shape path
         self._rect = None  # bounding rect
         self._edge_indicators = []  # list of LineEdgeIndicators
+        self._output_connector = None  # connected ConnectorItem
+        self._input_connectors = None  # list of connected ConnectorItems
 
         super().__init__(parent, metadata)
 
@@ -92,6 +95,7 @@ class LineTree(InsertableItem):
         self._update_data_structures()
         self._update_edge_indicators()
         self._update_shape()
+        self._update_connections()
 
         # TODO: create undo event
         pass
@@ -158,6 +162,36 @@ class LineTree(InsertableItem):
         shape_path.addPolygon(poly)
         self._shape = shape_path
         self._rect = bounding_rect
+
+    def _update_connections(self):
+        """
+        Updates connections to Connectors.
+        """
+        # TODO: call when position changes
+
+        if not self.is_registered():
+            return
+
+        # TODO: disconnect output connector
+        self._output_connector = None
+
+        # Collect all ConnectorItems
+        con_items = set()
+        if self.scene() is not None:
+            for line in self._lines:
+                l_bounding_rect = self._line_to_col_rect(line)
+                for item in self.scene().items(l_bounding_rect):
+                    if isinstance(item, ConnectorItem) and \
+                            l_bounding_rect.contains(item.anchorPoint()):
+                        con_items.add(item)
+
+        for con_item in con_items:
+            if not con_item.is_input():
+                assert self._output_connector is None, \
+                    'only one output can drive the line-trees'
+                if con_item.connect(self):
+                    self._output_connector = con_item
+        print("1", self._output_connector)
 
     @staticmethod
     def _reroot(tree, new_root):
@@ -306,6 +340,17 @@ class LineTree(InsertableItem):
 
     def shape(self):
         return self._shape
+
+    def on_registration_status_changed(self):
+        """Called when registration status changed."""
+        self._update_connections()
+
+    def itemChange(self, change, value):
+        # update connections on scene change
+        if change is QtGui.QGraphicsItem.ItemSceneHasChanged:
+            self._update_connections()
+
+        return super().itemChange(change, value)
 
     def paint(self, painter, option, widget=None):
         # draw lines
