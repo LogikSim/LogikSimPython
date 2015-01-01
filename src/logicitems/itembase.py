@@ -32,8 +32,8 @@ class ItemBase(QtGui.QGraphicsItem):
         """
         pass
 
-    def __init__(self, *args, **kargs):
-        super().__init__(*args, **kargs)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self._is_temp = False  # is temporary
 

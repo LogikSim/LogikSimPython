@@ -79,7 +79,8 @@ class Controller(ComponentRoot):
             command['metadata'])
 
         self.elements[element_id] = element
-        self.log.info("Instantiated %s as %d", guid, element_id)
+        self.log.info("Instantiated %s as %d with %s", guid, element_id,
+                      command['metadata'])
 
         element.updated()
 

@@ -6,7 +6,7 @@
 # be found in the LICENSE.txt file.
 #
 '''
-And logic item with variable number of inputs.
+Resizable item with text label.
 '''
 
 from PySide import QtCore
@@ -15,6 +15,11 @@ from logicitems import ResizableItem
 
 
 class TextItem(ResizableItem):
+    """
+    Resizable item with text label.
+
+    The label can be set via metadata['text'].
+    """
     def paint(self, painter, options, widget):
         super().paint(painter, options, widget)
 

@@ -13,17 +13,16 @@ import copy
 
 from PySide import QtGui, QtCore
 
-from .itembase import ItemBase
+from .insertable_item import InsertableItem
 from .line_edge_indicator import LineEdgeIndicator
 
 
-# TODO: make LineTree an insertable item
-class LineTree(ItemBase):
+class LineTree(InsertableItem):
     """ A tree of connected lines """
 
     _debug_painting = False
 
-    def __init__(self, path):
+    def __init__(self, parent, metadata):
         """
         Defines a tree of connected lines.
 
@@ -35,13 +34,12 @@ class LineTree(ItemBase):
 
         :param path: Initial path given as list of QtCore.QPointF.
         """
-        # TODO: implement parent
-        super().__init__()
+        metadata.setdefault('tree', {})
 
         # defines tree as dict of dict, with key being a tuple (x,y) and
         # value being a dict of children or empty dict. Since there is only
         # one root node, the _tree only contains one key-value pair.
-        self._tree = {}
+        self._tree = None
 
         self._lines = None  # list with all lines as QLinesF
         self._edges = None  # set with all edges as tuples
@@ -49,23 +47,54 @@ class LineTree(ItemBase):
         self._rect = None  # bounding rect
         self._edge_indicators = []  # list of LineEdgeIndicators
 
-        self._set_path(path)
+        super().__init__(parent, metadata)
+
+    @classmethod
+    def metadata_from_path(cls, path):
+        """
+        Return metadata representing given path.
+
+        This can then be used to construct a tree.
+
+        :param path: Path being added given as list of QtCore.QPointF
+        """
+        def path_to_tree(p):
+            root = pivot = {}
+            for point in p:
+                p = pivot[point.toTuple()] = {}
+                pivot = p
+            return root
+
+        return {'tree': path_to_tree(path)}
 
     @classmethod
     def GUI_GUID(cls):
         return "00352520-7cf0-43b7-9449-6fca5be8d6dc"
 
-    def _update_tree(self):
+    def apply_update(self, metadata):
+        super().apply_update(metadata)
+
+        tree = metadata.get('tree', {})
+        if tree is not None and tree != self._tree:
+            self._set_tree(tree)
+
+    def _set_tree(self, tree):
         """
-        Updates internal storage.
+        Set new tree and updates internal storage.
 
         Call this function whenever changing the line tree.
         """
-
-        # edge indicators and shape
+        # update internals
+        self._tree = tree
         self._update_data_structures()
         self._update_edge_indicators()
         self._update_shape()
+
+        # TODO: create undo event
+        pass
+
+        # notify backend
+        self._notify_backend({'tree': tree})
 
     def _update_data_structures(self):
         """
@@ -115,36 +144,17 @@ class LineTree(ItemBase):
         Do not call this function directly, it is called by _update_tree.
         """
         self.prepareGeometryChange()
-        bounding_rect = None
+        bounding_rect = QtCore.QRectF(0, 0, 0, 0)
         poly = QtGui.QPolygonF()
         for line in self._lines:
             l_bounding_rect = self._line_to_col_rect(line)
             poly = poly.united(QtGui.QPolygonF(l_bounding_rect))
-            if bounding_rect is None:
-                bounding_rect = l_bounding_rect
-            else:
-                bounding_rect = bounding_rect.united(l_bounding_rect)
+            bounding_rect = bounding_rect.united(l_bounding_rect)
 
         shape_path = QtGui.QPainterPath()
         shape_path.addPolygon(poly)
         self._shape = shape_path
         self._rect = bounding_rect
-
-    def _set_path(self, path):
-        """
-        Set tree to representing given path.
-
-        :param path: Path being added given as list of QtCore.QPointF
-        """
-        def path_to_tree(p):
-            root = pivot = {}
-            for point in p:
-                p = pivot[point.toTuple()] = {}
-                pivot = p
-            return root
-
-        self._tree = path_to_tree(path)
-        self._update_tree()
 
     @staticmethod
     def _reroot(tree, new_root):
@@ -244,8 +254,9 @@ class LineTree(ItemBase):
         new_tree[col_point].update(re_merge_tree[col_point])
 
         # merge lines at new root, if they have same orientation
-        self._tree = self._merge_root_lines_of_tree(new_tree)
-        self._update_tree()
+        simplified_tree = self._merge_root_lines_of_tree(new_tree)
+
+        self._set_tree(simplified_tree)
 
     def is_edge(self, scene_point):
         """ Is there an edge at scene_point given as QPointF """

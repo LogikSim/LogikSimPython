@@ -21,6 +21,7 @@ from schematics.mouse_modes.line_submode.inserting import (
 from schematics import GridScene
 from algorithms import hightower
 from logicitems import LineTree
+from tests.helpers import wait_until_registry_enumerated
 
 
 class TestHightowerObject(unittest.TestCase):
@@ -32,17 +33,7 @@ class TestHightowerObject(unittest.TestCase):
         self.scene = GridScene()
 
         # wait until all types have been enumerated
-        complete = False
-
-        def set_complete(*args):
-            nonlocal complete
-            complete = True
-        self.scene.registry().enumeration_complete.connect(set_complete)
-        self.scene.interface().enumerate_components()
-
-        while not complete:
-            self.app.processEvents()
-        self.scene.registry().enumeration_complete.disconnect(set_complete)
+        wait_until_registry_enumerated(self.scene, self.app)
 
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(
@@ -79,7 +70,8 @@ class TestHightowerObject(unittest.TestCase):
     def test_colision_line_tree(self):
         def tsp(x, y):
             return self.scene.to_scene_point((x, y))
-        tree = LineTree([tsp(5, 0), tsp(15, 0)])
+        tree_meta = LineTree.metadata_from_path([tsp(5, 0), tsp(15, 0)])
+        tree = LineTree(parent=None, metadata=tree_meta)
         self.scene.addItem(tree)
         trees = EndpointTrees(None, None)
         ho = GetHightowerObjectAtPoint(self.scene, (0, 0), (10, 10), trees)
@@ -100,6 +92,9 @@ class TestLineRoute(unittest.TestCase):
             self.app = QtGui.QApplication([])
 
         self.scene = GridScene()
+
+        # wait until all types have been enumerated
+        wait_until_registry_enumerated(self.scene, self.app)
 
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(
@@ -158,6 +153,9 @@ class TestLineRouteGraphical(unittest.TestCase):
 
         self.scene = GridScene()
 
+        # wait until all types have been enumerated
+        wait_until_registry_enumerated(self.scene, self.app)
+
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(
         self.scene.deleteLater()
@@ -172,8 +170,12 @@ class TestLineRouteGraphical(unittest.TestCase):
         lines = input_area.split('\n')
 
         def add_tree(p1, p2):
-            scene.addItem(LineTree([scene.to_scene_point(p1),
-                                    scene.to_scene_point(p2)]))
+            path = [scene.to_scene_point(p1), scene.to_scene_point(p2)]
+            metadata = LineTree.metadata_from_path(path)
+            l_tree = self.scene.registry().instantiate_frontend_item(
+                backend_guid=LineTree.GUI_GUID(),
+                additional_metadata=metadata)
+            scene.addItem(l_tree)
 
         # insert line stubs
         for y, line in enumerate(lines):

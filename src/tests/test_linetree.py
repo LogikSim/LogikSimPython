@@ -15,6 +15,13 @@ from PySide import QtCore, QtGui
 
 from logicitems.linetree import LineTree
 from schematics import GridScene
+from tests.helpers import wait_until_registry_enumerated
+
+
+def linetree_from_path(path):
+    """Create LineTree from path."""
+    metadata = LineTree.metadata_from_path(path)
+    return LineTree(parent=None, metadata=metadata)
 
 
 class LineTreeRerootTest(unittest.TestCase):
@@ -75,8 +82,8 @@ class LineTreeRerootTest(unittest.TestCase):
 
 class LineTreeGeneralTest(unittest.TestCase):
     def test_is_edge(self):
-        tree = LineTree([QtCore.QPointF(0, 0),
-                         QtCore.QPointF(10, 0)])
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(10, 0)])
 
         self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
         self.assertTrue(tree.is_edge(QtCore.QPointF(10, 0)))
@@ -89,8 +96,8 @@ class LineTreeGeneralTest(unittest.TestCase):
         self.assertFalse(tree.is_edge(QtCore.QPointF(0, 1)))
 
     def test_contains_hor_line(self):
-        hor_tree = LineTree([QtCore.QPointF(0, 0),
-                             QtCore.QPointF(10, 0)])
+        hor_tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                       QtCore.QPointF(10, 0)])
 
         self.assertTrue(hor_tree.contains_line(QtCore.QLineF(
             QtCore.QPointF(3, 0), QtCore.QPointF(7, 0))))
@@ -111,8 +118,8 @@ class LineTreeGeneralTest(unittest.TestCase):
             QtCore.QPointF(0, 1), QtCore.QPointF(10, 1))))
 
     def test_contains_ver_line(self):
-        ver_tree = LineTree([QtCore.QPointF(0, 0),
-                             QtCore.QPointF(0, 10)])
+        ver_tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                       QtCore.QPointF(0, 10)])
 
         self.assertTrue(ver_tree.contains_line(QtCore.QLineF(
             QtCore.QPointF(0, 3), QtCore.QPointF(0, 7))))
@@ -133,12 +140,12 @@ class LineTreeGeneralTest(unittest.TestCase):
             QtCore.QPointF(1, 0), QtCore.QPointF(1, 10))))
 
     def test_contains_hor_gap(self):
-        ver_tree = LineTree([QtCore.QPointF(0, 0),
-                             QtCore.QPointF(0, 10),
-                             QtCore.QPointF(1, 10),
-                             QtCore.QPointF(1, 11),
-                             QtCore.QPointF(0, 11),
-                             QtCore.QPointF(0, 20)])
+        ver_tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                       QtCore.QPointF(0, 10),
+                                       QtCore.QPointF(1, 10),
+                                       QtCore.QPointF(1, 11),
+                                       QtCore.QPointF(0, 11),
+                                       QtCore.QPointF(0, 20)])
 
         self.assertTrue(ver_tree.contains_line(QtCore.QLineF(
             QtCore.QPointF(0, 3), QtCore.QPointF(0, 7))))
@@ -155,6 +162,9 @@ class LineNearestPointTest(unittest.TestCase):
 
         self.scene = GridScene()
 
+        # wait until all types have been enumerated
+        wait_until_registry_enumerated(self.scene, self.app)
+
     def tearDown(self):
         # FIXME: No idea why this workaround is necessary :(
         self.scene.deleteLater()
@@ -168,7 +178,7 @@ class LineNearestPointTest(unittest.TestCase):
     def test_nearest_point_horizontal(self):
         def tsp(x, y):
             return self.scene.to_scene_point((x, y))
-        hor_tree = LineTree([tsp(0, 0), tsp(10, 0)])
+        hor_tree = linetree_from_path([tsp(0, 0), tsp(10, 0)])
         self.scene.addItem(hor_tree)
 
         self.assertEqual(
@@ -192,7 +202,7 @@ class LineNearestPointTest(unittest.TestCase):
     def test_nearest_point_vertical(self):
         def tsp(x, y):
             return self.scene.to_scene_point((x, y))
-        hor_tree = LineTree([tsp(0, 0), tsp(0, 10)])
+        hor_tree = linetree_from_path([tsp(0, 0), tsp(0, 10)])
         self.scene.addItem(hor_tree)
 
         self.assertEqual(
@@ -217,10 +227,10 @@ class LineNearestPointTest(unittest.TestCase):
 class LineMergeRegressionTest(unittest.TestCase):
     """Merge test not relying on introspecting inner states."""
     def test_simple_corner(self):
-        tree = LineTree([QtCore.QPointF(0, 0),
-                         QtCore.QPointF(10, 0)])
-        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
-                                  QtCore.QPointF(10, 10)]))
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(10, 0)])
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(10, 0),
+                                            QtCore.QPointF(10, 10)]))
 
         # check edges
         self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
@@ -269,10 +279,10 @@ class LineMergeRegressionTest(unittest.TestCase):
             QtCore.QPointF(11, 0), QtCore.QPointF(11, 10))))
 
     def test_horizontal_merge(self):
-        tree = LineTree([QtCore.QPointF(0, 0),
-                         QtCore.QPointF(10, 0)])
-        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
-                                  QtCore.QPointF(20, 0)]))
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(10, 0)])
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(10, 0),
+                                            QtCore.QPointF(20, 0)]))
 
         # check edges
         self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
@@ -295,10 +305,10 @@ class LineMergeRegressionTest(unittest.TestCase):
             QtCore.QPointF(0, 0), QtCore.QPointF(30, 0))))
 
     def test_split_merge(self):
-        tree = LineTree([QtCore.QPointF(0, 0),
-                         QtCore.QPointF(10, 0)])
-        tree.merge_tree(LineTree([QtCore.QPointF(5, 0),
-                                  QtCore.QPointF(5, 10)]))
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(10, 0)])
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(5, 0),
+                                            QtCore.QPointF(5, 10)]))
 
         # check edges
         self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
@@ -326,12 +336,12 @@ class LineMergeRegressionTest(unittest.TestCase):
             QtCore.QPointF(5, 0), QtCore.QPointF(5, 15))))
 
     def test_two_sided_vertical_merge(self):
-        tree = LineTree([QtCore.QPointF(0, 10),
-                         QtCore.QPointF(0, 20)])
-        tree.merge_tree(LineTree([QtCore.QPointF(0, 0),
-                                  QtCore.QPointF(0, 10)]))
-        tree.merge_tree(LineTree([QtCore.QPointF(0, 20),
-                                  QtCore.QPointF(0, 30)]))
+        tree = linetree_from_path([QtCore.QPointF(0, 10),
+                                   QtCore.QPointF(0, 20)])
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(0, 0),
+                                            QtCore.QPointF(0, 10)]))
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(0, 20),
+                                            QtCore.QPointF(0, 30)]))
 
         # check edges
         self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
@@ -349,15 +359,15 @@ class LineMergeRegressionTest(unittest.TestCase):
 
     def test_pass_crossing_merge(self):
         """Lines crossing, without being merged"""
-        tree = LineTree([QtCore.QPointF(0, 0),
-                         QtCore.QPointF(10, 0)])
-        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
-                                  QtCore.QPointF(10, 10)]))
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(10, 0)])
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(10, 0),
+                                            QtCore.QPointF(10, 10)]))
 
-        tree_m = LineTree([QtCore.QPointF(5, 0),
-                           QtCore.QPointF(5, 5)])
-        tree_m.merge_tree(LineTree([QtCore.QPointF(5, 5),
-                                    QtCore.QPointF(15, 5)]))
+        tree_m = linetree_from_path([QtCore.QPointF(5, 0),
+                                     QtCore.QPointF(5, 5)])
+        tree_m.merge_tree(linetree_from_path([QtCore.QPointF(5, 5),
+                                              QtCore.QPointF(15, 5)]))
 
         tree.merge_tree(tree_m)
 
@@ -373,14 +383,14 @@ class LineMergeRegressionTest(unittest.TestCase):
         self.assertFalse(tree.is_edge(QtCore.QPointF(0, 10)))
 
     def test_four_crossing_merge(self):
-        tree = LineTree([QtCore.QPointF(0, 0),
-                         QtCore.QPointF(10, 0)])
-        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
-                                  QtCore.QPointF(10, 10)]))
-        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
-                                  QtCore.QPointF(20, 0)]))
-        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
-                                  QtCore.QPointF(10, -10)]))
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(10, 0)])
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(10, 0),
+                                            QtCore.QPointF(10, 10)]))
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(10, 0),
+                                            QtCore.QPointF(20, 0)]))
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(10, 0),
+                                            QtCore.QPointF(10, -10)]))
 
         # check edges
         self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
@@ -401,12 +411,12 @@ class LineMergeRegressionTest(unittest.TestCase):
             QtCore.QPointF(0, 0), QtCore.QPointF(40, 0))))
 
     def test_split_crossing_lines(self):
-        tree = LineTree([QtCore.QPointF(0, 0),
-                         QtCore.QPointF(20, 0)])
-        tree.merge_tree(LineTree([QtCore.QPointF(10, 0),
-                                  QtCore.QPointF(10, 0)]))
-        tree.merge_tree(LineTree([QtCore.QPointF(10, -10),
-                                  QtCore.QPointF(10, 10)]))
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(20, 0)])
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(10, 0),
+                                            QtCore.QPointF(10, 0)]))
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(10, -10),
+                                            QtCore.QPointF(10, 10)]))
 
         # check edges
         self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))
@@ -427,25 +437,25 @@ class LineMergeRegressionTest(unittest.TestCase):
             QtCore.QPointF(0, 0), QtCore.QPointF(40, 0))))
 
     def test_split_complex_trees(self):
-        tree_a = LineTree([QtCore.QPointF(0, 0),
-                           QtCore.QPointF(10, 0)])
-        tree_a.merge_tree(LineTree([QtCore.QPointF(5, 0),
-                                    QtCore.QPointF(5, 10)]))
+        tree_a = linetree_from_path([QtCore.QPointF(0, 0),
+                                     QtCore.QPointF(10, 0)])
+        tree_a.merge_tree(linetree_from_path([QtCore.QPointF(5, 0),
+                                              QtCore.QPointF(5, 10)]))
 
-        tree_b = LineTree([QtCore.QPointF(0, 5),
-                           QtCore.QPointF(0, 15)])
-        tree_b.merge_tree(LineTree([QtCore.QPointF(0, 10),
-                                    QtCore.QPointF(10, 10)]))
+        tree_b = linetree_from_path([QtCore.QPointF(0, 5),
+                                     QtCore.QPointF(0, 15)])
+        tree_b.merge_tree(linetree_from_path([QtCore.QPointF(0, 10),
+                                              QtCore.QPointF(10, 10)]))
 
-        tree_c = LineTree([QtCore.QPointF(-10, 0),
-                           QtCore.QPointF(-10, 15)])
-        tree_c.merge_tree(LineTree([QtCore.QPointF(-10, 10),
-                                    QtCore.QPointF(0, 10)]))
+        tree_c = linetree_from_path([QtCore.QPointF(-10, 0),
+                                     QtCore.QPointF(-10, 15)])
+        tree_c.merge_tree(linetree_from_path([QtCore.QPointF(-10, 10),
+                                              QtCore.QPointF(0, 10)]))
 
-        tree_d = LineTree([QtCore.QPointF(3, 10),
-                           QtCore.QPointF(3, 20)])
-        tree_d.merge_tree(LineTree([QtCore.QPointF(0, 20),
-                                    QtCore.QPointF(10, 20)]))
+        tree_d = linetree_from_path([QtCore.QPointF(3, 10),
+                                     QtCore.QPointF(3, 20)])
+        tree_d.merge_tree(linetree_from_path([QtCore.QPointF(0, 20),
+                                              QtCore.QPointF(10, 20)]))
 
         tree_b.merge_tree(tree_a)
         tree_b.merge_tree(tree_c)

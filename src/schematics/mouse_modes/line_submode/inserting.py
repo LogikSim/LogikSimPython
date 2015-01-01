@@ -233,7 +233,10 @@ class LineRouteBetweenPoints:
 
         # create line tree from result
         path = list(map(self.scene.to_scene_point, res))
-        l_tree = logicitems.LineTree(path)
+        metadata = logicitems.LineTree.metadata_from_path(path)
+        l_tree = self.scene.registry().instantiate_frontend_item(
+            backend_guid=logicitems.LineTree.GUI_GUID(),
+            additional_metadata=metadata)
 
         # merge start and end lines
         merged_trees = []
@@ -261,8 +264,8 @@ class LineRouteBetweenPoints:
             return
 
         # add routed tree
-        self.scene.addItem(self._new_line_tree)
         self._new_line_tree.set_temporary(True)
+        self.scene.addItem(self._new_line_tree)
         # we do not delete merged_trees here, otherwise line
         #     indicator is not drawn any more
         self._is_temp_inserted = True

@@ -36,7 +36,8 @@ class ResizeHandle(ItemBase):
         # shape definition
         width = 6
         self._handle_rect = QtCore.QRectF(-width / 2, -width / 2, width, width)
-        self._bounding_rect = QtCore.QRectF(-width, -width, 2 * width, 2 * width)
+        self._bounding_rect = QtCore.QRectF(-width, -width,
+                                            2 * width, 2 * width)
 
         # mouse state
         self._press_handle_pos = None

@@ -110,3 +110,20 @@ def drain_queue(q):
         items.append(q.get_nowait())
 
     return items
+
+
+def wait_until_registry_enumerated(scene, app):
+    """Wait until Registry of the scene is enumerated."""
+    # FIXME: Shouldn't the scene wait in its constructor until
+    #        registry is ready?
+    complete = False
+
+    def set_complete(*args):
+        nonlocal complete
+        complete = True
+    scene.registry().enumeration_complete.connect(set_complete)
+    scene.interface().enumerate_components()
+
+    while not complete:
+        app.processEvents()
+    scene.registry().enumeration_complete.disconnect(set_complete)

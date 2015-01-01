@@ -57,8 +57,10 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
 
     They also support undo action creation.
     """
-    def __init__(self, parent=None, metadata={}):
+    def __init__(self, parent, metadata):
         super().__init__(parent)
+        metadata.setdefault('x', 0)
+        metadata.setdefault('y', 0)
 
         # self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
@@ -190,10 +192,27 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             self.scene().interface().update_element(
                 self.id(), metadata)
 
+    def setPos(self, pos, y=None):
+        if y is not None:
+            pos = QtCore.QPointF(pos, y)
+        super().setPos(pos)
+
+        self._on_item_position_has_changed(self.pos())
+
+    def setX(self, x):
+        self.setPos(x, self.y())
+
+    def setY(self, y):
+        self.setPos(self.x(), y)
+
+    def moveBy(self, dx, dy):
+        self.setPos(self.x() + dx, self.y() + dy)
+
     def _on_item_position_has_changed(self, new_pos):
-        """Notification from scene that position has changed."""
+        """Notification that position has changed."""
         if new_pos == self._last_position:
             return
+        self._last_position = new_pos
 
         # notify selection change
         if self.isSelected():
@@ -217,7 +236,6 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         if self.scene() is not None:
             # round position to grid point
             if change == QtGui.QGraphicsItem.ItemPositionChange:
-                self._last_position = self.pos()
                 return self.scene().roundToGrid(value)
             # handle position changes
             elif change == QtGui.QGraphicsItem.ItemPositionHasChanged:
