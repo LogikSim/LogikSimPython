@@ -58,7 +58,7 @@ class SelectItemsMode(GridViewMouseModeBase):
 
         if event.button() == QtCore.Qt.LeftButton:
             self._undo_group_scene = self.scene()
-            self._undo_group_scene.beginUndoRedoGroup()
+            self._undo_group_scene.beginUndoGroup()
 
     @mouse_mode_filtered
     def mouseDoubleClickEvent(self, event):
@@ -70,7 +70,7 @@ class SelectItemsMode(GridViewMouseModeBase):
 
         if event.button() == QtCore.Qt.LeftButton and \
                 self._undo_group_scene is not None:
-            self._undo_group_scene.endUndoRedoGroup()
+            self._undo_group_scene.endUndoGroup()
             self._undo_group_scene = None
 
     @mouse_mode_filtered

@@ -45,8 +45,7 @@ class ItemBase(QtGui.QGraphicsItem):
         """
         Is item temporary.
 
-        Temporary items are not considered in collision detection
-        and do not generate undo/redo actions.
+        Temporary items are not considered in collision detection.
         """
         return self._is_temp
 

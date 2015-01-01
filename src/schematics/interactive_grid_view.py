@@ -114,10 +114,6 @@ class InteractiveGridView(grid_view.GridView):
             metadata = json.loads(str(event.mimeData().data(
                 'application/x-components')))
 
-            # delete positions in metadata
-            metadata.pop('x', None)
-            metadata.pop('y', None)
-
             # create item
             item = self.scene().registry().instantiate_frontend_item(
                 backend_guid=metadata['GUID'],
@@ -149,7 +145,7 @@ class InteractiveGridView(grid_view.GridView):
         self._drop_item.set_temporary(False)
         self._drop_item = None
 
-        # create UndoRedo action
+        # create undo action
         def do():
             scene.addItem(item)
 

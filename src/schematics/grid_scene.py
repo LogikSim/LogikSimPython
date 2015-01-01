@@ -38,7 +38,7 @@ class GridScene(QtGui.QGraphicsScene):
         # can items be selected in this scene?
         self._allow_item_selection = False
 
-        # setup UndoRedo stack
+        # setup undo stack
         self.actions = ActionStackModel(self.tr("New circuit"), parent=self)
         self.actions.aboutToUndo.connect(self.onAboutToUndoRedo)
         self.actions.aboutToRedo.connect(self.onAboutToUndoRedo)
@@ -67,9 +67,9 @@ class GridScene(QtGui.QGraphicsScene):
         self._single_selected_item = None
         self.selectionChanged.connect(self.onSelectionChanged)
 
-        # group undo redo events
-        self._is_undo_redo_grouping = False
-        self._undo_redo_group_id = 0
+        # group undo events
+        self._is_undo_grouping = False
+        self._undo_group_id = 0
 
     def _setup_backend(self):
         """Setup simulation backend for this scene."""
@@ -276,24 +276,24 @@ class GridScene(QtGui.QGraphicsScene):
     def onAboutToUndoRedo(self):
         self.clearSelection()
 
-    def getUndoRedoGroupId(self):
+    def getUndoGroupId(self):
         """
         Get undo redo group id.
 
         All undo/redo actions with the same group should be merged.
         """
-        if self._is_undo_redo_grouping:
-            return self._undo_redo_group_id
+        if self._is_undo_grouping:
+            return self._undo_group_id
         else:
             return -1
 
-    def beginUndoRedoGroup(self):
+    def beginUndoGroup(self):
         """Group all coming item changes into one undo entry."""
-        self._undo_redo_group_id += 1
-        assert not self._is_undo_redo_grouping
-        self._is_undo_redo_grouping = True
+        self._undo_group_id += 1
+        assert not self._is_undo_grouping
+        self._is_undo_grouping = True
 
-    def endUndoRedoGroup(self):
+    def endUndoGroup(self):
         """End grouping of undo entries."""
-        assert self._is_undo_redo_grouping
-        self._is_undo_redo_grouping = False
+        assert self._is_undo_grouping
+        self._is_undo_grouping = False

@@ -29,11 +29,7 @@ class ResizeAction(StateAction):
                          (new_size, new_pos))
 
     def redo_item_state(self, item, state):
-        item.set_temporary(True)
         item.set_input_count_and_pos(*state)
-        item.set_temporary(False)
 
     def undo_item_state(self, item, state):
-        item.set_temporary(True)
         item.set_input_count_and_pos(*state)
-        item.set_temporary(False)

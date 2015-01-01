@@ -36,24 +36,17 @@ class InsertItemMode(GridViewMouseModeBase):
 
         self._inserted_item = instance
 
-    def insert_item(self, gpos):
-        registry = self.scene().registry()
-
-        item = registry.instantiate_frontend_item(self._insert_item_guid)
-        item.set_temporary(True)
-        item.setPos(gpos)
-        self.scene().addItem(item)
-
-        return item
-
     @mouse_mode_filtered
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
 
         # left button
         if event.button() is QtCore.Qt.LeftButton:
-            gpos = self.mapToSceneGrid(event.pos())
-            item = self.insert_item(gpos)
+            item = self.scene().registry().instantiate_frontend_item(
+                self._insert_item_guid)
+            item.set_temporary(True)
+            item.setPos(self.mapToSceneGrid(event.pos()))
+            self.scene().addItem(item)
             self._inserted_item = item
 
     @mouse_mode_filtered

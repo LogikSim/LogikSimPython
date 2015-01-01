@@ -53,11 +53,15 @@ class StateAction(QtGui.QUndoCommand):
             return
 
         for item, states in self._data.items():
-            self.redo_item_state(item, states[1])
+            from logicitems.insertable_item import disabled_undo
+            with disabled_undo(item):
+                self.redo_item_state(item, states[1])
 
     def undo(self):
         for item, states in self._data.items():
-            self.undo_item_state(item, states[0])
+            from logicitems.insertable_item import disabled_undo
+            with disabled_undo(item):
+                self.undo_item_state(item, states[0])
 
     def redo_item_state(self, item, state):
         """Redo state on given item"""

@@ -13,6 +13,7 @@ from PySide import QtGui, QtCore
 
 import logicitems
 from actions.resize_action import ResizeAction
+from .insertable_item import disabled_undo
 
 
 class ResizableItem(logicitems.LogicItem):
@@ -21,8 +22,6 @@ class ResizableItem(logicitems.LogicItem):
     _overlap = 0.37
 
     def __init__(self, parent=None, metadata={}):
-        super().__init__(parent=parent, metadata=metadata)
-
         self._input_count = metadata.get('#inputs', 2)
 
         # internal state
@@ -31,8 +30,10 @@ class ResizableItem(logicitems.LogicItem):
         self._connectors = []
         self._handles = {}
 
-    def update(self, metadata):
-        super().update(metadata)
+        super().__init__(parent=parent, metadata=metadata)
+
+    def apply_update(self, metadata):
+        super().apply_update(metadata)
 
         input_count = metadata.get('#inputs')
         if input_count is not None and input_count != self.get_input_count():
@@ -41,22 +42,28 @@ class ResizableItem(logicitems.LogicItem):
     def get_input_count(self):
         return self._input_count
 
-    def set_input_count_and_pos(self, new_input_count, new_position=None):
-        # create undo redo event
-        if not self.is_temporary() and self.scene() is not None:
-            action = ResizeAction(self.scene().getUndoRedoGroupId(), self,
+    def set_input_count(self, new_input_count):
+        self.set_input_count_and_pos(new_input_count)
+
+    def set_input_count_and_pos(self, new_input_count, new_pos=None):
+        # create undo event
+        if self.scene() is not None:
+            action = ResizeAction(self.scene().getUndoGroupId(), self,
                                   self.get_input_count(), self.pos(),
-                                  new_input_count, new_position)
-            self.scene().actions.push(action)
+                                  new_input_count, new_pos)
+            self._register_undo_action(action)
+
         # update input count
         self._input_count = new_input_count
         self._update_state()
+
         # update position
-        if new_position is not None:
-            temp = self.is_temporary()
-            self.set_temporary(True)
-            self.setPos(new_position)
-            self.set_temporary(temp)
+        if new_pos is not None:
+            with disabled_undo(self):
+                self.setPos(new_pos)
+
+        # notify backend
+        self._notify_backend({'#inputs': new_input_count})
 
     def _set_show_handles(self, value):
         if value != self._show_handles:

@@ -26,11 +26,7 @@ class MoveAction(StateAction):
         super().__init__("moved item", group_id, item, old_pos, new_pos)
 
     def redo_item_state(self, item, pos):
-        item.set_temporary(True)
         item.setPos(pos)
-        item.set_temporary(False)
 
     def undo_item_state(self, item, pos):
-        item.set_temporary(True)
         item.setPos(pos)
-        item.set_temporary(False)
