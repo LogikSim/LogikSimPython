@@ -57,11 +57,11 @@ def build_halfadder(name, parent):
     xor_gate = Xor.instantiate(1, half_adder)
     and_gate = And.instantiate(2, half_adder)
 
-    a.connect(xor_gate)
-    a.connect(and_gate)
+    a.connect(xor_gate, output_port=0)
+    a.connect(and_gate, output_port=1)
 
-    b.connect(xor_gate, input_port=1)
-    b.connect(and_gate, input_port=1)
+    b.connect(xor_gate, input_port=1, output_port=0)
+    b.connect(and_gate, input_port=1, output_port=1)
 
     half_adder.input_bank.connect(a, 0)
     half_adder.input_bank.connect(b, 1)
@@ -145,14 +145,14 @@ class BackendCoreTest(unittest.TestCase):
         xor_gate = Xor.instantiate(4, ctrl)
         and_gate = And.instantiate(5, ctrl)
 
-        a.connect(xor_gate)
-        a.connect(and_gate)
+        self.assertTrue(a.connect(xor_gate, output_port=0))
+        self.assertTrue(a.connect(and_gate, output_port=1))
 
-        b.connect(xor_gate, input_port=1)
-        b.connect(and_gate, input_port=1)
+        self.assertTrue(b.connect(xor_gate, input_port=1, output_port=0))
+        self.assertTrue(b.connect(and_gate, input_port=1, output_port=1))
 
-        xor_gate.connect(s)
-        and_gate.connect(c)
+        self.assertTrue(xor_gate.connect(s))
+        self.assertTrue(and_gate.connect(c))
 
         core = ctrl.get_core()
         core.schedule(Edge(10, a, 0, True))

@@ -74,15 +74,15 @@ class SimpleElement(Element):
         self.set_metadata_field('output-states',
                                 list(self.output_states), False)
 
-        self.outputs = [(None, 0)] * output_count
+        self.outputs = [(None, 0, 0)] * output_count
         self.inputs = [(None, 0)] * input_count
 
         self.set_metadata_field('inputs',
-                                self._con_to_data(self.inputs),
+                                self._in_con_to_data(self.inputs),
                                 False)
 
         self.set_metadata_field('outputs',
-                                self._con_to_data(self.outputs),
+                                self._out_con_to_data(self.outputs),
                                 False)
 
         self.delay = delay
@@ -90,7 +90,11 @@ class SimpleElement(Element):
         self.last_clock = -1
 
     @classmethod
-    def _con_to_data(cls, connections):
+    def _out_con_to_data(cls, connections):
+        return [((e.id() if e else None), c, d) for e, c, d in connections]
+
+    @classmethod
+    def _in_con_to_data(cls, connections):
         return [((e.id() if e else None), c) for e, c in connections]
 
     def reset(self, when):
@@ -144,31 +148,33 @@ class SimpleElement(Element):
                         output,
                         fstate) for output, fstate in enumerate(future_output)]
 
-    def connect(self, element, output_port=0, input_port=0):
+    def connect(self, element, output_port=0, input_port=0, delay=0):
         """
         Attach a given elements input to one of this elements outputs.
 
         :param element: Element to connect to output
         :param output_port: This elements output to connect to the input
         :param input_port: Input on given element to connect to
+        :param delay: Delay of this connection in simulation units
         """
+
+        if self.outputs[output_port][0] is not None:
+            # Can't connect twice
+            return False
 
         if element and not element.connected(self, output_port, input_port):
             # Notify the other element of our connection
             return False
 
-        if self.outputs[output_port] != (None, 0):
-            # Can't connect twice
-            return False
-
-        self.outputs[output_port] = (element, input_port)
-        self.set_metadata_field('outputs', self._con_to_data(self.outputs))
+        self.outputs[output_port] = (element, input_port, delay)
+        self.set_metadata_field('outputs', self._out_con_to_data(self.outputs))
 
         self.propagate_change({
             'source_id': self.id(),
             'source_port': output_port,
             'sink_id': element.id() if element else None,
-            'sink_port': input_port
+            'sink_port': input_port,
+            'delay': delay
         })
 
         return True
@@ -187,7 +193,7 @@ class SimpleElement(Element):
         else:
             self.inputs[input_port] = (element, output_port)
 
-        self.set_metadata_field('inputs', self._con_to_data(self.inputs))
+        self.set_metadata_field('inputs', self._in_con_to_data(self.inputs))
 
         return True
 
@@ -199,7 +205,7 @@ class SimpleElement(Element):
 
             element.disconnect(port)
 
-        for (element, port) in self.outputs:
+        for (element, port, delay) in self.outputs:
             if not element:
                 continue
 
@@ -220,8 +226,8 @@ class SimpleElement(Element):
         self.output_states[output] = state
         self.set_metadata_field('output-states', list(self.output_states))
 
-        element, input = self.outputs[output]
+        element, input_port, delay = self.outputs[output]
         if element is None:
             return []  # Nothing connected. No follow-up events
 
-        return [Edge(when, element, input, state)]
+        return [Edge(when + delay, element, input_port, state)]

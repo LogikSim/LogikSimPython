@@ -88,13 +88,14 @@ class Element(ComponentInstance):
         pass
 
     @abstractmethod
-    def connect(self, element, output_port=0, input_port=0):
+    def connect(self, element, output_port=0, input_port=0, delay=0):
         """
         Connects an element output to another elements input.
 
         :param element: Element to connect to output (None disconnects output)
         :param output_port: This elements output to connect to the input
         :param input_port: Input on given element to connect to
+        :param delay: Delay of this connection in simulation units
         :return: True if successfully connected
         """
         pass

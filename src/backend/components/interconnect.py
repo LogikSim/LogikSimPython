@@ -16,6 +16,8 @@ class Interconnect(ComponentType):
     """
     METADATA = {"GUID": "00352520-7cf0-43b7-9449-6fca5be8d6dc",
                 "name": "Interconnect",
+                "#inputs": 1,
+                "#outputs": 1,
                 "description": "Represents connections between elements"}
 
     @classmethod
@@ -34,14 +36,33 @@ class InterconnectInstance(Element):
     meta-data for the front-end would be quite annoying. We'll see if this
     becomes an issue in the future.
     """
-    PROPAGATION_CONSTANT = 1  # One time unit per length unit
 
     def __init__(self, parent, metadata):
         super().__init__(parent, metadata, Interconnect)
 
-        self.endpoints = []
+        if self.get_metadata_field("#inputs") != 1:
+            self.set_metadata_field("#inputs", 1, False)
+
+        output_count = self.get_metadata_field("#outputs")
+
+        self.set_metadata_field('state', False, False)
+
+        self.new_state = False
         self.state = False
-        self.last_clock = -1
+
+        self.set_metadata_field('input-states',
+                                False, False)
+
+        self.outputs = [(None, 0, 0)] * output_count
+        self.inputs = [(None, 0)]
+
+        self.set_metadata_field('inputs',
+                                self._in_con_to_data(self.inputs),
+                                False)
+
+        self.set_metadata_field('outputs',
+                                self._out_con_to_data(self.outputs),
+                                False)
 
     def __str__(self):
         names = []
@@ -50,6 +71,14 @@ class InterconnectInstance(Element):
 
         return "{0}(=>{1})".format(self.__class__.__name__,
                                    ','.join(names))
+
+    @classmethod
+    def _out_con_to_data(cls, connections):
+        return [((e.id() if e else None), c, d) for e, c, d in connections]
+
+    @classmethod
+    def _in_con_to_data(cls, connections):
+        return [((e.id() if e else None), c) for e, c in connections]
 
     def reset(self, when):
         """
@@ -61,33 +90,58 @@ class InterconnectInstance(Element):
                      input,
                      self.state) for element, input, delay in self.endpoints]
 
-    def connect(self, element, output_port=0, input_port=0,
-                connection_length=1):
+    def connect(self, element, output_port=0, input_port=0, delay=0):
         """
-        Connects an element output to another elements input.
+        Connects an element output to another elements input. This element
+        has the speciality of automatically growing its amount of output
+        ports instead of failing connection requests not matching the current
+        one. The amount of outputs won't every shrink though
 
         :param element: Element to connect to output (None disconnects output)
-        :param output_port: This elements output to connect to the input (=0)
+        :param output_port: This elements output to connect to the input
         :param input_port: Input on given element to connect to
-        :param connection_length: Length of the connection for delay calc
+        :param delay: Delay for the connection
         :return: True if successfully connected
         """
-        assert output_port == 0, "Interconnect only has one output"
+        if len(self.outputs) < output_port + 1:
+            # Expand the output count if needed
+            outputs_to_add = output_port - len(self.outputs) + 1
+            self.outputs.extend([(None, 0, 0)] * outputs_to_add)
+            self.set_metadata_field('#outputs', output_port)
 
-        if element is None:
-            # Disconnect everything
-            self.endpoints.clear()
-            pass
+        if self.outputs[output_port][0] is not None:
+            # Can't connect twice
+            return False
 
-        delay = connection_length * self.PROPAGATION_CONSTANT
-        self.endpoints.append((element, input_port, delay))
-        # FIXME: Kinda misses propagation also mega-mew at connection_length
-        #        get rid of that. This should happen through meta-data updates.
+        if element and not element.connected(self, output_port, input_port):
+            # Notify the other element of our connection
+            return False
+
+        self.outputs[output_port] = (element, input_port, delay)
+        self.set_metadata_field('outputs', self._out_con_to_data(self.outputs))
+
+        self.propagate_change({
+            'source_id': self.id(),
+            'source_port': output_port,
+            'sink_id': element.id() if element else None,
+            'sink_port': input_port,
+            'delay': delay
+        })
 
         return True
 
     def connected(self, element, output_port=0, input_port=0):
-        # FIXME: Implement this
+        if input_port != 0:
+            return False
+
+        if not element:
+            self.inputs = [(None, 0)]
+        else:
+            self.inputs = [(element, output_port)]
+
+        self.set_metadata_field('inputs',
+                                self._in_con_to_data(self.inputs))
+
         return True
 
     def edge(self, input_port, state):
@@ -99,7 +153,9 @@ class InterconnectInstance(Element):
         """
         assert input_port == 0, "Interconnect does not have multiple inputs."
 
-        self.state = state
+        self.new_state = state
+
+        return []
 
     def clock(self, when):
         """
@@ -112,11 +168,18 @@ class InterconnectInstance(Element):
         :param when: Current simulation time.
         :return: One future edge event for each connection endpoint.
         """
-        assert self.last_clock != when, "Repeated clock for {0} on {1}".format(
-            when, self)
-        self.last_clock = when
+
+        if self.new_state == self.get_metadata_field('state'):
+            # Nothing to do
+            # FIXME: Fix initialization behavior so we can return [] here
+            pass
+
+        self.set_metadata_field('state', self.new_state)
+        self.state = self.new_state
 
         return [Edge(when + delay,
                      element,
-                     iinput,
-                     self.state) for element, iinput, delay in self.endpoints]
+                     input_port,
+                     self.state) for (element,
+                                      input_port,
+                                      delay) in self.outputs if element]

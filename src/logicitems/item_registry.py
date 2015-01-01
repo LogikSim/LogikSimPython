@@ -190,12 +190,17 @@ class ItemRegistry(QtCore.QObject):
         else:
             # Must be connection related then
             source = self._items[update['source_id']]
-            source_port = self.update['source_port']
+            source_port = update['source_port']
             sink = self._items.get(update['sink_id'])
-            sink_port = self.update['sink_port']
+            sink_port = update['sink_port']
+            delay = update['delay']
 
-            if self.sink:
-                self.connected.emit(source, source_port, sink, sink_port)
+            if sink:
+                self.connected.emit(source,
+                                    source_port,
+                                    sink,
+                                    sink_port,
+                                    delay)
             else:
                 self.disconnected.emit(source, source_port)
 
@@ -240,8 +245,8 @@ class ItemRegistry(QtCore.QObject):
     updated = QtCore.Signal(ItemBase, dict)
     # Emitted on item deletion triggered from the backend (item)
     deleted = QtCore.Signal(ItemBase)
-    # Emitted when item output is connected (source, output, sink, input)
-    connected = QtCore.Signal(ItemBase, int, ItemBase, int)
+    # Emitted when output is connected (source, output, sink, input, delay)
+    connected = QtCore.Signal(ItemBase, int, ItemBase, int, object)
     # Emitted when item output is disconnected (source, output)
     disconnected = QtCore.Signal(ItemBase, int)
     # Emitted when backend type enumeration completes (list of metadata sets)

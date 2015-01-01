@@ -160,14 +160,15 @@ class Controller(ComponentRoot):
         _deserialize(serialization)
 
         for element, connections in connections.items():
-            for (out_port, (old_target, in_port)) in enumerate(connections):
+            for (out_port,
+                 (old_target, in_port, delay)) in enumerate(connections):
                 if old_target is None:
                     continue
 
                 target = elements.get(id_mappings.get(old_target))
                 if target:
                     # Only reconnect if target was part of serialization
-                    element.connect(target, out_port, in_port)
+                    element.connect(target, out_port, in_port, delay)
 
         self._post_to_frontend('deserialization-end',
                                {'ids': list(elements.keys())},
@@ -206,7 +207,8 @@ class Controller(ComponentRoot):
 
         if not source.connect(sink,
                               command['source_port'],
-                              command['sink_port']):
+                              command['sink_port'],
+                              command['delay']):
             self.log.warning("Failed to connect %d port %d to %d port %d",
                              command['source_id'],
                              command['source_port'],
@@ -214,11 +216,12 @@ class Controller(ComponentRoot):
                              command['sink_port'])
             return
 
-        self.log.info("Connected %d port %d to %d port %d",
+        self.log.info("Connected %d port %d to %d port %d (delay %d)",
                       command['source_id'],
                       command['source_port'],
                       command['sink_id'],
-                      command['sink_port'])
+                      command['sink_port'],
+                      command['delay'])
 
     def _on_disconnect(self, command):
         source = self.elements[command['source_id']]

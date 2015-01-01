@@ -217,7 +217,7 @@ class Interface:
             }
         )
 
-    def connect(self, source_id, source_port, sink_id, sink_port):
+    def connect(self, source_id, source_port, sink_id, sink_port, delay=0):
         self._channel_out.put(
             {
                 'type': 'connect',
@@ -225,6 +225,7 @@ class Interface:
                 'source_port': source_port,
                 'sink_id': sink_id,
                 'sink_port': sink_port,
+                'delay': delay,
             }
         )
 

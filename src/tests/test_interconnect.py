@@ -28,22 +28,27 @@ class InterconnectTest(unittest.TestCase):
         i = Interconnect.instantiate(0, p)
 
         class Foo:
-            pass
+            def id(self):
+                return 0
+
+            def connected(self, *args, **argv):
+                return True
 
         a = Foo()
         b = Foo()
 
-        i.connect(a, input_port=0)
-        i.connect(b, input_port=2, connection_length=10)
-
-        i.edge(0, False)
-        self.assertListEqual([Edge(1, a, 0, False),
-                              Edge(10, b, 2, False)],
-                             i.clock(0))
-        self.assertFalse(i.state)
+        self.assertTrue(i.connect(a, input_port=0, output_port=0, delay=1))
+        self.assertTrue(i.connect(b, input_port=2, output_port=1, delay=10))
 
         i.edge(0, True)
-        self.assertListEqual([Edge(11, a, 0, True),
-                              Edge(20, b, 2, True)],
-                             i.clock(10))
+        self.assertListEqual([Edge(1, a, 0, True),
+                              Edge(10, b, 2, True)],
+                             i.clock(0))
+
         self.assertTrue(i.state)
+
+        i.edge(0, False)
+        self.assertListEqual([Edge(11, a, 0, False),
+                              Edge(20, b, 2, False)],
+                             i.clock(10))
+        self.assertFalse(i.state)
