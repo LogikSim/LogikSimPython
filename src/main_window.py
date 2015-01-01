@@ -118,7 +118,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             "<p>A logic simulator that makes it easy and fun to explore and "
             "design digital circuits starting from simple AND gates, up to "
             "complex computing systems as we use them today.</b></p>"
-            "<p>Copyright (C) 2011-2014 The LogikSim Authors</p>"
+            "<p>Copyright (C) 2011-2015 The LogikSim Authors</p>"
             "<p>Distribution of this application and its source is governed "
             "by the GNU GPLv3 license that can be found in the LICENSE.txt "
             "file.</p><p>For more information visit "
