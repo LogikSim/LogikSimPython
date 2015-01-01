@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Copyright 2011-2015 The LogikSim Authors. All rights reserved.
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
@@ -27,7 +27,7 @@ class CompoundElementTest(unittest.TestCase):
         e.input_bank.connect(e.output_bank, 5, 6)
 
         ins = [Interconnect.instantiate(i, p) for i in range(0, 6)]
-        outs = [Interconnect.instantiate(i*10, p) for i in range(0, 6)]
+        outs = [Interconnect.instantiate(i * 10, p) for i in range(0, 6)]
 
         for i in range(0, 6):
             ins[i].connect(e, input_port=i)

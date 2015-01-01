@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Copyright 2011-2015 The LogikSim Authors. All rights reserved.
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
@@ -96,9 +96,9 @@ class Core:
         :param event:
         :return:
         """
-        assert isinstance(event, Event),\
+        assert isinstance(event, Event), \
             "Can only schedule things derived from Event"
-        assert event.when >= self.clock,\
+        assert event.when >= self.clock, \
             "Cannot schedule events in the past"
 
         self.event_queue.put(event)

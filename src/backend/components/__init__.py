@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Copyright 2014-2015 The LogikSim Authors. All rights reserved.
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
@@ -11,7 +11,7 @@ from backend.components.basic_logic_elements import And, Or, Xor, Nand, Nor, \
     register
 
 from backend.components.interconnect import Interconnect
-from backend.components.compound_element import CompoundElement,\
+from backend.components.compound_element import CompoundElement, \
     InputOutputBank
 
 register(get_library())  # Register components

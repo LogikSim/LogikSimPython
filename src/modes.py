@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Copyright 2011-2015 The LogikSim Authors. All rights reserved.
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
@@ -111,7 +111,7 @@ def generate_mode_base(base_class, name):
             super().__init__(*args, **kargs)
             setattr(self, mode_attr_name, None)
 
-        locals()[mode_enter_name] = lambda self: None # noqa
+        locals()[mode_enter_name] = lambda self: None  # noqa
         locals()[mode_enter_name].__doc__ = \
             """
             called when the mouse mode is activated
@@ -119,7 +119,7 @@ def generate_mode_base(base_class, name):
             This method gets automatically mode_filtered.
             """
 
-        locals()[mode_leave_name] = lambda self: None # noqa
+        locals()[mode_leave_name] = lambda self: None  # noqa
         locals()[mode_leave_name].__doc__ = \
             """
             called when the mouse mode is  activated

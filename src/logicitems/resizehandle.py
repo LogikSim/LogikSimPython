@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Copyright 2011-2015 The LogikSim Authors. All rights reserved.
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
@@ -35,8 +35,8 @@ class ResizeHandle(ItemBase):
 
         # shape definition
         width = 6
-        self._handle_rect = QtCore.QRectF(-width/2, -width/2, width, width)
-        self._bounding_rect = QtCore.QRectF(-width, -width, 2*width, 2*width)
+        self._handle_rect = QtCore.QRectF(-width / 2, -width / 2, width, width)
+        self._bounding_rect = QtCore.QRectF(-width, -width, 2 * width, 2 * width)
 
         # mouse state
         self._press_handle_pos = None

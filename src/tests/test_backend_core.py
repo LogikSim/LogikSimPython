@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011-2014 The LogikSim Authors. All rights reserved.
+# Copyright 2011-2015 The LogikSim Authors. All rights reserved.
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
@@ -75,8 +75,8 @@ def build_halfadder(name, parent):
 def build_fulladder(name, parent):
     full_adder = CompoundElement.instantiate(0, parent, {"name": name})
 
-    ha1 = build_halfadder(name+"_ha1", full_adder)
-    ha2 = build_halfadder(name+"_ha2", full_adder)
+    ha1 = build_halfadder(name + "_ha1", full_adder)
+    ha2 = build_halfadder(name + "_ha2", full_adder)
 
     full_adder.input_bank.connect(ha1, 0, 0)  # A input on 0
     full_adder.input_bank.connect(ha1, 1, 1)  # B input on 1
