@@ -71,10 +71,13 @@ class LineTree(InsertableItem):
     def GUI_GUID(cls):
         return "00352520-7cf0-43b7-9449-6fca5be8d6dc"
 
+    def selectionRect(self):
+        return self._rect
+
     def apply_update(self, metadata):
         super().apply_update(metadata)
 
-        tree = metadata.get('tree', {})
+        tree = metadata.get('tree', None)
         if tree is not None and tree != self._tree:
             self._set_tree(tree)
 

@@ -12,6 +12,7 @@ They also support undo action creation.
 '''
 
 import contextlib
+from logging import getLogger
 
 from PySide import QtGui, QtCore
 
@@ -62,6 +63,8 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         metadata.setdefault('x', 0)
         metadata.setdefault('y', 0)
 
+        self.log = getLogger(__name__)
+
         # self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
         self.setFlag(QtGui.QGraphicsItem.ItemSendsGeometryChanges)
@@ -94,7 +97,7 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
 
     def id(self):
         """Return id, used to communicate with backend."""
-        return self._cached_metadata['id']
+        return self._cached_metadata.get('id', None)
 
     def name(self):
         """Return name."""
@@ -110,6 +113,8 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
 
         To update states of this object override apply_update.
         """
+        self.log.info("Update {} with {}".format(self.id(), metadata))
+
         self._cached_metadata.update(metadata)
 
         self._in_metadata_update = True
