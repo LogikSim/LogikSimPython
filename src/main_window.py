@@ -62,7 +62,20 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
         self.action_stack_view.setModel(actions)
 
+        # Debug stuff
+        sim_rate_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        sim_rate_slider.setRange(0, 200)
+        sim_rate_slider.setValue(1)
+        sim_rate_slider.valueChanged.connect(
+            lambda v: scene._interface.set_simulation_properties({'rate': v}))
+
+        self.status_bar.addPermanentWidget(sim_rate_slider)
+
+        sim_rate_label = QtGui.QLabel()
+        self.status_bar.addPermanentWidget(sim_rate_label)
         scene._registry.tick.connect(self._on_tick)
+        scene._registry.simulation_properties_changed.connect(
+            lambda p: sim_rate_label.setText(str(p['rate'])))
 
         # Prepend undo/redo QActions to menu_edit
         first_menu_edit_qaction = (
