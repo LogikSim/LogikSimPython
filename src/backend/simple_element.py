@@ -66,13 +66,16 @@ class SimpleElement(Element):
         output_count = self.get_metadata_field("#outputs")
         delay = self.get_metadata_field("delay")
 
-        self.input_states = array('i', [False] * input_count)
-        self.output_states = array('i', [False] * output_count)
+        self.logic_function = logic_function
 
+        self.input_states = array('i', [False] * input_count)
         self.set_metadata_field('input-states',
                                 list(self.input_states), False)
+
+        self.output_states = array('i', self.logic_function(self.input_states))
         self.set_metadata_field('output-states',
                                 list(self.output_states), False)
+        assert len(self.output_states) == output_count
 
         self.outputs = [(None, 0, 0)] * output_count
         self.inputs = [(None, 0)] * input_count
@@ -86,7 +89,6 @@ class SimpleElement(Element):
                                 False)
 
         self.delay = delay
-        self.logic_function = logic_function
         self.last_clock = -1
 
     @classmethod
