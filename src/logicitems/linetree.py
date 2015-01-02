@@ -47,6 +47,7 @@ class LineTree(InsertableItem):
         self._shape = None  # shape path
         self._rect = None  # bounding rect
         self._edge_indicators = []  # list of LineEdgeIndicators
+
         self._connected_input = None  # connected ConnectorItem
         self._connected_outputs = []  # list of connected ConnectorItems
 
@@ -163,6 +164,13 @@ class LineTree(InsertableItem):
         self._shape = shape_path
         self._rect = bounding_rect
 
+    def _get_root(self):
+        """returns root of tree"""
+        keys = list(self._tree.keys())
+        if len(keys) == 0:
+            return None
+        else: return keys[0]
+
     def _update_connections(self):
         """
         Updates connections to Connectors.
@@ -174,12 +182,11 @@ class LineTree(InsertableItem):
 
         # Disconnect connectors
         if self._connected_input is not None:
-            self._connected_input.parentItem().disconnect(self)
+            self._connected_input.disconnect()
         self._connected_input = None
 
         for i, con_item in enumerate(self._connected_outputs):
-            self.scene().interface().disconnect(
-                self.id(), i, con_item.id(), con_item.index())
+            self.scene().interface().disconnect(self.id(), i)
         self._input_connectors = []
 
         # Collect all ConnectorItems
@@ -192,7 +199,27 @@ class LineTree(InsertableItem):
                             l_bounding_rect.contains(item.anchorPoint()):
                         con_items.add(item)
 
-        # Connect to connectors
+        # Connect input
+        for con_item in con_items:
+            if not con_item.is_input():
+                # tell other item to connect to us
+                if con_item.connect(self):
+                    assert self._connected_input is None, \
+                        'only one output can drive the line-trees'
+                    self._connected_input = con_item
+                    # make sure input is root of the tree
+                    new_root = con_item.anchorPoint().toTuple()
+                    if new_root != self._get_root():
+                        if new_root not in self._edges:
+                            tree = self._split_line_of_tree(self._tree,
+                                                            new_root)
+                        else:
+                            tree = self._tree
+                        new_tree = self._reroot(tree, new_root)
+                        # TODO: with disabled_undo?
+                        self._set_tree(new_tree)
+
+        # Connect output
         for con_item in con_items:
             if con_item.is_input():
                 # setup connection in backend
@@ -201,12 +228,6 @@ class LineTree(InsertableItem):
                         self.id(), len(self._connected_outputs),
                         con_item.id(), con_item.index())
                     self._connected_outputs.append(con_item)
-            else:
-                # tell other item to connect to us
-                if con_item.connect(self):
-                    assert self._connected_input is None, \
-                        'only one output can drive the line-trees'
-                    self._connected_input = con_item
 
     @staticmethod
     def _reroot(tree, new_root):

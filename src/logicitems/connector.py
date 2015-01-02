@@ -74,14 +74,13 @@ class ConnectorItem(ItemBase):
 
         return True
 
-    def disconnect(self, linetree):
+    def disconnect(self):
         """Disconnect connected output to linetree."""
         if not self.is_registered():
             return
 
         # disconect connection in backend
-        self.scene().interface().disconnect(
-            self.id(), self.index(), linetree.id(), 0)
+        self.scene().interface().disconnect(self.id(), self.index())
 
     def set_logic_state(self, state):
         if state != self._logic_state:
