@@ -103,6 +103,8 @@ class InterconnectInstance(Element):
         :param delay: Delay for the connection
         :return: True if successfully connected
         """
+        assert element is not None, "Must be given element to connect to"
+
         if len(self.outputs) < output_port + 1:
             # Expand the output count if needed
             outputs_to_add = output_port - len(self.outputs) + 1
@@ -113,11 +115,12 @@ class InterconnectInstance(Element):
             # Can't connect twice
             return False
 
-        if element and not element.connected(self, output_port, input_port):
-            # Notify the other element of our connection
+        if not element.connected(self, output_port, input_port):
+            # Other element rejected the connection
             return False
 
         self.outputs[output_port] = (element, input_port, delay)
+
         self.set_metadata_field('outputs', self._out_con_to_data(self.outputs))
 
         self.propagate_change({
@@ -130,17 +133,67 @@ class InterconnectInstance(Element):
 
         return True
 
-    def connected(self, element, output_port=0, input_port=0):
-        if input_port != 0:
+    def disconnect(self, output_port):
+        """
+        Disconnects the currently connected element from the given port
+        on this element.
+
+        :param output_port: Port to disconnect
+        :return: True if successful
+        """
+        remote, remote_input, _ = self.outputs[output_port]
+        if not remote:
+            # Nothing connected
             return False
 
-        if not element:
-            self.inputs = [(None, 0)]
-        else:
-            self.inputs = [(element, output_port)]
+        if not remote.disconnected(remote_input):
+            return False
 
-        self.set_metadata_field('inputs',
-                                self._in_con_to_data(self.inputs))
+        self.outputs[output_port] = (None, 0, 0)
+
+        self.set_metadata_field('outputs', self._out_con_to_data(self.outputs))
+
+        self.propagate_change({
+            'source_id': self.id(),
+            'source_port': output_port,
+            'sink_id': None,
+            'sink_port': 0,
+            'delay': 0
+        })
+
+    def connected(self, element, output_port=0, input_port=0):
+        """
+        Remembers connections to a given port.
+
+        :param element:
+        :param output_port:
+        :param input_port:
+        :return:
+        """
+        assert element is not None, "Must be given element"
+
+        if self.inputs[input_port][0] is not None:
+            # Already have something connected on that port
+            return False
+
+        self.inputs[input_port] = (element, output_port)
+        self.set_metadata_field('inputs', self._in_con_to_data(self.inputs))
+
+        return True
+
+    def disconnected(self, input_port):
+        """
+        Clears a connection to this element.
+
+        :param input_port:
+        :return: True if successfull
+        """
+        if self.inputs[input_port][0] is None:
+            # There wasn't anything connected in the first place
+            return False
+
+        self.inputs[input_port] = (None, 0)
+        self.set_metadata_field('inputs', self._in_con_to_data(self.inputs))
 
         return True
 
@@ -152,11 +205,11 @@ class InterconnectInstance(Element):
 
             element.disconnect(port)
 
-        for (element, port, delay) in self.outputs:
+        for output_port, (element, port, delay) in enumerate(self.outputs):
             if not element:
                 continue
 
-            self.disconnect(port)
+            self.disconnect(output_port)
 
         # Make sure to go through the rest of the destruction process
         return super().destruct()

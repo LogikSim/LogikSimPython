@@ -113,10 +113,22 @@ class Element(ComponentInstance):
         """
         pass
 
+    @abstractmethod
     def disconnect(self, output_port):
         """
         Disconnects the given output.
         :param output_port: Output index.
         :return: True if successful
         """
-        return self.connect(None, output_port)
+        pass
+
+    @abstractmethod
+    def disconnected(self, input_port):
+        """
+        Notifies an element of another elements output being disconnected
+        from one of its inputs.
+
+        :param output_port: Input port being disconnected
+        :return: True if successful
+        """
+        pass
