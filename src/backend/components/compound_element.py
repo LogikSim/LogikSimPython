@@ -39,7 +39,16 @@ class InputOutputBankInstance(Element):
         # FIXME: Implement rest of this
         return True
 
+    def disconnect(self, output_port):
+        val = self.mapping.pop(output_port, None)
+        # FIXME: Implement rest of this
+        return val is not None
+
     def connected(self, element, output_port=0, input_port=0):
+        # FIXME: Implement this
+        return True
+
+    def disconnected(self, input_port):
         # FIXME: Implement this
         return True
 
@@ -161,5 +170,11 @@ class CompoundElementInstance(Element):
         """
         return self.output_bank.connect(element, output_port, input_port)
 
+    def disconnect(self, output_port):
+        return self.output_bank.disconnect(output_port)
+
     def connected(self, element, output_port=0, input_port=0):
         return self.output_bank.connected(element, output_port, input_port)
+
+    def disconnected(self, input_port):
+        return self.output_bank.disconnected(input_port)
