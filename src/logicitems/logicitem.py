@@ -21,9 +21,6 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
     All children must implement the methods: ownBoundingRect, paint
     """
     def __init__(self, parent=None, metadata={}):
-        InsertableItem.__init__(self, parent, metadata)
-        QtGui.QGraphicsLayoutItem.__init__(self, parent)
-
         # stores bounding rect
         self._bounding_rect_valid = False
         self._bounding_rect = None
@@ -31,6 +28,20 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
         # store inputs and outputs connectors
         self._inputs = []
         self._outputs = []
+
+        InsertableItem.__init__(self, parent, metadata)
+        QtGui.QGraphicsLayoutItem.__init__(self, parent)
+
+    def apply_update(self, metadata):
+        input_states = metadata.get('input-states', None)
+        if input_states is not None:
+            for input_con, state in zip(self._inputs, input_states):
+                input_con.set_logic_state(state)
+
+        output_states = metadata.get('output-states', None)
+        if output_states is not None:
+            for output_con, state in zip(self._outputs, output_states):
+                output_con.set_logic_state(state)
 
     def setGeometry(self, rect):
         scene_offset = self.mapToScene(self.selectionRect().topLeft()) - \

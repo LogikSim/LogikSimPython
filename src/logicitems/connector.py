@@ -25,6 +25,8 @@ class ConnectorItem(ItemBase):
         self._is_input = is_input
         self._index = index
 
+        self._logic_state = False
+
         self._bounding_rect_valid = False
         self._bounding_rect = None
 
@@ -36,7 +38,8 @@ class ConnectorItem(ItemBase):
         """Toggle input signal."""
         if not self.is_input():
             raise Exception("Can only toggle inputs.")
-        print("toggle")
+        self.scene().interface().schedule_edge(self.id(), self.index(),
+                                               not self.logic_state(), 0)
 
     def is_input(self):
         """Returns True if connector is an input."""
@@ -80,6 +83,14 @@ class ConnectorItem(ItemBase):
         self.scene().interface().disconnect(
             self.id(), self.index(), linetree.id(), 0)
 
+    def set_logic_state(self, state):
+        if state != self._logic_state:
+            self._logic_state = state
+            self.update()
+
+    def logic_state(self):
+        return self._logic_state
+
     def anchorPoint(self):
         """Returns position where lines can connect to."""
         return self.mapToScene(self._line.p2())
@@ -97,7 +108,10 @@ class ConnectorItem(ItemBase):
     def paint(self, painter, option, widget=None):
         # draw line
         if self.is_valid():
-            painter.setPen(QtGui.QPen(QtCore.Qt.black))
+            if self.logic_state():
+                painter.setPen(QtGui.QPen(QtCore.Qt.red))
+            else:
+                painter.setPen(QtGui.QPen(QtCore.Qt.black))
         else:
             painter.setPen(QtGui.QPen(QtCore.Qt.lightGray))
         painter.drawLine(self._line)
