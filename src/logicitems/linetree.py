@@ -13,7 +13,6 @@ import copy
 
 from PySide import QtGui, QtCore
 
-from helper.timeit_mod import timeit
 from .insertable_item import InsertableItem
 from .line_edge_indicator import LineEdgeIndicator
 from .connector import ConnectorItem
@@ -496,49 +495,49 @@ class LineTree(InsertableItem):
 
         :return: iterator with items of (QLineF, state)
         """
-        if len(self._logic_states) == 0 or True:
+        if len(self._logic_states) == 0:
             return ((line, False) for line in self._lines)
 
         clock = self.scene().registry().clock()
 
-        def iter_segment(tree, current_state, next_index, origin=None,
+        def iter_segment(tree, current_state, current_index, origin=None,
                          parent_delay=0):
             for destination, children in tree.items():
+                next_index = current_index
                 if origin is not None:
                     j = origin[0] == destination[0]  # vertical line?
                     length = (destination[j] - origin[j])
                     delay = (abs(length) * self._delay_per_gridpoint /
-                             self.scene().get_grid_spacing()) + parent_delay
+                             self.scene().get_grid_spacing())
 
                     start = origin
                     while True:
                         if next_index >= 0:
                             state_clock, state = self._logic_states[next_index]
-                            delta = clock - state_clock
+                            delta = clock - state_clock - parent_delay
                         else:
                             state = current_state
                             delta = delay
 
-                        end = list(destination)
-                        if delta == 0:
-                            continue
-                        elif delta < delay:
-                            end[j] = (origin[j] + delta / delay *
-                                      (destination[j] - origin[j]))
+                        if delta > 0:  # it has finite length --> visible
+                            end = list(destination)
+                            if delta < delay:
+                                end[j] = (origin[j] + delta / delay *
+                                          (destination[j] - origin[j]))
+                            yield QtCore.QLineF(QtCore.QPointF(*start),
+                                                QtCore.QPointF(*end)), state
 
-                        yield QtCore.QLineF(QtCore.QPointF(*start),
-                                            QtCore.QPointF(*end)), state
+                            start = end
 
-                        if delta >= delay:
+                        if delta >= delay:  # we are at the end of line
                             break
 
                         current_state = state
-                        start = end
                         next_index -= 1
                 else:
                     delay = 0
                 for item in iter_segment(children, current_state, next_index,
-                                         destination, delay):
+                                         destination, delay + parent_delay):
                     yield item
 
         return iter_segment(self._tree, self._logic_states[-1][1],
@@ -548,7 +547,7 @@ class LineTree(InsertableItem):
         # redraw
         QtGui.QGraphicsItem.update(self)
 
-    @timeit
+    # @timeit
     def paint(self, painter, option, widget=None):
         for line, state in self._iter_state_line_segments():
             if state:
