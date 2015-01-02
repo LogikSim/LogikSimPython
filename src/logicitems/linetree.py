@@ -13,6 +13,7 @@ import copy
 
 from PySide import QtGui, QtCore
 
+from helper.timeit_mod import timeit
 from .insertable_item import InsertableItem
 from .line_edge_indicator import LineEdgeIndicator
 from .connector import ConnectorItem
@@ -53,6 +54,15 @@ class LineTree(InsertableItem):
         self._connected_input = None  # connected ConnectorItem
         self._connected_outputs = []  # list of connected ConnectorItems
 
+        # contains last logic states with entries (sim_time, value)
+        self._logic_states = []
+
+        # timer for updating
+        self._update_paint = QtCore.QTimer()
+        self._update_paint.timeout.connect(self.do_update_paint)
+        self._update_paint.setInterval(50)
+        self._update_paint.setSingleShot(True)
+
         super().__init__(parent, metadata)
 
     @classmethod
@@ -83,9 +93,17 @@ class LineTree(InsertableItem):
     def apply_update(self, metadata):
         super().apply_update(metadata)
 
+        # tree updates
         tree = metadata.get('tree', None)
         if tree is not None and tree != self._tree:
             self._set_tree(tree)
+
+        # collect input value changes   # metadata.get('input-states', None)
+        input_states = metadata.get('state', None)
+        if input_states is not None:
+            if self.scene() is not None:
+                self._logic_states.append(((self.scene().registry().clock()),
+                                           input_states))
 
     def _set_tree(self, tree):
         """
@@ -287,10 +305,7 @@ class LineTree(InsertableItem):
             nonlocal found
             for destination, children in tree.items():
                 if origin is not None:
-                    if origin[1] == destination[1]:  # horizontal line?
-                        index = 0
-                    else:
-                        index = 1
+                    index = origin[0] == destination[0]  # vertical line?
                     length = (destination[index] - origin[index])
                     # point on same straight?
                     if point[not index] == origin[not index]:
@@ -475,11 +490,74 @@ class LineTree(InsertableItem):
 
         return super().itemChange(change, value)
 
+    def _iter_state_line_segments(self):
+        """
+        Returns iterator of line segments with state information.
+
+        :return: iterator with items of (QLineF, state)
+        """
+        if len(self._logic_states) == 0 or True:
+            return ((line, False) for line in self._lines)
+
+        clock = self.scene().registry().clock()
+
+        def iter_segment(tree, current_state, next_index, origin=None,
+                         parent_delay=0):
+            for destination, children in tree.items():
+                if origin is not None:
+                    j = origin[0] == destination[0]  # vertical line?
+                    length = (destination[j] - origin[j])
+                    delay = (abs(length) * self._delay_per_gridpoint /
+                             self.scene().get_grid_spacing()) + parent_delay
+
+                    start = origin
+                    while True:
+                        if next_index >= 0:
+                            state_clock, state = self._logic_states[next_index]
+                            delta = clock - state_clock
+                        else:
+                            state = current_state
+                            delta = delay
+
+                        end = list(destination)
+                        if delta == 0:
+                            continue
+                        elif delta < delay:
+                            end[j] = (origin[j] + delta / delay *
+                                      (destination[j] - origin[j]))
+
+                        yield QtCore.QLineF(QtCore.QPointF(*start),
+                                            QtCore.QPointF(*end)), state
+
+                        if delta >= delay:
+                            break
+
+                        current_state = state
+                        start = end
+                        next_index -= 1
+                else:
+                    delay = 0
+                for item in iter_segment(children, current_state, next_index,
+                                         destination, delay):
+                    yield item
+
+        return iter_segment(self._tree, self._logic_states[-1][1],
+                            len(self._logic_states) - 1)
+
+    def do_update_paint(self):
+        # redraw
+        QtGui.QGraphicsItem.update(self)
+
+    @timeit
     def paint(self, painter, option, widget=None):
-        # draw lines
-        painter.setPen(QtGui.QPen(QtCore.Qt.black))
-        for line in self._lines:
+        for line, state in self._iter_state_line_segments():
+            if state:
+                painter.setPen(QtGui.QPen(QtCore.Qt.red))
+            else:
+                painter.setPen(QtGui.QPen(QtCore.Qt.black))
             painter.drawLine(line)
+
+        self._update_paint.start()
 
         # debugging
         if self._debug_painting:

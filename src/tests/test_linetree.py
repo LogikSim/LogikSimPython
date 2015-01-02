@@ -539,3 +539,68 @@ class LineLengthToTest(unittest.TestCase):
         tree._set_tree(tree._reroot(tree._tree, (0, 0)))
 
         self.assertRaises(Exception, tree._length_to, (20, 20))
+
+
+def get_linetree_with_states(tree, states, curr_clock, grid_spacing=1,
+                             delay_per_gridpoint=1):
+    """
+    :param tree: tree dict
+    :param states: list of (time, value)
+    :param curr_clock: current simulation clock
+    :param grid_spacing: spacing of the grid
+    """
+    class dummy:
+        pass
+
+    tree = LineTree(None, {'tree': tree})
+    tree._delay_per_gridpoint = delay_per_gridpoint
+
+    # setup scene
+    scene = dummy()
+    registry = dummy()
+    tree.scene = lambda: scene
+    tree.scene().registry = lambda: registry
+    tree.scene().get_grid_spacing = lambda: grid_spacing
+
+    for clock, state in states:
+        tree.scene().registry().clock = lambda: clock
+        tree.update({'state': state})
+
+    tree.scene().registry().clock = lambda: curr_clock
+    return tree
+
+
+class StateLineSegmentationTest(unittest.TestCase):
+    def test_horizontal_line_partial_start(self):
+        tree = get_linetree_with_states(
+            {(0, 0): {(10, 0): {}}},
+            [(0, False), (1, True), (2, False), (5, True)],
+            curr_clock=5)
+
+        self.assertListEqual(
+                list(tree._iter_state_line_segments()),
+                [(QtCore.QLineF(0, 0, 3, 0), False),
+                 (QtCore.QLineF(3, 0, 4, 0), True),
+                 (QtCore.QLineF(4, 0, 5, 0), False),
+                 (QtCore.QLineF(5, 0, 10, 0), False)])
+
+    def test_horizontal_line_startup(self):
+        tree = get_linetree_with_states({(0, 0): {(10, 0): {}}},
+                                        [], curr_clock=0)
+
+        self.assertListEqual(
+                list(tree._iter_state_line_segments()),
+                [(QtCore.QLineF(0, 0, 10, 0), False)])
+
+    def test_horizontal_line_full_simulationi(self):
+        tree = get_linetree_with_states(
+            {(0, 0): {(10, 0): {}}},
+            [(0, False), (3, True), (7, False), (10, True)],
+            curr_clock=12)
+
+        self.assertListEqual(
+                list(tree._iter_state_line_segments()),
+                [(QtCore.QLineF(0, 0, 2, 0), True),
+                 (QtCore.QLineF(2, 0, 5, 0), False),
+                 (QtCore.QLineF(5, 0, 9, 0), True),
+                 (QtCore.QLineF(9, 0, 10, 0), False)])
