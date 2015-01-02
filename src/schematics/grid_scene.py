@@ -85,8 +85,12 @@ class GridScene(QtGui.QGraphicsScene):
         self._core_thread = Thread(target=self._core.run)
         self._core_thread.start()
 
-        # fetch all components
+        # fetch all components and properties
         self._interface.enumerate_components()
+        self._interface.query_simulation_properties()
+
+        # Configure it how we want it to
+        # self._interface.set_simulation_properties({'rate': 10})
 
         # Join threads on destruct (mustn't be a slot on this object)
         self.destroyed.connect(lambda: [self._core.quit(),

@@ -87,6 +87,41 @@ class Interface:
         """
         return random.getrandbits(128)
 
+    def set_simulation_properties(self, properties):
+        """
+        Sets the given properties for the simulation.
+
+        :param properties: Dict with properties to set
+        :return: Request id
+        """
+        request_id = self._gen_request_id()
+
+        self._channel_out.put(
+            {
+                'type': 'set-simulation-properties',
+                'properties': properties,
+                'request-id': request_id
+            }
+        )
+
+        return request_id
+
+    def query_simulation_properties(self):
+        """
+        Queries the current simulation properties from the backend.
+        :return: Request id
+        """
+        request_id = self._gen_request_id()
+
+        self._channel_out.put(
+            {
+                'type': 'query-simulation-properties',
+                'request-id': request_id
+            }
+        )
+
+        return request_id
+
     def schedule_edge(self, element_id, input, state, delay):
         """
         Schedules a signal transition in the future.

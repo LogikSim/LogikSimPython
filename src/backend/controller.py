@@ -38,7 +38,15 @@ class Controller(ComponentRoot):
         self._simulation_rate = 1  # Ratio between SUs and wall-clock time
         self._last_process_time = 0  # Remembers last process return time
 
+        # Members that should be exposed as simulation properties must be
+        # listed in self._properties as property name, member variable.
+        # Use a property to do write-only or complex setters.
+        self._properties = {'rate': '_simulation_rate',
+                            'clock': '_readonly_prop_clock'}
+
         self._message_handlers = {
+            'set-simulation-properties': self._on_set_simu_properties,
+            'query-simulation-properties': self._on_query_simu_properties,
             'create': self._on_create,
             'update': self._on_update,
             'delete': self._on_delete,
@@ -51,6 +59,10 @@ class Controller(ComponentRoot):
             'enumerate_components': self._on_enumerate_components,
             'quit': self._on_quit
         }
+
+    @property
+    def _readonly_prop_clock(self):
+        return self.get_core().clock
 
     def get_interface(self):
         return Interface(self._channel_in)
@@ -66,6 +78,38 @@ class Controller(ComponentRoot):
 
     def get_channel_out(self):
         return self._channel_out
+
+    def get_simulation_properties(self):
+        """
+        :return: Current simulation properties as dict
+        """
+        properties = {}
+        for name, member in self._properties.items():
+            properties[name] = getattr(self, member)
+
+        return properties
+
+    def _on_query_simu_properties(self, command):
+        self._post_to_frontend(
+            'simulation-properties',
+            {'properties': self.get_simulation_properties()},
+            command.get('request-id')
+        )
+
+    def _on_set_simu_properties(self, command):
+        properties = command['properties']
+        for prop, value in properties.items():
+            member = self._properties.get(prop)
+            if not member:
+                continue
+
+            try:
+                setattr(self, member, value)
+            except AttributeError:
+                # Probably readonly
+                pass
+
+        self._on_query_simu_properties(command)
 
     def _on_create(self, command):
         parent = self.elements.get(command.get("parent"))

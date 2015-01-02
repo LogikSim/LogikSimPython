@@ -53,6 +53,7 @@ class ItemRegistry(QtCore.QObject):
         self.destroyed.connect(lambda: self._registry_handler.quit(True))
 
         self._handlers = {
+            'simulation-properties': self._on_simulation_properties_changed,
             'alive': self._on_alive,
             'change': self._on_change,
             'enumerate_components': self._on_enumerate_components,
@@ -243,6 +244,12 @@ class ItemRegistry(QtCore.QObject):
         self.deserialization_complete.emit(message['in-reply-to'],
                                            message['ids'])
 
+    def _on_simulation_properties_changed(self, message):
+        """
+        Emits the simulation_properties_changed signal.
+        """
+        self.simulation_properties_changed.emit(message['properties'])
+
     # Emitted on item creation triggered from the backend (item)
     instantiated = QtCore.Signal(ItemBase)
     # Emitted on item update triggered from the backend (item, update)
@@ -263,6 +270,8 @@ class ItemRegistry(QtCore.QObject):
     deserialization_complete = QtCore.Signal(object, list)
     # Emitted when the backend simulation time changed (new clock)
     tick = QtCore.Signal(object)
+    # Emitted when a simulation property update is received
+    simulation_properties_changed = QtCore.Signal(dict)
 
 
 class ItemRegistryHandler(QtCore.QThread, Handler):
