@@ -144,6 +144,23 @@ class InterconnectInstance(Element):
 
         return True
 
+    def destruct(self):
+        # Drop all in and outbound connections first
+        for (element, port) in self.inputs:
+            if not element:
+                continue
+
+            element.disconnect(port)
+
+        for (element, port, delay) in self.outputs:
+            if not element:
+                continue
+
+            self.disconnect(port)
+
+        # Make sure to go through the rest of the destruction process
+        return super().destruct()
+
     def edge(self, input_port, state):
         """
         Registers a rising or falling edge on the interconnect.
