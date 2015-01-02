@@ -315,7 +315,7 @@ class LineTree(InsertableItem):
                             return abs(delta)
                 else:
                     length = 0
-                res = length + iter_lines(children, destination)
+                res = abs(length) + iter_lines(children, destination)
                 if found:
                     return res
             return 0
