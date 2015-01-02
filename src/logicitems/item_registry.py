@@ -44,7 +44,7 @@ class ItemRegistry(QtCore.QObject):
 
         self._items = {}  # Remembers backend id -> item associations
 
-        self.clock = -1  # Backend clock
+        self._clock = -1  # Backend clock
 
         self._registry_handler = ItemRegistryHandler(self)
         self._registry_handler.update.connect(self.handle_backend_update)
@@ -60,6 +60,10 @@ class ItemRegistry(QtCore.QObject):
             'deserialization-start': self._on_deserialization_start,
             'deserialization-end': self._on_deserialization_complete
         }
+
+    def clock(self):
+        """Returns current backend clock."""
+        return self._clock
 
     def register_type(self, item_type):
         assert issubclass(item_type, ItemBase), \
@@ -142,10 +146,10 @@ class ItemRegistry(QtCore.QObject):
         """
         message_type = update['type']
         new_clock = update['clock']
-        if new_clock != self.clock:
-            assert new_clock > self.clock
+        if new_clock != self._clock:
+            assert new_clock > self._clock
             self.tick.emit(new_clock)
-            self.clock = new_clock
+            self._clock = new_clock
 
         handler = self._handlers.get(message_type)
         if not handler:

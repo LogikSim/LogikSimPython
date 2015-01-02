@@ -369,7 +369,6 @@ class LineTree(InsertableItem):
 
         return res
 
-
     def paint(self, painter, option, widget=None):
         # draw lines
         painter.setPen(QtGui.QPen(QtCore.Qt.black))
