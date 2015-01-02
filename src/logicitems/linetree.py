@@ -174,6 +174,7 @@ class LineTree(InsertableItem):
 
         # TODO: disconnect output connector
         self._output_connector = None
+        self._input_connectors = []
 
         # Collect all ConnectorItems
         con_items = set()
@@ -185,13 +186,24 @@ class LineTree(InsertableItem):
                             l_bounding_rect.contains(item.anchorPoint()):
                         con_items.add(item)
 
+        # Connect to connectors
         for con_item in con_items:
-            if not con_item.is_input():
+            if con_item.is_input():
+                # setup connection in backend
+                parent = con_item.parentItem()
+                index = parent.get_input_index(con_item)
+                if parent.is_registered():
+                    self.scene().interface().connect(
+                        self.id(), len(self._input_connectors),
+                        parent.id(), index)
+                    self._input_connectors.append(con_item)
+            else:
+                # tell other item to connect to us
                 assert self._output_connector is None, \
                     'only one output can drive the line-trees'
-                if con_item.connect(self):
+                if con_item.parentItem().connect(self):
                     self._output_connector = con_item
-        print("1", self._output_connector)
+
 
     @staticmethod
     def _reroot(tree, new_root):

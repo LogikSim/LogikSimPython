@@ -50,6 +50,10 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
 
         return True
 
+    def get_input_index(self, connector):
+        """Get index of input connector."""
+        return self._inputs.index(connector)
+
     def setGeometry(self, rect):
         scene_offset = self.mapToScene(self.selectionRect().topLeft()) - \
             self.mapToScene(QtCore.QPointF(0, 0))

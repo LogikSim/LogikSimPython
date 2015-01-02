@@ -31,10 +31,6 @@ class ConnectorItem(ItemBase):
         self.prepareGeometryChange()
         self._bounding_rect_valid = False
 
-    def connect(self, linetree):
-        """Connect output connector to linetree."""
-        self.parentItem().connect(linetree)
-
     def is_input(self):
         """Returns True if connector is an input."""
         return self._is_input
