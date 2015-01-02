@@ -476,3 +476,66 @@ class LineMergeRegressionTest(unittest.TestCase):
 
         self.assertFalse(tree.contains_line(QtCore.QLineF(
             QtCore.QPointF(0, 0), QtCore.QPointF(40, 0))))
+
+
+class LineLengthToTest(unittest.TestCase):
+    def test_horizontal_line(self):
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(10, 0)])
+        tree._set_tree(tree._reroot(tree._tree, (0, 0)))
+
+        self.assertEqual(tree._length_to((0, 0)), 0)
+        self.assertEqual(tree._length_to((10, 0)), 10)
+        self.assertEqual(tree._length_to((5, 0)), 5)
+
+    def test_vertical_line(self):
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(0, 10)])
+        tree._set_tree(tree._reroot(tree._tree, (0, 0)))
+
+        self.assertEqual(tree._length_to((0, 0)), 0)
+        self.assertEqual(tree._length_to((0, 10)), 10)
+        self.assertEqual(tree._length_to((0, 5)), 5)
+
+    def test_path_line(self):
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(10, 0),
+                                   QtCore.QPointF(10, 10),
+                                   QtCore.QPointF(20, 10)])
+        tree._set_tree(tree._reroot(tree._tree, (10, 0)))
+
+        self.assertEqual(tree._length_to((0, 0)), 10)
+        self.assertEqual(tree._length_to((10, 0)), 0)
+        self.assertEqual(tree._length_to((5, 0)), 5)
+
+        self.assertEqual(tree._length_to((10, 10)), 10)
+        self.assertEqual(tree._length_to((10, 5)), 5)
+
+        self.assertEqual(tree._length_to((20, 10)), 20)
+        self.assertEqual(tree._length_to((15, 10)), 15)
+
+    def test_merged_tree(self):
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(20, 0)])
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(10, 0),
+                                            QtCore.QPointF(10, 10)]))
+        tree._set_tree(tree._reroot(tree._tree, (0, 0)))
+
+        self.assertEqual(tree._length_to((0, 0)), 0)
+        self.assertEqual(tree._length_to((10, 0)), 10)
+        self.assertEqual(tree._length_to((5, 0)), 5)
+
+        self.assertEqual(tree._length_to((20, 0)), 20)
+        self.assertEqual(tree._length_to((15, 0)), 15)
+
+        self.assertEqual(tree._length_to((10, 10)), 20)
+        self.assertEqual(tree._length_to((10, 5)), 15)
+
+    def test_nonexisting_tree(self):
+        tree = linetree_from_path([QtCore.QPointF(0, 0),
+                                   QtCore.QPointF(20, 0)])
+        tree.merge_tree(linetree_from_path([QtCore.QPointF(10, 0),
+                                            QtCore.QPointF(10, 10)]))
+        tree._set_tree(tree._reroot(tree._tree, (0, 0)))
+
+        self.assertRaises(Exception, tree._length_to, (20, 20))

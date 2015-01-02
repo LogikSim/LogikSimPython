@@ -23,6 +23,8 @@ class LineTree(InsertableItem):
 
     _debug_painting = False
 
+    _delay_per_gridpoint = 1
+
     def __init__(self, parent, metadata):
         """
         Defines a tree of connected lines.
@@ -89,20 +91,37 @@ class LineTree(InsertableItem):
         """
         Set new tree and updates internal storage.
 
-        Call this function whenever changing the line tree.
+        Always use this function, rather than assigning to self._tree.
         """
-        # update internals
         self._tree = tree
-        self._update_data_structures()
-        self._update_edge_indicators()
-        self._update_shape()
-        self._update_connections()
+        self._update_tree()
 
         # TODO: create undo event
         pass
 
         # notify backend
         self._notify_backend({'tree': tree})
+
+    def _update_tree(self):
+        """
+        Updates internal storage.
+
+        Call this whenever added or removed from scene or self._tree
+        changes or registration status changes.
+        """
+        # re-root necessary?
+        if self.scene() is not None:
+            re_tree = self._reroot_to_possible_input(self._tree)
+            if re_tree != self._tree:
+                self._set_tree(re_tree)
+                return
+
+        # okay, then update internals
+        self._update_data_structures()
+        self._update_edge_indicators()
+        self._update_shape()
+        if self.is_registered() and self.scene() is not None:
+            self._update_connections()
 
     def _update_data_structures(self):
         """
@@ -111,24 +130,10 @@ class LineTree(InsertableItem):
         Like lines, edges that are derived from self._tree.
         """
         # collect all lines
-        def iter_lines(tree, origin=None):
-            for destination, children in tree.items():
-                if origin is not None:
-                    yield QtCore.QLineF(QtCore.QPointF(*origin),
-                                        QtCore.QPointF(*destination))
-                for line in iter_lines(children, destination):
-                    yield line
-
-        self._lines = list(iter_lines(self._tree))
+        self._lines = list(self._iter_lines(self._tree))
 
         # collect all edges
-        def iter_edges_as_tuple(tree):
-            for point, children in tree.items():
-                yield point
-                for edge in iter_edges_as_tuple(children):
-                    yield edge
-
-        self._edges = set(iter_edges_as_tuple(self._tree))
+        self._edges = set(self._iter_edges(self._tree))
 
     def _update_edge_indicators(self):
         # delete old
@@ -164,21 +169,11 @@ class LineTree(InsertableItem):
         self._shape = shape_path
         self._rect = bounding_rect
 
-    def _get_root(self):
-        """returns root of tree"""
-        keys = list(self._tree.keys())
-        if len(keys) == 0:
-            return None
-        else: return keys[0]
-
     def _update_connections(self):
         """
         Updates connections to Connectors.
         """
         # TODO: call when position changes
-
-        if not self.is_registered():
-            return
 
         # Disconnect connectors
         if self._connected_input is not None:
@@ -190,49 +185,138 @@ class LineTree(InsertableItem):
         self._input_connectors = []
 
         # Collect all ConnectorItems
-        con_items = set()
-        if self.scene() is not None:
-            for line in self._lines:
-                l_bounding_rect = self._line_to_col_rect(line)
-                for item in self.scene().items(l_bounding_rect):
-                    if isinstance(item, ConnectorItem) and \
-                            l_bounding_rect.contains(item.anchorPoint()):
-                        con_items.add(item)
+        con_items = self._get_all_colliding_connectors(self._tree)
 
         # Connect input
         for con_item in con_items:
             if not con_item.is_input():
-                # tell other item to connect to us
-                if con_item.connect(self):
+                if con_item.is_registered():
+                    # tell other item to connect to us
                     assert self._connected_input is None, \
                         'only one output can drive the line-trees'
+                    con_item.connect(self)
                     self._connected_input = con_item
-                    # make sure input is root of the tree
-                    new_root = con_item.anchorPoint().toTuple()
-                    if new_root != self._get_root():
-                        if new_root not in self._edges:
-                            tree = self._split_line_of_tree(self._tree,
-                                                            new_root)
-                        else:
-                            tree = self._tree
-                        new_tree = self._reroot(tree, new_root)
-                        # TODO: with disabled_undo?
-                        self._set_tree(new_tree)
 
         # Connect output
         for con_item in con_items:
             if con_item.is_input():
                 # setup connection in backend
+                delay = self._length_to(con_item.anchorPoint().toTuple()) * \
+                    self._delay_per_gridpoint / self.scene().get_grid_spacing()
                 if con_item.is_registered():
                     self.scene().interface().connect(
                         self.id(), len(self._connected_outputs),
-                        con_item.id(), con_item.index())
+                        con_item.id(), con_item.index(), delay)
                     self._connected_outputs.append(con_item)
+
+    def _iter_lines(self, tree, __origin=None):
+        """
+        Iterator over all lines in the given tree.
+
+        :param tree: given tree
+        :return: list of QLineF
+
+        Note: __origin is for internal use only!
+        """
+        for destination, children in tree.items():
+            if __origin is not None:
+                yield QtCore.QLineF(QtCore.QPointF(*__origin),
+                                    QtCore.QPointF(*destination))
+            for line in self._iter_lines(children, destination):
+                yield line
+
+    def _iter_edges(self, tree):
+        """
+        Iterator over all edges in the given tree.
+
+        :param tree: given tree
+        """
+        for point, children in tree.items():
+            yield point
+            for edge in self._iter_edges(children):
+                yield edge
+
+    def _get_root(self, tree):
+        """Returns root of given tree"""
+        if len(tree) == 0:
+            return None
+        else:
+            return list(self._tree.keys())[0]
+
+    def _get_all_colliding_connectors(self, tree):
+        """Return all colliding connectors."""
+        con_items = set()
+        for line in self._iter_lines(tree):
+            l_bounding_rect = self._line_to_col_rect(line)
+            for item in self.scene().items(l_bounding_rect):
+                if isinstance(item, ConnectorItem) and \
+                        l_bounding_rect.contains(item.anchorPoint()):
+                    con_items.add(item)
+        return list(con_items)
+
+    def _reroot_to_possible_input(self, tree):
+        """
+        Re-roots tree to possible input.
+
+        :return: Changed tree
+        """
+        tree = copy.deepcopy(tree)
+
+        # Connect input
+        for con_item in self._get_all_colliding_connectors(tree):
+            if not con_item.is_input() and con_item.is_registered():
+                # make sure input is root of the tree
+                new_root = con_item.anchorPoint().toTuple()
+                print(new_root, self._get_root(tree))
+                if new_root != self._get_root(tree):
+                    if new_root not in self._iter_edges(tree):
+                        tree = self._split_line_of_tree(self._tree, new_root)
+                    print("re-root to", new_root)
+                    return self._reroot(tree, new_root)
+        return tree
+
+    def _length_to(self, point):
+        """
+        Get delay from root to given point of tree.
+
+        :param point: destination point as tuple
+        """
+        found = False
+
+        def iter_lines(tree, origin=None):
+            nonlocal found
+            for destination, children in tree.items():
+                if origin is not None:
+                    if origin[1] == destination[1]:  # horizontal line?
+                        index = 0
+                    else:
+                        index = 1
+                    length = (destination[index] - origin[index])
+                    # point on same straight?
+                    if point[not index] == origin[not index]:
+                        delta = (point[index] - origin[index])
+                        # point on line?
+                        if 0 <= delta <= length or length <= delta <= 0:
+                            found = True
+                            return abs(delta)
+                else:
+                    length = 0
+                res = length + iter_lines(children, destination)
+                if found:
+                    return res
+            return 0
+
+        res = iter_lines(self._tree)
+        if not found:
+            raise Exception("point is not part of tree")
+        return res
 
     @staticmethod
     def _reroot(tree, new_root):
         """Reroot the tree with given new root."""
         tree = copy.deepcopy(tree)
+        if len(tree) == 0 or new_root == list(tree.keys())[0]:
+            return tree
 
         def helper(tree):
             for node, children in tree.items():
@@ -379,16 +463,17 @@ class LineTree(InsertableItem):
 
     def on_registration_status_changed(self):
         """Called when registration status changed."""
-        self._update_connections()
+        if not self.is_registered():
+            self._connected_input = None
+            self._connected_outputs = []
+        self._update_tree()
 
     def itemChange(self, change, value):
-        res = super().itemChange(change, value)
-
         # update connections on scene change
         if change is QtGui.QGraphicsItem.ItemSceneHasChanged:
-            self._update_connections()
+            self._update_tree()
 
-        return res
+        return super().itemChange(change, value)
 
     def paint(self, painter, option, widget=None):
         # draw lines

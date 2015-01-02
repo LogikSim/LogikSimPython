@@ -63,7 +63,7 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         metadata.setdefault('x', 0)
         metadata.setdefault('y', 0)
 
-        self.log = getLogger(__name__)
+        self.log = getLogger(type(self).__name__)
 
         # self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)

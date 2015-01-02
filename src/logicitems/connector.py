@@ -64,15 +64,18 @@ class ConnectorItem(ItemBase):
         return self._line.length() == self.scene().get_grid_spacing()
 
     def connect(self, linetree):
-        """Connect output to linetree and returns True on success."""
+        """
+        Connect output to linetree.
+
+        Only registred outputs can be connected, otherwise an Exception
+        is thrown.
+        """
         if not self.is_registered():
-            return False
+            raise Exception("Item not registered")
 
         # setup connection in backend
         self.scene().interface().connect(
             self.id(), self.index(), linetree.id(), 0)
-
-        return True
 
     def disconnect(self):
         """Disconnect connected output to linetree."""

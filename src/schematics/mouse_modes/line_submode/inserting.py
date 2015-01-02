@@ -278,11 +278,12 @@ class LineRouteBetweenPoints:
         if not self._is_temp_inserted:
             self.do_temp_insert()
 
-        # unset temporary flag
-        self._new_line_tree.set_temporary(False)
         # remove merged line trees
         for linetree in self._merged_line_trees:
             self.scene.removeItem(linetree)
+        # unset temporary flag
+        self._new_line_tree.set_temporary(False)
+
         self._is_inserted = True
 
     def undo_insert(self):
