@@ -15,7 +15,7 @@ from .itembase import ItemBase
 
 
 class ConnectorItem(ItemBase):
-    def __init__(self, parent, start, anchor, is_input):
+    def __init__(self, parent, start, anchor, is_input, index):
         """
         anchor is the position, at which lines can connect to
         """
@@ -23,6 +23,7 @@ class ConnectorItem(ItemBase):
 
         self._line = QtCore.QLineF(start, anchor)
         self._is_input = is_input
+        self._index = index
 
         self._bounding_rect_valid = False
         self._bounding_rect = None
@@ -31,15 +32,53 @@ class ConnectorItem(ItemBase):
         self.prepareGeometryChange()
         self._bounding_rect_valid = False
 
+    def toggle(self):
+        """Toggle input signal."""
+        if not self.is_input():
+            raise Exception("Can only toggle inputs.")
+        print("toggle")
+
     def is_input(self):
         """Returns True if connector is an input."""
         return self._is_input
+
+    def index(self):
+        """Returns index of connector port."""
+        return self._index
+
+    def id(self):
+        """Returns backend id of connector."""
+        return self.parentItem().id()
+
+    def is_registered(self):
+        """Returns true if connector is registered in backend."""
+        return self.parentItem().is_registered()
 
     def is_valid(self):
         """Returns True if connector has valid shape."""
         if self.scene() is None:
             return False
         return self._line.length() == self.scene().get_grid_spacing()
+
+    def connect(self, linetree):
+        """Connect output to linetree and returns True on success."""
+        if not self.is_registered():
+            return False
+
+        # setup connection in backend
+        self.scene().interface().connect(
+            self.id(), self.index(), linetree.id(), 0)
+
+        return True
+
+    def disconnect(self, linetree):
+        """Disconnect connected output to linetree."""
+        if not self.is_registered():
+            return
+
+        # disconect connection in backend
+        self.scene().interface().disconnect(
+            self.id(), self.index(), linetree.id(), 0)
 
     def anchorPoint(self):
         """Returns position where lines can connect to."""

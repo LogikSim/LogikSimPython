@@ -16,7 +16,8 @@ from . import grid_scene
 class EditSchematicView(mouse_modes.SelectItemsMode,
                         mouse_modes.InsertItemMode,
                         mouse_modes.InsertLineMode,
-                        mouse_modes.InsertConnectorMode):
+                        mouse_modes.InsertConnectorMode,
+                        mouse_modes.TriggerEdgeMode):
     """Combines all mouse modes to edit schematics."""
 
     def __init__(self, *args, **kargs):

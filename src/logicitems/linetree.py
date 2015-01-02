@@ -178,10 +178,8 @@ class LineTree(InsertableItem):
         self._connected_input = None
 
         for i, con_item in enumerate(self._connected_outputs):
-            parent = con_item.parentItem()
-            parent_index = parent.get_input_index(con_item)
             self.scene().interface().disconnect(
-                self.id(), i, parent, parent_index)
+                self.id(), i, con_item.id(), con_item.index())
         self._input_connectors = []
 
         # Collect all ConnectorItems
@@ -198,20 +196,17 @@ class LineTree(InsertableItem):
         for con_item in con_items:
             if con_item.is_input():
                 # setup connection in backend
-                parent = con_item.parentItem()
-                parent_index = parent.get_input_index(con_item)
-                if parent.is_registered():
+                if con_item.is_registered():
                     self.scene().interface().connect(
                         self.id(), len(self._connected_outputs),
-                        parent.id(), parent_index)
+                        con_item.id(), con_item.index())
                     self._connected_outputs.append(con_item)
             else:
                 # tell other item to connect to us
-                assert self._connected_input is None, \
-                    'only one output can drive the line-trees'
-                if con_item.parentItem().connect(self):
+                if con_item.connect(self):
+                    assert self._connected_input is None, \
+                        'only one output can drive the line-trees'
                     self._connected_input = con_item
-
 
     @staticmethod
     def _reroot(tree, new_root):

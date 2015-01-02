@@ -43,7 +43,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.tool_logic.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F2))
         self.tool_connector = self.tool_actions.addAction(
             QtGui.QIcon(":/resources/or.png"),
-            self.tr("Insert Connectors (F3)"))
+            self.tr("Trigger Edge (F3)"))
         self.tool_connector.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F3))
         self.tool_lines = self.tool_actions.addAction(
             QtGui.QIcon(":/resources/xor.png"),
@@ -140,7 +140,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         elif action == self.tool_logic:
             self._view.setMouseMode(schematics.mouse_modes.InsertItemMode)
         elif action == self.tool_connector:
-            self._view.setMouseMode(schematics.mouse_modes.InsertConnectorMode)
+            self._view.setMouseMode(schematics.mouse_modes.TriggerEdgeMode)
         elif action == self.tool_lines:
             self._view.setMouseMode(schematics.mouse_modes.InsertLineMode)
         else:

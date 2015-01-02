@@ -13,6 +13,7 @@ from .insert_connector import InsertConnectorMode
 from .insert_item import InsertItemMode
 from .insert_line import InsertLineMode
 from .select_items import SelectItemsMode
+from .trigger_edge import TriggerEdgeMode
 
 __all__ = ('InsertConnectorMode', 'InsertItemMode', 'InsertLineMode',
-           'SelectItemsMode')
+           'SelectItemsMode', 'TriggerEdgeMode')
