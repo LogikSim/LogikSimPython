@@ -32,23 +32,35 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
         self._inputs = []
         self._outputs = []
 
+    def _get_colliding_output(self, item):
+        for con_item in self._outputs:
+            if item.contains(con_item.anchorPoint()):
+                return con_item
+        raise Exception("No output found to connect to item {}".format(item))
+
     def connect(self, linetree):
         """Connect output to linetree and returns True on success."""
         if not self.is_registered():
             return False
 
-        for con_item in self._outputs:
-            if linetree.contains(con_item.anchorPoint()):
-                break
-        else:
-            raise Exception("No output found to connect to linetree.")
 
+        out_index = self._outputs.index(self._get_colliding_output(linetree))
         # setup connection in backend
-        out_index = self._outputs.index(con_item)
         self.scene().interface().connect(
             self.id(), out_index, linetree.id(), 0)
 
         return True
+
+    def disconnect(self, linetree):
+        """Disconnect connected output to linetree."""
+        if not self.is_registered():
+            return
+
+        out_index = self._outputs.index(self._get_colliding_output(linetree))
+        # disconect connection in backend
+        self.scene().interface().disconnect(
+            self.id(), out_index, linetree.id(), 0)
+
 
     def get_input_index(self, connector):
         """Get index of input connector."""

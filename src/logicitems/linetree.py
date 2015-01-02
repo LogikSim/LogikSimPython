@@ -47,8 +47,8 @@ class LineTree(InsertableItem):
         self._shape = None  # shape path
         self._rect = None  # bounding rect
         self._edge_indicators = []  # list of LineEdgeIndicators
-        self._output_connector = None  # connected ConnectorItem
-        self._input_connectors = None  # list of connected ConnectorItems
+        self._connected_input = None  # connected ConnectorItem
+        self._connected_outputs = []  # list of connected ConnectorItems
 
         super().__init__(parent, metadata)
 
@@ -172,8 +172,16 @@ class LineTree(InsertableItem):
         if not self.is_registered():
             return
 
-        # TODO: disconnect output connector
-        self._output_connector = None
+        # Disconnect connectors
+        if self._connected_input is not None:
+            self._connected_input.parentItem().disconnect(self)
+        self._connected_input = None
+
+        for i, con_item in enumerate(self._connected_outputs):
+            parent = con_item.parentItem()
+            parent_index = parent.get_input_index(con_item)
+            self.scene().interface().disconnect(
+                self.id(), i, parent, parent_index)
         self._input_connectors = []
 
         # Collect all ConnectorItems
@@ -191,18 +199,18 @@ class LineTree(InsertableItem):
             if con_item.is_input():
                 # setup connection in backend
                 parent = con_item.parentItem()
-                index = parent.get_input_index(con_item)
+                parent_index = parent.get_input_index(con_item)
                 if parent.is_registered():
                     self.scene().interface().connect(
-                        self.id(), len(self._input_connectors),
-                        parent.id(), index)
-                    self._input_connectors.append(con_item)
+                        self.id(), len(self._connected_outputs),
+                        parent.id(), parent_index)
+                    self._connected_outputs.append(con_item)
             else:
                 # tell other item to connect to us
-                assert self._output_connector is None, \
+                assert self._connected_input is None, \
                     'only one output can drive the line-trees'
                 if con_item.parentItem().connect(self):
-                    self._output_connector = con_item
+                    self._connected_input = con_item
 
 
     @staticmethod
@@ -358,11 +366,14 @@ class LineTree(InsertableItem):
         self._update_connections()
 
     def itemChange(self, change, value):
+        res = super().itemChange(change, value)
+
         # update connections on scene change
         if change is QtGui.QGraphicsItem.ItemSceneHasChanged:
             self._update_connections()
 
-        return super().itemChange(change, value)
+        return res
+
 
     def paint(self, painter, option, widget=None):
         # draw lines
