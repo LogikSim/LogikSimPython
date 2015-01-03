@@ -166,7 +166,7 @@ class StateLineItem(ItemBase):
             self._logic_states = self._logic_states[i:]
 
         # connect to timer, if there are still relevant states
-        if len(self._logic_states) > 0 and \
+        if self._animate_lines and len(self._logic_states) > 1 and \
                 (clock - self._logic_states[-1][0]) < longest_delay:
             # self._update_paint.start()
             self.request_paint()
