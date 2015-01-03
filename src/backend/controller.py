@@ -253,11 +253,10 @@ class Controller(ComponentRoot):
                               command['source_port'],
                               command['sink_port'],
                               command['delay']):
-            self.log.warning("Failed to connect %d port %d to %d port %d",
-                             command['source_id'],
-                             command['source_port'],
-                             command['sink_id'],
-                             command['sink_port'])
+            # TODO: proper exception handling
+            raise Exception("Failed to connect %d port %d to %d port %d" % (
+                command['source_id'], command['source_port'],
+                command['sink_id'], command['sink_port']))
             return
 
         self.log.info("Connected %d port %d to %d port %d (delay %d)",
@@ -269,7 +268,10 @@ class Controller(ComponentRoot):
 
     def _on_disconnect(self, command):
         source = self.elements[command['source_id']]
-        source.disconnect(command['source_port'])
+        if not source.disconnect(command['source_port']):
+            # TODO: proper exception handling
+            raise Exception("Failed to disconnect %d port %d" % (
+                command['source_id'], command['source_port']))
 
         self.log.info("Disconnected port %d of %d",
                       command['source_id'],

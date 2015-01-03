@@ -34,6 +34,7 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
         QtGui.QGraphicsLayoutItem.__init__(self, parent)
 
     def apply_update(self, metadata):
+        # input / output states
         input_states = metadata.get('input-states', None)
         if input_states is not None:
             for input_con, state in zip(self._inputs, input_states):
@@ -43,6 +44,17 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
         if output_states is not None:
             for output_con, state in zip(self._outputs, output_states):
                 output_con.update_metadata_state(state)
+
+        # connection information
+        inputs = metadata.get('inputs', None)
+        if inputs is not None:
+            for input_con, con_data in zip(self._inputs, inputs):
+                input_con.update_metadata_connection(con_data)
+
+        outputs = metadata.get('outputs', None)
+        if outputs is not None:
+            for output_con, con_data in zip(self._outputs, outputs):
+                output_con.update_metadata_connection(con_data)
 
     def setGeometry(self, rect):
         scene_offset = self.mapToScene(self.selectionRect().topLeft()) - \

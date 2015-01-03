@@ -33,20 +33,41 @@ class ConnectorItem(StateLineItem):
         self._bounding_rect_valid = False
         self._bounding_rect = None
 
-        self._delay = self._get_delay(end)
-        self._anchor_delay = self._get_delay(anchor)
+        # delay of connector given by backend
+        self._delay = 0
 
     def update_metadata_state(self, state):
         """
-        Called by parent item to propagate metadata update.
+        Called by parent item to propagate metadata updates.
 
         Instead of the full metadata only the logic state of
-        the specific input is propagated.
+        the specific connector is propagated.
         """
         self.set_logic_state(state)
 
-    def _get_delay(self, pos):
-        return abs((pos - self._start).manhattanLength() *
+    def update_metadata_connection(self, connection_data):
+        """
+        Called by parent item to propagate metadata updates.
+
+        Instead of the full metadata only the connection data
+        of the specific connector is propagated.
+        """
+        if self.is_input():
+            dst_id, _ = connection_data
+            con_delay = self.visual_delay()
+        else:
+            dst_id, _, con_delay = connection_data
+
+        self._is_connected = dst_id is not None
+        self._delay = con_delay
+        self.set_animate_lines(self._is_connected)
+        self.request_paint()
+
+    def visual_delay(self):
+        """Get delay based on visual extend of the connector."""
+        if self.scene() is None:
+            return 0
+        return abs((self._end - self._start).manhattanLength() *
                    self._delay_per_gridpoint / self.scene().get_grid_spacing())
 
     def _invalidate_bounding_rect(self):
@@ -84,40 +105,27 @@ class ConnectorItem(StateLineItem):
             return False
         return True
 
-    def delay(self):
-        return self._delay
-
-    def connect(self, linetree):
+    def connect(self, item):
         """
-        Connect output to linetree.
+        Connect output to item.
 
         Only registred outputs can be connected, otherwise an Exception
         is thrown.
         """
-#        assert not self._is_connected
-        # TODO: fix assert
         if not self.is_registered():
             raise Exception("Item not registered")
 
         # setup connection in backend
         self.scene().interface().connect(
-            self.id(), self.index(), linetree.id(), 0, self.delay())
-        self._is_connected = True
-        self.set_animate_lines(True)
-        # TODO: disable line animation on disconnect
-        self.request_paint()
+            self.id(), self.index(), item.id(), 0, self.visual_delay())
 
     def disconnect(self):
-        """Disconnect connected output to linetree."""
-        # TODO: disconnect from backend
-        assert self._is_connected
+        """Disconnect connected output."""
         if not self.is_registered():
             return
 
-        # disconect connection in backend
+        # disconnect connection in backend
         self.scene().interface().disconnect(self.id(), self.index())
-        self._is_connected = False
-        self.request_paint()
 
     def is_connected(self):
         return self._is_connected
@@ -143,12 +151,8 @@ class ConnectorItem(StateLineItem):
 
         :return: iterator with items of (QLineF, state)
         """
-        if self._is_connected:
-            drawing_end = self._end
-            delay = self._delay
-        else:
-            drawing_end = self._anchor
-            delay = self._anchor_delay
+        drawing_end = self._end if self._is_connected else self._anchor
+        delay = self._delay
 
         yield from self.iter_state_line_segments_helper(
             origin=self._start.toTuple(),

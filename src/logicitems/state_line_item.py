@@ -78,19 +78,16 @@ class StateLineItem(ItemBase):
             to animate child lines (lines attached at this line) by providing
             these values when segmenting each child.
         """
-        current_index = parent_index
-        current_state = parent_state
+        current_state = self.get_last_logic_state() if parent_state is None \
+            else parent_state
+        current_index = len(self._logic_states) - 1 if parent_index is None \
+            else parent_index
 
-        if not self._animate_lines or len(self._logic_states) == 0:
+        if not self._animate_lines or delay == 0 \
+                or len(self._logic_states) == 0:
             yield (QtCore.QLineF(QtCore.QPointF(*origin),
-                                 QtCore.QPointF(*destination)),
-                   self.get_last_logic_state())
+                                 QtCore.QPointF(*destination)), current_state)
         else:
-            if current_state is None:
-                current_state = self.get_last_logic_state()
-            if current_index is None:
-                current_index = len(self._logic_states) - 1
-
             start = origin
             j = is_vertical
             while True:
