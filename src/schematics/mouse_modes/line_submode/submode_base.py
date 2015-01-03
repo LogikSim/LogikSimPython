@@ -27,13 +27,11 @@ class InsertLineSubModeBase(LineSubModeBase):
         super().__init__(*args, **kargs)
         # store start position and new line items while inserting lines
         self._insert_line_start = None
-        self._line_anchor_indicator = None
+        self._line_anchor = None
         # shape used for mouse collision tests while searching for
         # line anchors (must be float!)
         self._mouse_collision_line_radius = 5.
         self._mouse_collision_connector_radius = 10.
-        # used to store anchor in mouseMoveEvent
-        self._mouse_move_anchor = None
 
     def find_nearest_item_at_pos(self, pos, radius, filter_func=None):
         """
@@ -71,11 +69,11 @@ class InsertLineSubModeBase(LineSubModeBase):
         if len(items) > 0:
             return items[0]
 
-    def find_line_anchor_at_view_pos(self, pos, y=None):
+    def get_line_anchor_at_view_pos(self, pos):
         """
         returns nearest anchor to pos in scene coordinates or None
 
-        pos - coordinate in view coordinates
+        :param pos: coordinate in view coordinates
         """
 
         def anchor_filter(item, path, radius):
@@ -90,8 +88,6 @@ class InsertLineSubModeBase(LineSubModeBase):
                     item is not self._inserted_connector:
                 return path.contains(item.anchorPoint())
 
-        if y is not None:
-            pos = QtCore.QPoint(pos, y)
         r_min, r_max = sorted((self._mouse_collision_line_radius,
                                self._mouse_collision_connector_radius))
         # first try to find item on smaller radius
@@ -101,42 +97,48 @@ class InsertLineSubModeBase(LineSubModeBase):
         if item is None:
             item = self.find_nearest_item_at_pos(
                 pos, r_max, functools.partial(anchor_filter, radius=r_max))
-        # find nearest point on line (in scene coordinates)
+        anchor_pos = None
         if isinstance(item, logicitems.LineTree):
+            # find nearest point on line (in scene coordinates)
             scene_pos = self.mapToScene(pos)
-            return item.get_nearest_point(scene_pos)
-        # return anchor point for connectors
-        if isinstance(item, logicitems.ConnectorItem):
-            return item.anchorPoint()
+            anchor_pos = item.get_nearest_point(scene_pos)
+        elif isinstance(item, logicitems.ConnectorItem):
+            # return anchor point for connectors
+            anchor_pos = item.anchorPoint()
+        if anchor_pos is not None:
+            return logicitems.LineAnchorIndicator(anchor_pos, item)
 
-    def setLineAnchorIndicator(self, pos):
+    def update_line_anchor_indicator(self, pos):
         """ pos - scene pos or None """
-        if pos is None:
-            if self._line_anchor_indicator is not None:
-                self.scene().removeItem(self._line_anchor_indicator)
-                self._line_anchor_indicator = None
-        else:
-            if self._line_anchor_indicator is None:
-                # create new
-                item = logicitems.LineAnchorIndicator(pos)
+        # delete old
+        if self._line_anchor is not None:
+            self.scene().removeItem(self._line_anchor)
+            self._line_anchor = None
+        # create new
+        if pos is not None:
+            item = self.get_line_anchor_at_view_pos(pos)
+            if item is not None:
                 self.scene().addItem(item)
-                self._line_anchor_indicator = item
-            else:
-                # move existing
-                self._line_anchor_indicator.setPos(pos)
+                self._line_anchor = item
+
+    def get_line_insertion_point(self, view_pos):
+        """
+        Get position where lines should be inserted.
+
+        Either returns anchor point or given position.
+
+        :param pos: Requested mouse pos for insertion in view coordinates.
+        """
+        if self._line_anchor is not None:
+            return self._line_anchor.get_start_pos()
+        else:
+            return self.mapToSceneGrid(view_pos)
 
     def _do_start_insert_lines(self, view_pos, anchor=None):
-        # find anchor
-        if anchor is None:
-            anchor = self.find_line_anchor_at_view_pos(view_pos)
-        start = self.mapToSceneGrid(view_pos) if anchor is None else anchor
-        # store start position
-        self._insert_line_start = start
+        # TODO: update anchor?
+        self._insert_line_start = self.get_line_insertion_point(view_pos)
 
     @mouse_mode_filtered
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
-
-        self._mouse_move_anchor = \
-            self.find_line_anchor_at_view_pos(event.pos())
-        self.setLineAnchorIndicator(self._mouse_move_anchor)
+        self.update_line_anchor_indicator(event.pos())

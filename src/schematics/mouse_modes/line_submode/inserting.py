@@ -47,11 +47,11 @@ class InsertingLineSubMode(InsertLineSubModeBase):
 
         # left button
         if event.button() is QtCore.Qt.LeftButton:
-            anchor = self.find_line_anchor_at_view_pos(event.pos())
+            self.update_line_anchor_indicator(event.pos())
             self.commit_inserted_temp_line()
             # if there is no anchor, immediately start inserting new lines
-            if anchor is None:
-                self._do_start_insert_lines(event.pos(), anchor)
+            if self._line_anchor is None:
+                self._do_start_insert_lines(event.pos())
             else:  # otherwise stop for now
                 self.setLinesubMode(ReadyToInsertLineSubMode)
         # right button
@@ -62,9 +62,7 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
 
-        gpos = self.mapToSceneGrid(event.pos())
-        anchor = self._mouse_move_anchor
-        end = gpos if anchor is None else anchor
+        end = self.get_line_insertion_point(event.pos())
         start = self._insert_line_start
 
         self._insert_line_start_end = (start, end)
@@ -419,7 +417,7 @@ class GetHightowerObjectAtPoint:
             if isinstance(item, logicitems.LineEdgeIndicator):
                 continue
             elif isinstance(item, logicitems.ConnectorItem) and \
-                    item.anchorPoint() == scene_point and \
+                    item.endPoint() == scene_point and \
                     point in (self.p_start, self.p_end):
                 continue
             elif isinstance(item, logicitems.LineTree):

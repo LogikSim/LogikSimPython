@@ -23,8 +23,6 @@ class LineTree(InsertableItem):
 
     _debug_painting = False
 
-    _delay_per_gridpoint = 1
-
     def __init__(self, parent, metadata):
         """
         Defines a tree of connected lines.
@@ -59,7 +57,7 @@ class LineTree(InsertableItem):
         # timer for updating
         self._update_paint = QtCore.QTimer()
         self._update_paint.timeout.connect(self.do_update_paint)
-        self._update_paint.setInterval(50)
+        self._update_paint.setInterval(40)
         self._update_paint.setSingleShot(True)
 
         super().__init__(parent, metadata)
@@ -99,10 +97,9 @@ class LineTree(InsertableItem):
 
         # collect input value changes   # metadata.get('input-states', None)
         input_states = metadata.get('state', None)
-        if input_states is not None:
-            if self.scene() is not None:
-                self._logic_states.append(((self.scene().registry().clock()),
-                                           input_states))
+        if input_states is not None and self.scene() is not None:
+            self._logic_states.append(((self.scene().registry().clock()),
+                                       input_states))
 
     def _set_tree(self, tree):
         """
@@ -218,7 +215,7 @@ class LineTree(InsertableItem):
         for con_item in con_items:
             if con_item.is_input():
                 # setup connection in backend
-                delay = self._length_to(con_item.anchorPoint().toTuple()) * \
+                delay = self._length_to(con_item.endPoint().toTuple()) * \
                     self._delay_per_gridpoint / self.scene().get_grid_spacing()
                 if con_item.is_registered():
                     self.scene().interface().connect(
@@ -267,7 +264,7 @@ class LineTree(InsertableItem):
             l_bounding_rect = self._line_to_col_rect(line)
             for item in self.scene().items(l_bounding_rect):
                 if isinstance(item, ConnectorItem) and \
-                        l_bounding_rect.contains(item.anchorPoint()):
+                        l_bounding_rect.contains(item.endPoint()):
                     con_items.add(item)
         return list(con_items)
 
@@ -283,12 +280,10 @@ class LineTree(InsertableItem):
         for con_item in self._get_all_colliding_connectors(tree):
             if not con_item.is_input() and con_item.is_registered():
                 # make sure input is root of the tree
-                new_root = con_item.anchorPoint().toTuple()
-                print(new_root, self._get_root(tree))
+                new_root = con_item.endPoint().toTuple()
                 if new_root != self._get_root(tree):
                     if new_root not in self._iter_edges(tree):
                         tree = self._split_line_of_tree(self._tree, new_root)
-                    print("re-root to", new_root)
                     return self._reroot(tree, new_root)
         return tree
 
@@ -550,12 +545,12 @@ class LineTree(InsertableItem):
     # @timeit
     def paint(self, painter, option, widget=None):
         for line, state in self._iter_state_line_segments():
-            if state:
-                painter.setPen(QtGui.QPen(QtCore.Qt.red))
-            else:
-                painter.setPen(QtGui.QPen(QtCore.Qt.black))
+            color = QtCore.Qt.red if state else QtCore.Qt.black
+            painter.setPen(QtGui.QPen(color))
             painter.drawLine(line)
+        # TODO: delete old logic states
 
+        # TODO: stop drawing on steady state
         self._update_paint.start()
 
         # debugging

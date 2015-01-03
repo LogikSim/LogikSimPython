@@ -22,6 +22,9 @@ class ItemBase(QtGui.QGraphicsItem):
     # rounding errors, check with (number).hex() how many digits are taken)
     collision_margin = 2 ** -10
 
+    # Standard delay of signals on the grid
+    _delay_per_gridpoint = 1
+
     class ItemSingleSelectionHasChanged:
         """
         QGraphicsItem.itemChange() notification

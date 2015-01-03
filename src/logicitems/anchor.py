@@ -12,12 +12,15 @@ They are shown during drawing new lines to snap to interesting anchors.
 '''
 
 from PySide import QtGui, QtCore
+from .connector import ConnectorItem
 
 
 class LineAnchorIndicator(QtGui.QGraphicsEllipseItem):
     """ visual effect for line anchors while adding lines """
 
-    def __init__(self, pos):
+    def __init__(self, pos, anchored_item=None):
+        self._anchored_item = anchored_item
+
         radius = 10
         rect = QtCore.QRectF(-radius / 2, -radius / 2, radius, radius)
         QtGui.QGraphicsEllipseItem.__init__(self, rect)
@@ -27,6 +30,12 @@ class LineAnchorIndicator(QtGui.QGraphicsEllipseItem):
         pen = QtGui.QPen(QtCore.Qt.darkGreen)
         pen.setWidthF(1.2)
         self.setPen(pen)
+
+    def get_start_pos(self):
+        if isinstance(self._anchored_item, ConnectorItem):
+            return self._anchored_item.endPoint()
+        else:
+            return self.pos()
 
     def paint(self, painter, options, widget):
         painter.setRenderHint(QtGui.QPainter.Antialiasing)

@@ -44,7 +44,7 @@ class InsertLineMode(ReadyToInsertLineSubMode,
     def mouse_leave(self):
         super().linesub_leave()
         # cleanup InsertLine
-        self.setLineAnchorIndicator(None)
+        self.update_line_anchor_indicator(None)
         self.setLinesubMode(None)
 
     @mouse_mode_filtered

@@ -90,8 +90,9 @@ class ResizableItem(logicitems.LogicItem):
         for i in range(self._input_count):
             con = logicitems.ConnectorItem(
                 parent=self,
-                start=QtCore.QPointF(0, scale * (i)),
-                anchor=QtCore.QPointF(-scale, scale * (i)),
+                start=QtCore.QPointF(0, scale * i),
+                anchor=QtCore.QPointF(-0.5 * scale, scale * i),
+                end=QtCore.QPointF(-scale, scale * i),
                 is_input=True,
                 index=i)
             self._inputs.append(con)
@@ -99,8 +100,9 @@ class ResizableItem(logicitems.LogicItem):
         mid_point = int((self._input_count - 1) / 2)
         con = logicitems.ConnectorItem(
             parent=self,
-            start=QtCore.QPointF(2 * scale, scale * (mid_point)),
-            anchor=QtCore.QPointF(3 * scale, scale * (mid_point)),
+            start=QtCore.QPointF(2 * scale, scale * mid_point),
+            anchor=QtCore.QPointF(2.5 * scale, scale * mid_point),
+            end=QtCore.QPointF(3 * scale, scale * mid_point),
             is_input=False,
             index=0)
         self._outputs.append(con)
