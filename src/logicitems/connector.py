@@ -9,12 +9,12 @@
 Connectors of Logic Items where lines be attached.
 '''
 
-from PySide import QtGui, QtCore
+from PySide import QtCore
 
-from .itembase import ItemBase
+from .state_line_item import StateLineItem
 
 
-class ConnectorItem(ItemBase):
+class ConnectorItem(StateLineItem):
     def __init__(self, parent, start, anchor, end, is_input, index):
         """
         anchor is the position, at which lines can connect to
@@ -33,17 +33,12 @@ class ConnectorItem(ItemBase):
         self._bounding_rect_valid = False
         self._bounding_rect = None
 
-        # contains last logic states with entries (sim_time, value)
+        # input logic state
         self._input_state = False
-        self._logic_states = []
+        # TODO: also set this by backend update
+
         self._delay = self._get_delay(end)
         self._anchor_delay = self._get_delay(anchor)
-
-        # timer for updating
-        self._update_paint = QtCore.QTimer()
-        self._update_paint.timeout.connect(self.do_update_paint)
-        self._update_paint.setInterval(40)
-        self._update_paint.setSingleShot(True)
 
     def _get_delay(self, pos):
         return abs((pos - self._start).manhattanLength() * \
@@ -61,9 +56,7 @@ class ConnectorItem(ItemBase):
             self._input_state = not self._input_state
             self.scene().interface().schedule_edge(self.id(), self.index(),
                                                    self._input_state, 0)
-            print(self._input_state)
-            # TODO: update
-
+            self.update()
 
     def is_input(self):
         """Returns True if connector is an input."""
@@ -97,7 +90,8 @@ class ConnectorItem(ItemBase):
         Only registred outputs can be connected, otherwise an Exception
         is thrown.
         """
-        assert not self._is_connected
+#        assert not self._is_connected
+        # TODO: fix assert
         if not self.is_registered():
             raise Exception("Item not registered")
 
@@ -118,10 +112,8 @@ class ConnectorItem(ItemBase):
         self._is_connected = False
         self.update()
 
-    def set_logic_state(self, state):
-        if self.scene() is not None:
-            self._logic_states.append(((self.scene().registry().clock()),
-                                        state))
+    def is_connected(self):
+        return self._is_connected
 
     def anchorPoint(self):
         """Returns where AnchorItems should be drawn at."""
@@ -138,7 +130,14 @@ class ConnectorItem(ItemBase):
             self._bounding_rect_valid = True
         return self._bounding_rect
 
-    def _iter_state_line_segments(self):
+    def get_last_logic_state(self):
+        """Overrides StateLineItem.get_last_logic_state"""
+        if self._is_input:
+            return self._input_state
+        else:
+            return super().get_last_logic_state()
+
+    def iter_state_line_segments(self):
         """
         Returns iterator of line segments with state information.
 
@@ -151,54 +150,9 @@ class ConnectorItem(ItemBase):
             drawing_end = self._anchor
             delay = self._anchor_delay
 
-        if len(self._logic_states) == 0 or self._is_input:
-            yield (QtCore.QLineF(self._start, drawing_end), self._input_state)
-            return
-
-        clock = self.scene().registry().clock()
-        origin = self._start.toTuple()
-        destination = drawing_end.toTuple()
-
-        next_index = len(self._logic_states) - 1
-        current_state = self._logic_states[next_index][1]
-
-        start = origin
-        while True:
-            if next_index >= 0:
-                state_clock, state = self._logic_states[next_index]
-                delta = clock - state_clock
-            else:
-                state = current_state
-                delta = delay
-
-            if delta > 0:  # it has finite length --> visible
-                end = list(destination)
-                if delta < delay:
-                    end[0] = (origin[0] + delta / delay *
-                              (destination[0] - origin[0]))
-                yield QtCore.QLineF(QtCore.QPointF(*start),
-                                    QtCore.QPointF(*end)), state
-
-                start = end
-
-            if delta >= delay:  # we are at the end of line
-                break
-
-            current_state = state
-            next_index -= 1
-
-    def do_update_paint(self):
-        # redraw
-        QtGui.QGraphicsItem.update(self)
-
-    def paint(self, painter, option, widget=None):
-        # TODO: merge paint logic of Connector and LineTree in new class
-
-        for line, state in self._iter_state_line_segments():
-            color = QtCore.Qt.red if state else QtCore.Qt.black
-            painter.setPen(QtGui.QPen(color))
-            painter.drawLine(line)
-        # TODO: delete old logic states
-
-        # TODO: stop drawing on steady state
-        self._update_paint.start()
+        yield from self.iter_state_line_segments_helper(
+                origin=self._start.toTuple(),
+                destination=drawing_end.toTuple(),
+                delay=delay,
+                clock=self.scene().registry().clock(),
+                is_vertical=False)

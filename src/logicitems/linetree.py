@@ -16,9 +16,10 @@ from PySide import QtGui, QtCore
 from .insertable_item import InsertableItem
 from .line_edge_indicator import LineEdgeIndicator
 from .connector import ConnectorItem
+from .state_line_item import StateLineItem
 
 
-class LineTree(InsertableItem):
+class LineTree(InsertableItem, StateLineItem):
     """ A tree of connected lines """
 
     _debug_painting = False
@@ -50,15 +51,6 @@ class LineTree(InsertableItem):
 
         self._connected_input = None  # connected ConnectorItem
         self._connected_outputs = []  # list of connected ConnectorItems
-
-        # contains last logic states with entries (sim_time, value)
-        self._logic_states = []
-
-        # timer for updating
-        self._update_paint = QtCore.QTimer()
-        self._update_paint.timeout.connect(self.do_update_paint)
-        self._update_paint.setInterval(40)
-        self._update_paint.setSingleShot(True)
 
         super().__init__(parent, metadata)
 
@@ -97,9 +89,8 @@ class LineTree(InsertableItem):
 
         # collect input value changes   # metadata.get('input-states', None)
         input_states = metadata.get('state', None)
-        if input_states is not None and self.scene() is not None:
-            self._logic_states.append(((self.scene().registry().clock()),
-                                       input_states))
+        if input_states is not None:
+            self.set_logic_state(input_states)
 
     def _set_tree(self, tree):
         """
@@ -159,8 +150,7 @@ class LineTree(InsertableItem):
             for point, children in tree.items():
                 if len(children) >= (3 if root else 2):
                     yield LineEdgeIndicator(self, QtCore.QPointF(*point))
-                for indicator in iter_edge_indicators(children, False):
-                    yield indicator
+                yield from iter_edge_indicators(children, False)
 
         self._edge_indicators = list(iter_edge_indicators(self._tree))
 
@@ -236,8 +226,7 @@ class LineTree(InsertableItem):
             if __origin is not None:
                 yield QtCore.QLineF(QtCore.QPointF(*__origin),
                                     QtCore.QPointF(*destination))
-            for line in self._iter_lines(children, destination):
-                yield line
+            yield from self._iter_lines(children, destination)
 
     def _iter_edges(self, tree):
         """
@@ -247,8 +236,7 @@ class LineTree(InsertableItem):
         """
         for point, children in tree.items():
             yield point
-            for edge in self._iter_edges(children):
-                yield edge
+            yield from self._iter_edges(children)
 
     def _get_root(self, tree):
         """Returns root of given tree"""
@@ -484,74 +472,38 @@ class LineTree(InsertableItem):
 
         return super().itemChange(change, value)
 
-    def _iter_state_line_segments(self):
+    def iter_state_line_segments(self):
         """
         Returns iterator of line segments with state information.
 
         :return: iterator with items of (QLineF, state)
         """
-        if len(self._logic_states) == 0:
-            return ((line, False) for line in self._lines)
-
         clock = self.scene().registry().clock()
 
-        def iter_segment(tree, current_state, current_index, origin=None,
-                         parent_delay=0):
+        def iter_segment(tree, parent_index=None, parent_state=None,
+                         origin=None, parent_delay=0):
             for destination, children in tree.items():
-                next_index = current_index
                 if origin is not None:
-                    j = origin[0] == destination[0]  # vertical line?
-                    length = (destination[j] - origin[j])
+                    is_vertical = origin[0] == destination[0]
+                    length = (destination[is_vertical] - origin[is_vertical])
                     delay = (abs(length) * self._delay_per_gridpoint /
                              self.scene().get_grid_spacing())
 
-                    start = origin
-                    while True:
-                        if next_index >= 0:
-                            state_clock, state = self._logic_states[next_index]
-                            delta = clock - state_clock - parent_delay
-                        else:
-                            state = current_state
-                            delta = delay
-
-                        if delta > 0:  # it has finite length --> visible
-                            end = list(destination)
-                            if delta < delay:
-                                end[j] = (origin[j] + delta / delay *
-                                          (destination[j] - origin[j]))
-                            yield QtCore.QLineF(QtCore.QPointF(*start),
-                                                QtCore.QPointF(*end)), state
-
-                            start = end
-
-                        if delta >= delay:  # we are at the end of line
-                            break
-
-                        current_state = state
-                        next_index -= 1
+                    next_index, next_state = yield from \
+                        self.iter_state_line_segments_helper(
+                            origin, destination, delay, clock, is_vertical,
+                            parent_delay, parent_index, parent_state)
                 else:
                     delay = 0
-                for item in iter_segment(children, current_state, next_index,
-                                         destination, delay + parent_delay):
-                    yield item
+                    next_index, next_state = parent_index, parent_state
+                yield from iter_segment(children, next_index, next_state,
+                                        destination, delay + parent_delay)
 
-        return iter_segment(self._tree, self._logic_states[-1][1],
-                            len(self._logic_states) - 1)
-
-    def do_update_paint(self):
-        # redraw
-        QtGui.QGraphicsItem.update(self)
+        return iter_segment(self._tree)
 
     # @timeit
     def paint(self, painter, option, widget=None):
-        for line, state in self._iter_state_line_segments():
-            color = QtCore.Qt.red if state else QtCore.Qt.black
-            painter.setPen(QtGui.QPen(color))
-            painter.drawLine(line)
-        # TODO: delete old logic states
-
-        # TODO: stop drawing on steady state
-        self._update_paint.start()
+        super().paint(painter, option, widget)
 
         # debugging
         if self._debug_painting:

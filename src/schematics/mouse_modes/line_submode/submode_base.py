@@ -75,7 +75,6 @@ class InsertLineSubModeBase(LineSubModeBase):
 
         :param pos: coordinate in view coordinates
         """
-
         def anchor_filter(item, path, radius):
             # line items
             if radius <= self._mouse_collision_line_radius and \
@@ -85,7 +84,8 @@ class InsertLineSubModeBase(LineSubModeBase):
             # connector items
             elif radius <= self._mouse_collision_connector_radius and \
                     isinstance(item, logicitems.ConnectorItem) and \
-                    item is not self._inserted_connector:
+                    item is not self._inserted_connector and \
+                    not item.is_connected():
                 return path.contains(item.anchorPoint())
 
         r_min, r_max = sorted((self._mouse_collision_line_radius,
