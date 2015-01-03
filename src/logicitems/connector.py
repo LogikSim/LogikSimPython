@@ -27,18 +27,23 @@ class ConnectorItem(StateLineItem):
         self._is_input = is_input
         self._index = index
 
-        self._logic_state = False
         self._is_connected = False
+        self.set_animate_lines(False)
 
         self._bounding_rect_valid = False
         self._bounding_rect = None
 
-        # input logic state
-        self._input_state = False
-        # TODO: also set this by backend update
-
         self._delay = self._get_delay(end)
         self._anchor_delay = self._get_delay(anchor)
+
+    def update_metadata_state(self, state):
+        """
+        Called by parent item to propagate metadata update.
+
+        Instead of the full metadata only the logic state of
+        the specific input is propagated.
+        """
+        self.set_logic_state(state)
 
     def _get_delay(self, pos):
         return abs((pos - self._start).manhattanLength() *
@@ -53,10 +58,9 @@ class ConnectorItem(StateLineItem):
         if not self.is_input():
             raise Exception("Can only toggle inputs.")
         if not self._is_connected:
-            self._input_state = not self._input_state
-            self.scene().interface().schedule_edge(self.id(), self.index(),
-                                                   self._input_state, 0)
-            self.update()
+            new_state = not self.get_last_logic_state()
+            self.scene().interface().schedule_edge(
+                self.id(), self.index(), new_state, 0)
 
     def is_input(self):
         """Returns True if connector is an input."""
@@ -99,10 +103,13 @@ class ConnectorItem(StateLineItem):
         self.scene().interface().connect(
             self.id(), self.index(), linetree.id(), 0, self.delay())
         self._is_connected = True
-        self.update()
+        self.set_animate_lines(True)
+        # TODO: disable line animation on disconnect
+        self.request_paint()
 
     def disconnect(self):
         """Disconnect connected output to linetree."""
+        # TODO: disconnect from backend
         assert self._is_connected
         if not self.is_registered():
             return
@@ -110,7 +117,7 @@ class ConnectorItem(StateLineItem):
         # disconect connection in backend
         self.scene().interface().disconnect(self.id(), self.index())
         self._is_connected = False
-        self.update()
+        self.request_paint()
 
     def is_connected(self):
         return self._is_connected
@@ -129,13 +136,6 @@ class ConnectorItem(StateLineItem):
             self._bounding_rect = self._line_to_col_rect(line)
             self._bounding_rect_valid = True
         return self._bounding_rect
-
-    def get_last_logic_state(self):
-        """Overrides StateLineItem.get_last_logic_state"""
-        if self._is_input:
-            return self._input_state
-        else:
-            return super().get_last_logic_state()
 
     def iter_state_line_segments(self):
         """

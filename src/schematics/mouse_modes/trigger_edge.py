@@ -30,6 +30,14 @@ class TriggerEdgeMode(GridViewMouseModeBase):
             self._mouse_press_pos = self.mapToSceneGrid(event.pos())
 
     @mouse_mode_filtered
+    def mouseDoubleClickEvent(self, event):
+        super().mouseDoubleClickEvent(event)
+
+        # left button
+        if event.button() is QtCore.Qt.LeftButton:
+            self._mouse_press_pos = self.mapToSceneGrid(event.pos())
+
+    @mouse_mode_filtered
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
 

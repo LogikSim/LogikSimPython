@@ -25,19 +25,32 @@ class StateLineItem(ItemBase):
 
         # contains last logic states with entries (sim_time, value)
         self._logic_states = []
+        self._animate_lines = True
 
         # start timer
         self._update_paint.start()
         self._update_paint_connected = False
 
-    def set_logic_state(self, state):
+    def set_animate_lines(self, on):
+        """
+        If on is True, this item will animate its line.
+
+        Animation is based on logic states provided. If it is off,
+        everything is drawn in with the last logic state.
+
+        It is enabled by default.
+        """
+        self._animate_lines = on
+        self.request_paint()
+
+    def set_logic_state(self, state, clock=None):
+        """Set new logic state with clock information."""
         if self.scene() is not None:
-            self._logic_states.append(
-                (self.scene().registry().clock(), state))
+            self._logic_states.append((self.scene().registry().clock(), state))
             self.request_paint()
 
     def get_last_logic_state(self):
-        """Returns most recent logic state."""
+        """Returns most recent logic state or False."""
         if len(self._logic_states) > 0:
             return self._logic_states[-1][1]
         else:
@@ -68,7 +81,7 @@ class StateLineItem(ItemBase):
         current_index = parent_index
         current_state = parent_state
 
-        if len(self._logic_states) == 0:
+        if not self._animate_lines or len(self._logic_states) == 0:
             yield (QtCore.QLineF(QtCore.QPointF(*origin),
                                  QtCore.QPointF(*destination)),
                    self.get_last_logic_state())
