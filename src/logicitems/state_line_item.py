@@ -19,7 +19,6 @@ from .itembase import ItemBase
 class StateLineItem(ItemBase):
     _update_paint = QtCore.QTimer()
     _update_paint.setInterval(40)
-    _update_paint.setSingleShot(True)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -27,14 +26,15 @@ class StateLineItem(ItemBase):
         # contains last logic states with entries (sim_time, value)
         self._logic_states = []
 
-        # timer for updating
-        self._update_paint.timeout.connect(self.do_update_paint)
+        # start timer
+        self._update_paint.start()
+        self._update_paint_connected = False
 
     def set_logic_state(self, state):
         if self.scene() is not None:
             self._logic_states.append(
                 (self.scene().registry().clock(), state))
-        self._update_paint.start()
+            self.request_paint()
 
     def get_last_logic_state(self):
         """Returns most recent logic state."""
@@ -117,12 +117,18 @@ class StateLineItem(ItemBase):
         """
         raise NotImplementedError
 
+    def request_paint(self):
+        if not self._update_paint_connected:
+            self._update_paint.timeout.connect(self.do_update_paint)
+            self._update_paint_connected = True
+
     def do_update_paint(self):
         # redraw
+        self._update_paint.timeout.disconnect(self.do_update_paint)
+        self._update_paint_connected = False
         QtGui.QGraphicsItem.update(self)
 
     def paint(self, painter, option, widget=None):
-
         # extract longest delay from generator
         def helper():
             nonlocal longest_delay
@@ -146,7 +152,8 @@ class StateLineItem(ItemBase):
         if i > 0:
             self._logic_states = self._logic_states[i:]
 
-        # restart timer, if there are still relevant states
-        if len(self._logic_states) > 1 and \
+        # connect to timer, if there are still relevant states
+        if len(self._logic_states) > 0 and \
                 (clock - self._logic_states[-1][0]) < longest_delay:
-            self._update_paint.start()
+            # self._update_paint.start()
+            self.request_paint()
