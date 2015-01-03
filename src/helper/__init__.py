@@ -5,3 +5,7 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
+
+from .timeit_mod import timeit
+
+__all__ = ('timeit',)

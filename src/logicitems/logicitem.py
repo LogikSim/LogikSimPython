@@ -35,10 +35,10 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
 
     def apply_update(self, metadata):
         # TODO: updates on input
-#        input_states = metadata.get('input-states', None)
-#        if input_states is not None:
-#            for input_con, state in zip(self._inputs, input_states):
-#                input_con.set_logic_state(state)
+        # input_states = metadata.get('input-states', None)
+        # if input_states is not None:
+        #    for input_con, state in zip(self._inputs, input_states):
+        #        input_con.set_logic_state(state)
 
         output_states = metadata.get('output-states', None)
         if output_states is not None:

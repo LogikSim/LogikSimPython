@@ -107,6 +107,10 @@ class ResizableItem(logicitems.LogicItem):
             index=0)
         self._outputs.append(con)
 
+        # setup delay based on #inputs
+        self._notify_backend({'delay': (2 + self._input_count // 2) *
+                              self._delay_per_gridpoint})
+
     def _update_resize_tool_handles(self):
         for handle in self._handles.values():
             handle.setParentItem(None)

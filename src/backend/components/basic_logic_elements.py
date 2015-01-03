@@ -24,7 +24,7 @@ class And(ComponentType):
                 "text": "&",
                 "#inputs": 2,
                 "#outputs": 1,
-                "delay": 2}
+                "delay": 1}
 
     @classmethod
     def instantiate(cls, id, parent, additional_metadata={}):
@@ -50,7 +50,7 @@ class Or(ComponentType):
                 "description": "Or logic gate",
                 "#inputs": 2,
                 "#outputs": 1,
-                "delay": 2}
+                "delay": 1}
 
     @classmethod
     def instantiate(cls, id, parent, additional_metadata={}):
@@ -76,7 +76,7 @@ class Xor(ComponentType):
                 "description": "Xor logic gate",
                 "#inputs": 2,
                 "#outputs": 1,
-                "delay": 2}
+                "delay": 1}
 
     @classmethod
     def instantiate(cls, id, parent, additional_metadata={}):
@@ -101,7 +101,7 @@ class Nand(ComponentType):
                 "description": "Nand logic gate",
                 "#inputs": 2,
                 "#outputs": 1,
-                "delay": 2}
+                "delay": 1}
 
     @classmethod
     def instantiate(cls, element_id, parent, additional_metadata={}):
@@ -126,7 +126,7 @@ class Nor(ComponentType):
                 "description": "Nor logic gate",
                 "#inputs": 2,
                 "#outputs": 1,
-                "delay": 2}
+                "delay": 1}
 
     @classmethod
     def instantiate(cls, id, parent, additional_metadata={}):

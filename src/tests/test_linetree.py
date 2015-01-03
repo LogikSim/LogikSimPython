@@ -592,7 +592,7 @@ class StateLineSegmentationTest(unittest.TestCase):
             [(0, False), (1, True), (2, False), (5, True)],
             curr_clock=5)
 
-        self.assertListEqual(list(tree._iter_state_line_segments()),
+        self.assertListEqual(list(tree.iter_state_line_segments()),
                              [(QtCore.QLineF(0, 0, 3, 0), False),
                               (QtCore.QLineF(3, 0, 4, 0), True),
                               (QtCore.QLineF(4, 0, 5, 0), False),
@@ -602,7 +602,7 @@ class StateLineSegmentationTest(unittest.TestCase):
         tree = get_linetree_with_states({(0, 0): {(10, 0): {}}},
                                         [], curr_clock=0)
 
-        self.assertListEqual(list(tree._iter_state_line_segments()),
+        self.assertListEqual(list(tree.iter_state_line_segments()),
                              [(QtCore.QLineF(0, 0, 10, 0), False)])
 
     def test_horizontal_line_full_simulation(self):
@@ -611,7 +611,7 @@ class StateLineSegmentationTest(unittest.TestCase):
             [(0, False), (3, True), (7, False), (10, True)],
             curr_clock=12)
 
-        self.assertListEqual(list(tree._iter_state_line_segments()),
+        self.assertListEqual(list(tree.iter_state_line_segments()),
                              [(QtCore.QLineF(0, 0, 2, 0), True),
                               (QtCore.QLineF(2, 0, 5, 0), False),
                               (QtCore.QLineF(5, 0, 9, 0), True),
@@ -624,7 +624,7 @@ class StateLineSegmentationTest(unittest.TestCase):
              (14, False), (17, True), (18, False), (21, True)],
             curr_clock=22)
 
-        self.assertListEqual(list(tree._iter_state_line_segments()),
+        self.assertListEqual(list(tree.iter_state_line_segments()),
                              [(QtCore.QLineF(0, 0, 1, 0), True),
                               (QtCore.QLineF(1, 0, 4, 0), False),
                               (QtCore.QLineF(4, 0, 5, 0), True),
@@ -647,7 +647,7 @@ class StateLineSegmentationTest(unittest.TestCase):
                 res.add((line.toTuple(), state))
             return res
 
-        self.assertSetEqual(to_set(tree._iter_state_line_segments()),
+        self.assertSetEqual(to_set(tree.iter_state_line_segments()),
                             to_set([(QtCore.QLineF(0, 0, 5, 0), True),
                                     (QtCore.QLineF(0, 0, 0, 5), True),
                                     (QtCore.QLineF(5, 0, 10, 0), False),

@@ -13,6 +13,7 @@ from PySide import QtGui, QtCore
 
 from .itembase import ItemBase
 
+
 class StateLineItem(ItemBase):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -28,9 +29,9 @@ class StateLineItem(ItemBase):
 
     def set_logic_state(self, state):
         if self.scene() is not None:
-            self._logic_states.append(((self.scene().registry().clock()),
-                                        state))
-        # TODO: update
+            self._logic_states.append(
+                (self.scene().registry().clock(), state))
+        self._update_paint.start()
 
     def get_last_logic_state(self):
         """Returns most recent logic state."""
@@ -61,22 +62,21 @@ class StateLineItem(ItemBase):
             to animate child lines (lines attached at this line) by providing
             these values when segmenting each child.
         """
+        current_index = parent_index
+        current_state = parent_state
+
         if len(self._logic_states) == 0:
             yield (QtCore.QLineF(QtCore.QPointF(*origin),
                                  QtCore.QPointF(*destination)),
                    self.get_last_logic_state())
-            current_index = parent_index
-            current_state = parent_state
         else:
-            if parent_index is None:
-                parent_index = len(self._logic_states) - 1
-            if parent_state is None:
-                parent_state = self.get_last_logic_state()
+            if current_state is None:
+                current_state = self.get_last_logic_state()
+            if current_index is None:
+                current_index = len(self._logic_states) - 1
 
             start = origin
             j = is_vertical
-            current_index = parent_index
-            current_state = parent_state
             while True:
                 if current_index >= 0:
                     state_clock, state = self._logic_states[current_index]
@@ -100,6 +100,7 @@ class StateLineItem(ItemBase):
 
                 current_state = state
                 current_index -= 1
+
         return current_index, current_state
 
     def iter_state_line_segments(self):
@@ -107,6 +108,9 @@ class StateLineItem(ItemBase):
         Iterator over all line segments with specific state.
 
         Implement this function by using iter_state_line_segments_helper.
+        Based on the returned longest delay old logic states are discarded.
+
+        :return: Iterator with line segments. Iterator return: longest delay
         """
         raise NotImplementedError
 
@@ -114,13 +118,31 @@ class StateLineItem(ItemBase):
         # redraw
         QtGui.QGraphicsItem.update(self)
 
-    # @timeit
     def paint(self, painter, option, widget=None):
-        for line, state in self.iter_state_line_segments():
+        # extract longest delay from generator
+        def helper():
+            nonlocal longest_delay
+            longest_delay = yield from self.iter_state_line_segments()
+        longest_delay = 0
+
+        # draw line segments
+        for line, state in helper():
             color = QtCore.Qt.red if state else QtCore.Qt.black
             painter.setPen(QtGui.QPen(color))
             painter.drawLine(line)
-        # TODO: delete old logic states
 
-        # TODO: stop drawing on steady state
-        self._update_paint.start()
+        # delete old logic states
+        clock = self.scene().registry().clock()
+        i = 0
+        for i, (state_clock, state) in enumerate(self._logic_states):
+            delta = clock - state_clock
+            if delta < longest_delay:
+                break
+        i -= 1  # keep one more
+        if i > 0:
+            self._logic_states = self._logic_states[i:]
+
+        # restart timer, if there are still relevant states
+        if len(self._logic_states) > 1 and \
+                (clock - self._logic_states[-1][0]) < longest_delay:
+            self._update_paint.start()

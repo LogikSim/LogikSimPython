@@ -482,6 +482,7 @@ class LineTree(InsertableItem, StateLineItem):
 
         def iter_segment(tree, parent_index=None, parent_state=None,
                          origin=None, parent_delay=0):
+            longest_delay = parent_delay
             for destination, children in tree.items():
                 if origin is not None:
                     is_vertical = origin[0] == destination[0]
@@ -496,9 +497,11 @@ class LineTree(InsertableItem, StateLineItem):
                 else:
                     delay = 0
                     next_index, next_state = parent_index, parent_state
-                yield from iter_segment(children, next_index, next_state,
-                                        destination, delay + parent_delay)
-
+                subdelay = yield from iter_segment(
+                    children, next_index, next_state, destination,
+                    delay + parent_delay)
+                longest_delay = max(longest_delay, subdelay)
+            return longest_delay
         return iter_segment(self._tree)
 
     # @timeit

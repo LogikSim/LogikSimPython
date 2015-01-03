@@ -11,7 +11,7 @@ Creates the inserting lines submode and its baseclass.
 
 import functools
 
-from PySide import QtGui, QtCore
+from PySide import QtGui
 
 from ..modes_base import (GridViewMouseModeBase, mouse_mode_filtered)
 import modes

@@ -41,8 +41,8 @@ class ConnectorItem(StateLineItem):
         self._anchor_delay = self._get_delay(anchor)
 
     def _get_delay(self, pos):
-        return abs((pos - self._start).manhattanLength() * \
-            self._delay_per_gridpoint / self.scene().get_grid_spacing())
+        return abs((pos - self._start).manhattanLength() *
+                   self._delay_per_gridpoint / self.scene().get_grid_spacing())
 
     def _invalidate_bounding_rect(self):
         self.prepareGeometryChange()
@@ -151,8 +151,9 @@ class ConnectorItem(StateLineItem):
             delay = self._anchor_delay
 
         yield from self.iter_state_line_segments_helper(
-                origin=self._start.toTuple(),
-                destination=drawing_end.toTuple(),
-                delay=delay,
-                clock=self.scene().registry().clock(),
-                is_vertical=False)
+            origin=self._start.toTuple(),
+            destination=drawing_end.toTuple(),
+            delay=delay,
+            clock=self.scene().registry().clock(),
+            is_vertical=False)
+        return delay
