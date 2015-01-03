@@ -9,12 +9,18 @@
 Item that provides animated lines of logic states.
 '''
 
+import time
+
 from PySide import QtGui, QtCore
 
 from .itembase import ItemBase
 
 
 class StateLineItem(ItemBase):
+    _update_paint = QtCore.QTimer()
+    _update_paint.setInterval(40)
+    _update_paint.setSingleShot(True)
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -22,10 +28,7 @@ class StateLineItem(ItemBase):
         self._logic_states = []
 
         # timer for updating
-        self._update_paint = QtCore.QTimer()
         self._update_paint.timeout.connect(self.do_update_paint)
-        self._update_paint.setInterval(40)
-        self._update_paint.setSingleShot(True)
 
     def set_logic_state(self, state):
         if self.scene() is not None:
@@ -119,6 +122,7 @@ class StateLineItem(ItemBase):
         QtGui.QGraphicsItem.update(self)
 
     def paint(self, painter, option, widget=None):
+
         # extract longest delay from generator
         def helper():
             nonlocal longest_delay
