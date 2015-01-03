@@ -151,12 +151,13 @@ class ConnectorItem(StateLineItem):
 
         :return: iterator with items of (QLineF, state)
         """
-        drawing_end = self._end if self._is_connected else self._anchor
+        start = self._start
+        drawing_end = (self._end if self._is_connected else self._anchor)
         delay = self._delay
 
         yield from self.iter_state_line_segments_helper(
-            origin=self._start.toTuple(),
-            destination=drawing_end.toTuple(),
+            origin=(drawing_end if self.is_input() else start).toTuple(),
+            destination=(start if self.is_input() else drawing_end).toTuple(),
             delay=delay,
             clock=self.scene().registry().clock(),
             is_vertical=False)
