@@ -243,6 +243,10 @@ class LineRouteBetweenPoints:
                 l_tree.merge_tree(tree)
                 merged_trees.append(tree)
 
+        # check numer of inputs
+        if l_tree.numer_of_driving_inputs(self.scene) > 1:
+            raise RouteNotFoundException()
+
         # store result
         self._is_routed = True
         self._new_line_tree = l_tree

@@ -9,8 +9,6 @@
 Item that provides animated lines of logic states.
 '''
 
-import time
-
 from PySide import QtGui, QtCore
 
 from .itembase import ItemBase

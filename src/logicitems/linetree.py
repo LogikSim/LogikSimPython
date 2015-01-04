@@ -199,18 +199,14 @@ class LineTree(InsertableItem, StateLineItem):
 
             # disconnect if connected
             key = (con_item.id(), con_item.index())
-            print(key, self._connected_outputs)
             if key in self._connected_outputs:
                 out_port = self._connected_outputs.index(key)
                 self._connected_outputs[out_port] = con_item.id()
-                print("disconnect", self.id(), out_port)
                 self.scene().interface().disconnect(self.id(), out_port)
             else:
                 out_port = len(self._connected_outputs)
                 self._connected_outputs.append(key)
             # connect
-            print("connect", self.id(), out_port,
-                con_item.id(), con_item.index(), delay)
             self.scene().interface().connect(
                 self.id(), out_port,
                 con_item.id(), con_item.index(), delay)
@@ -251,16 +247,27 @@ class LineTree(InsertableItem, StateLineItem):
         else:
             return list(self._tree.keys())[0]
 
-    def _get_all_colliding_connectors(self, tree):
+    def _get_all_colliding_connectors(self, tree, scene=None):
         """Return all colliding connectors."""
+        if scene is None:
+            scene = self.scene()
+
         con_items = set()
         for line in self._iter_lines(tree):
             l_bounding_rect = self._line_to_col_rect(line)
-            for item in self.scene().items(l_bounding_rect):
+            for item in scene.items(l_bounding_rect):
                 if isinstance(item, ConnectorItem) and \
                         l_bounding_rect.contains(item.endPoint()):
                     con_items.add(item)
         return list(con_items)
+
+    def numer_of_driving_inputs(self, scene=None):
+        """Returns number of inputs of the Linetree."""
+        input_count = 0
+        for con_item in self._get_all_colliding_connectors(self._tree, scene):
+            if not con_item.is_input() and con_item.is_registered():
+                input_count += 1
+        return input_count
 
     def _reroot_to_possible_input(self, tree):
         """
@@ -268,17 +275,26 @@ class LineTree(InsertableItem, StateLineItem):
 
         :return: Changed tree
         """
-        tree = copy.deepcopy(tree)
-
-        # Connect input
+        # Find all inputs
+        inputs = []
         for con_item in self._get_all_colliding_connectors(tree):
             if not con_item.is_input() and con_item.is_registered():
-                # make sure input is root of the tree
-                new_root = con_item.endPoint().toTuple()
-                if new_root != self._get_root(tree):
-                    if new_root not in self._iter_edges(tree):
-                        tree = self._split_line_of_tree(self._tree, new_root)
-                    return self._reroot(tree, new_root)
+                inputs.append(con_item)
+
+        if len(inputs) > 1:
+            raise Exception("LineTree cannot be driven by more than "
+                            "one input.")
+        elif len(inputs) == 1:
+            con_item = inputs[0]
+            # make sure input is root of the tree
+            new_root = con_item.endPoint().toTuple()
+            if new_root != self._get_root(tree):
+                # re-root tree to new input
+                tree = copy.deepcopy(tree)
+                if new_root not in self._iter_edges(tree):
+                    tree = self._split_line_of_tree(self._tree, new_root)
+                return self._reroot(tree, new_root)
+
         return tree
 
     def _length_to(self, point):

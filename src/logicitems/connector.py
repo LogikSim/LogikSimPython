@@ -13,6 +13,7 @@ from PySide import QtCore, QtGui
 
 from .state_line_item import StateLineItem
 
+
 class ConnectorItem(StateLineItem):
     def __init__(self, parent, start, anchor, end, is_input, index):
         """
