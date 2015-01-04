@@ -80,6 +80,12 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
         """
         return self.boundingRect().united(self.childrenBoundingRect())
 
+    def on_registration_status_changed(self):
+        """Called when registration status changed."""
+        # propagate event to connectors
+        for con_item in self._inputs + self._outputs:
+            con_item.on_registration_status_changed()
+
     def itemChange(self, change, value):
         if change in (QtGui.QGraphicsItem.ItemChildAddedChange,
                       QtGui.QGraphicsItem.ItemChildRemovedChange):

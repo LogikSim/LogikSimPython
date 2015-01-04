@@ -248,6 +248,12 @@ class LineRouteBetweenPoints:
         self._new_line_tree = l_tree
         self._merged_line_trees = merged_trees
 
+    def set_endpoint_anchors(self, value):
+        """Set or unsets anchors for Connectors endpoints."""
+        for item in self.scene.items(self.start) + self.scene.items(self.end):
+            if isinstance(item, logicitems.ConnectorItem):
+                item.set_anchored(value)
+
     def do_temp_insert(self):
         """
         Add new route to scene as temporary object.
@@ -260,6 +266,9 @@ class LineRouteBetweenPoints:
             self.undo_insert()
         if not self._is_routed or self._is_temp_inserted:  # nothing todo
             return
+
+        # set endpoint connectors as anchored
+        self.set_endpoint_anchors(True)
 
         # add routed tree
         self._new_line_tree.set_temporary(True)
@@ -275,6 +284,9 @@ class LineRouteBetweenPoints:
 
         if not self._is_temp_inserted:
             self.do_temp_insert()
+
+        # unset anchor on endpoint connectors
+        self.set_endpoint_anchors(False)
 
         # remove merged line trees
         for linetree in self._merged_line_trees:
@@ -298,6 +310,8 @@ class LineRouteBetweenPoints:
             # remove routed tree
             self.scene.removeItem(self._new_line_tree)
             self._is_temp_inserted = False
+            # unset anchor
+            self.set_endpoint_anchors(False)
 
     @staticmethod
     def _iter_line(line):

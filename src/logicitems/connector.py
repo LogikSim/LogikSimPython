@@ -9,10 +9,9 @@
 Connectors of Logic Items where lines be attached.
 '''
 
-from PySide import QtCore
+from PySide import QtCore, QtGui
 
 from .state_line_item import StateLineItem
-
 
 class ConnectorItem(StateLineItem):
     def __init__(self, parent, start, anchor, end, is_input, index):
@@ -20,6 +19,8 @@ class ConnectorItem(StateLineItem):
         anchor is the position, at which lines can connect to
         """
         super().__init__(parent)
+
+        self.setFlag(QtGui.QGraphicsItem.ItemSendsScenePositionChanges)
 
         self._start = start
         self._anchor = anchor
@@ -63,6 +64,25 @@ class ConnectorItem(StateLineItem):
         self.set_animate_lines(self._is_connected)
         self.request_paint()
 
+    def _update_connection(self):
+        from .linetree import LineTree
+
+        if self.scene() is not None:
+            found_con = False
+            for item in self.scene().items(self.endPoint()):
+                if isinstance(item, LineTree) and item.is_registered():
+                    if self.is_registered():
+                        item.connect(self)
+                    found_con = True
+            if self.is_temporary():
+                self.set_anchored(found_con)
+
+    def set_anchored(self, value):
+        """If value is True, visualizes the object as being connected."""
+        self.set_animate_lines(True if value else self.is_connected())
+        # use direct update here for immediate feedback
+        QtGui.QGraphicsItem.update(self)
+
     def visual_delay(self):
         """Get delay based on visual extend of the connector."""
         if self.scene() is None:
@@ -87,6 +107,10 @@ class ConnectorItem(StateLineItem):
         """Returns True if connector is an input."""
         return self._is_input
 
+    def is_output(self):
+        """Returns True if connector is an output."""
+        return not self._is_input
+
     def index(self):
         """Returns index of connector port."""
         return self._index
@@ -96,36 +120,24 @@ class ConnectorItem(StateLineItem):
         return self.parentItem().id()
 
     def is_registered(self):
-        """Returns true if connector is registered in backend."""
+        """Returns True if connector is registered in backend."""
         return self.parentItem().is_registered()
 
-    def is_valid(self):
-        """Returns True if connector has valid shape."""
-        if self.scene() is None:
-            return False
-        return True
+    def is_temporary(self):
+        """Return True if connector is temporary."""
+        return self.parentItem().is_temporary()
 
     def connect(self, item):
-        """
-        Connect output to item.
-
-        Only registred outputs can be connected, otherwise an Exception
-        is thrown.
-        """
+        """Setup connection with given item."""
         if not self.is_registered():
             raise Exception("Item not registered")
 
-        # setup connection in backend
-        self.scene().interface().connect(
-            self.id(), self.index(), item.id(), 0, self.visual_delay())
-
-    def disconnect(self):
-        """Disconnect connected output."""
-        if not self.is_registered():
-            return
-
-        # disconnect connection in backend
-        self.scene().interface().disconnect(self.id(), self.index())
+        if self.is_input():
+            item.connect(self)
+        else:
+            # setup connection in backend
+            self.scene().interface().connect(
+                self.id(), self.index(), item.id(), 0, self.visual_delay())
 
     def is_connected(self):
         return self._is_connected
@@ -152,7 +164,7 @@ class ConnectorItem(StateLineItem):
         :return: iterator with items of (QLineF, state)
         """
         start = self._start
-        drawing_end = (self._end if self._is_connected else self._anchor)
+        drawing_end = (self._end if self.animate_lines() else self._anchor)
         delay = self._delay
 
         yield from self.iter_state_line_segments_helper(
@@ -162,3 +174,15 @@ class ConnectorItem(StateLineItem):
             clock=self.scene().registry().clock(),
             is_vertical=False)
         return delay
+
+    def on_registration_status_changed(self):
+        """Called when registration status of parent is changed."""
+        self._update_connection()
+
+    def itemChange(self, change, value):
+        if change == QtGui.QGraphicsItem.ItemParentHasChanged or \
+                change == QtGui.QGraphicsItem.ItemSceneHasChanged or \
+                change == QtGui.QGraphicsItem.ItemScenePositionHasChanged:
+            self._update_connection()
+
+        return super().itemChange(change, value)

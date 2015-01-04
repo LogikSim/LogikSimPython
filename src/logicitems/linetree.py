@@ -49,8 +49,8 @@ class LineTree(InsertableItem, StateLineItem):
         self._rect = None  # bounding rect
         self._edge_indicators = []  # list of LineEdgeIndicators
 
-        self._connected_input = None  # connected ConnectorItem
-        self._connected_outputs = []  # list of connected ConnectorItems
+        self._connected_input = None  # id of connected input
+        self._connected_outputs = []  # (out_port, id) of connected outputs
 
         super().__init__(parent, metadata)
 
@@ -87,10 +87,20 @@ class LineTree(InsertableItem, StateLineItem):
         if tree is not None and tree != self._tree:
             self._set_tree(tree)
 
-        # collect input value changes   # metadata.get('input-states', None)
+        # collect input value changes
         input_states = metadata.get('state', None)
         if input_states is not None:
             self.set_logic_state(input_states)
+
+        # connection updates
+        inputs = metadata.get('inputs', None)
+        if inputs is not None:
+            self._connected_input = inputs[0][0]
+
+        outputs = metadata.get('outputs', None)
+        if outputs is not None:
+            self._connected_outputs = list(
+                (con_id, con_port) for con_id, con_port, _ in outputs)
 
     def _set_tree(self, tree):
         """
@@ -177,41 +187,37 @@ class LineTree(InsertableItem, StateLineItem):
         """
         Updates connections to Connectors.
         """
-        # TODO: call when position changes
+        # Connect connectors
+        for con_item in self._get_all_colliding_connectors(self._tree):
+            if con_item.is_registered():
+                con_item.connect(self)
 
-        # Disconnect connectors
-        if self._connected_input is not None:
-            self._connected_input.disconnect()
-        self._connected_input = None
+    def connect(self, con_item):
+        if con_item.is_input():
+            delay = self._length_to(con_item.endPoint().toTuple()) * \
+                self._delay_per_gridpoint / self.scene().get_grid_spacing()
 
-        for i, con_item in enumerate(self._connected_outputs):
-            self.scene().interface().disconnect(self.id(), i)
-        self._input_connectors = []
-
-        # Collect all ConnectorItems
-        con_items = self._get_all_colliding_connectors(self._tree)
-
-        # Connect input
-        for con_item in con_items:
-            if not con_item.is_input():
-                if con_item.is_registered():
-                    # tell other item to connect to us
-                    assert self._connected_input is None, \
-                        'only one output can drive the line-trees'
-                    con_item.connect(self)
-                    self._connected_input = con_item
-
-        # Connect output
-        for con_item in con_items:
-            if con_item.is_input():
-                # setup connection in backend
-                delay = self._length_to(con_item.endPoint().toTuple()) * \
-                    self._delay_per_gridpoint / self.scene().get_grid_spacing()
-                if con_item.is_registered():
-                    self.scene().interface().connect(
-                        self.id(), len(self._connected_outputs),
-                        con_item.id(), con_item.index(), delay)
-                    self._connected_outputs.append(con_item)
+            # disconnect if connected
+            key = (con_item.id(), con_item.index())
+            print(key, self._connected_outputs)
+            if key in self._connected_outputs:
+                out_port = self._connected_outputs.index(key)
+                self._connected_outputs[out_port] = con_item.id()
+                print("disconnect", self.id(), out_port)
+                self.scene().interface().disconnect(self.id(), out_port)
+            else:
+                out_port = len(self._connected_outputs)
+                self._connected_outputs.append(key)
+            # connect
+            print("connect", self.id(), out_port,
+                con_item.id(), con_item.index(), delay)
+            self.scene().interface().connect(
+                self.id(), out_port,
+                con_item.id(), con_item.index(), delay)
+        else:
+            # for outputs we need to update our tree (re-rooting)
+            # in this process connections will be discovered by its own
+            self._update_tree()
 
     def _iter_lines(self, tree, __origin=None):
         """

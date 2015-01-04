@@ -30,9 +30,7 @@ class InsertConnectorMode(GridViewMouseModeBase):
         if event.button() is QtCore.Qt.LeftButton:
             gpos = self.mapToSceneGrid(event.pos())
             self._insert_connector_start = gpos
-            self._inserted_connector = logicitems.ConnectorItem(None, gpos,
-                                                                gpos)
-            self.scene().addItem(self._inserted_connector)
+            self._inserted_connector = None
 
     @mouse_mode_filtered
     def mouseMoveEvent(self, event):
@@ -41,8 +39,14 @@ class InsertConnectorMode(GridViewMouseModeBase):
         # left button
         if event.buttons() & QtCore.Qt.LeftButton:
             gpos = self.mapToSceneGrid(event.pos())
-            self._inserted_connector.setLine(self._insert_connector_start,
-                                             gpos)
+            if self._inserted_connector is not None:
+                self.scene().removeItem(self._inserted_connector)
+                self._inserted_connector = None
+            item = logicitems.connector.ConnectorItem(
+                parent=None, start=self._insert_connector_start,
+                anchor=gpos, end=gpos, is_input=True, index=0)
+            self.scene().addItem(item)
+            self._inserted_connector = item
 
     @mouse_mode_filtered
     def mouseReleaseEvent(self, event):

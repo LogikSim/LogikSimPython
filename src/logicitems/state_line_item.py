@@ -43,6 +43,14 @@ class StateLineItem(ItemBase):
         self._animate_lines = on
         self.request_paint()
 
+    def animate_lines(self):
+        """
+        Return True, if this item will animate its line.
+
+        see set_animate_lines.
+        """
+        return self._animate_lines
+
     def set_logic_state(self, state, clock=None):
         """Set new logic state with clock information."""
         if self.scene() is not None:
