@@ -54,6 +54,7 @@ class SimpleElement(Element):
         """
         Constructs a basic logic element with input to output transformation.
 
+        TODO: fix documentation of parameters
         :param logic_function: Function taking input iterable transforming it
             into the future outputs that become visible after `delay`
         :param input_count: Number of input latches for the element
@@ -210,6 +211,8 @@ class SimpleElement(Element):
             'sink_port': 0,
             'delay': 0
         })
+
+        return True
 
     def connected(self, element, output_port=0, input_port=0):
         """

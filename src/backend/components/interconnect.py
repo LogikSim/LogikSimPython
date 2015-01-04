@@ -161,6 +161,8 @@ class InterconnectInstance(Element):
             'delay': 0
         })
 
+        return True
+
     def connected(self, element, output_port=0, input_port=0):
         """
         Remembers connections to a given port.
