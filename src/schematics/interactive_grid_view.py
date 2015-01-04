@@ -113,9 +113,6 @@ class InteractiveGridView(grid_view.GridView):
                 item_drop_pos + self.mapToScene(view_pos) - self._drag_pos)
             item.setPos(new_pos)
 
-    def selection_allowed(self):
-        return False
-
     def dragEnterEvent(self, event):
         if event.mimeData().hasFormat('application/x-components'):
             self.scene().clearSelection()
@@ -135,7 +132,7 @@ class InteractiveGridView(grid_view.GridView):
                     additional_metadata=item_metadata)
                 item.set_temporary(True)
                 item.setZValue(0.5)
-                if self.selection_allowed():
+                if self.scene().selectionAllowed():
                     item.setSelected(True)
                 self.scene().addItem(item)
                 self._drop_items.append((item, item.pos()))

@@ -31,6 +31,7 @@ class ResizableItem(logicitems.LogicItem):
         self._handles = {}
 
         super().__init__(parent=parent, metadata=metadata)
+        self.setFlag(QtGui.QGraphicsItem.ItemSendsScenePositionChanges)
 
     def apply_update(self, metadata):
         super().apply_update(metadata)
@@ -112,18 +113,26 @@ class ResizableItem(logicitems.LogicItem):
                               self._delay_per_gridpoint})
 
     def _update_resize_tool_handles(self):
-        for handle in self._handles.values():
-            handle.setParentItem(None)
-        self._handles = {}
-        if self.isSelected() and self._show_handles:
+        show_handles = self.isSelected() and self._show_handles
+        if not show_handles:
+            for handle in self._handles.values():
+                handle.scene().removeItem(handle)
+            self._handles = {}
+        else:
             scale = self.scene().get_grid_spacing()
-            ht = logicitems.ResizeHandle(self, horizontal=False,
-                                         resize_callback=self.on_handle_resize)
-            ht.setPos(scale, -scale * self._overlap)
-            hb = logicitems.ResizeHandle(self, horizontal=False,
-                                         resize_callback=self.on_handle_resize)
-            hb.setPos(scale, (self._input_count - 1 + self._overlap) * scale)
-            self._handles = {'top': ht, 'bottom': hb}
+            if not self._handles:
+                ht = logicitems.ResizeHandle(
+                    horizontal=False, resize_callback=self.on_handle_resize)
+                self.scene().addItem(ht)
+                hb = logicitems.ResizeHandle(
+                    horizontal=False, resize_callback=self.on_handle_resize)
+                self.scene().addItem(hb)
+                self._handles = {'top': ht, 'bottom': hb}
+            self._handles['top'].setPos(self.mapToScene(scale, -scale *
+                                                        self._overlap))
+            self._handles['bottom'].setPos(
+                self.mapToScene(scale, (self._input_count - 1 +
+                                        self._overlap) * scale))
 
     def on_handle_resize(self, handle, delta):
         sign = (-1 if handle is self._handles['top'] else 1)
@@ -154,6 +163,8 @@ class ResizableItem(logicitems.LogicItem):
             self._update_resize_tool_handles()
         elif change == logicitems.ItemBase.ItemSingleSelectionHasChanged:
             self._set_show_handles(value)
+        elif change == logicitems.ItemBase.ItemScenePositionHasChanged:
+            self._update_resize_tool_handles()
         return super().itemChange(change, value)
 
     def ownBoundingRect(self):

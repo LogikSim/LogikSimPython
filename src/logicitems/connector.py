@@ -122,11 +122,13 @@ class ConnectorItem(StateLineItem):
 
     def is_registered(self):
         """Returns True if connector is registered in backend."""
-        return self.parentItem().is_registered()
+        return self.parentItem() is not None and \
+            self.parentItem().is_registered()
 
     def is_temporary(self):
         """Return True if connector is temporary."""
-        return self.parentItem().is_temporary()
+        return self.parentItem() is not None and \
+            self.parentItem().is_temporary()
 
     def connect(self, item):
         """Setup connection with given item."""

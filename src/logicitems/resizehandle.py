@@ -17,7 +17,7 @@ from .itembase import ItemBase
 
 
 class ResizeHandle(ItemBase):
-    def __init__(self, parent, horizontal, resize_callback):
+    def __init__(self, parent=None, horizontal=True, resize_callback=None):
         """
         A handle used to resize parent.
 
@@ -32,6 +32,7 @@ class ResizeHandle(ItemBase):
 
         self.setFlag(QtGui.QGraphicsItem.ItemIgnoresTransformations)
         self.setAcceptHoverEvents(True)
+        self.setZValue(2)
 
         # shape definition
         width = 6
@@ -56,7 +57,8 @@ class ResizeHandle(ItemBase):
                 delta.setY(0)
             else:
                 delta.setX(0)
-            self._resize_callback(self, delta)
+            if self._resize_callback is not None:
+                self._resize_callback(self, delta)
 
     def boundingRect(self):
         return self._bounding_rect

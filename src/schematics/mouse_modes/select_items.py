@@ -55,11 +55,6 @@ class SelectItemsMode(GridViewMouseModeBase):
             self.setDragMode(drag_mode)
 
     @mouse_mode_filtered
-    def selection_allowed(self):
-        """Overrides selection_allowed."""
-        return True
-
-    @mouse_mode_filtered
     def mousePressEvent(self, event):
         # call parent with masked drag mode
         self._mask_drag_mode(super().mousePressEvent, event)
