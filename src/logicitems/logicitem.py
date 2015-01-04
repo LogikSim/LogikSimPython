@@ -34,6 +34,8 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
         QtGui.QGraphicsLayoutItem.__init__(self, parent)
 
     def apply_update(self, metadata):
+        super().apply_update(metadata)
+
         # input / output states
         input_states = metadata.get('input-states', None)
         if input_states is not None:

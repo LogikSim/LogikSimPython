@@ -70,7 +70,7 @@ class LineTree(InsertableItem, StateLineItem):
                 pivot = p
             return root
 
-        return {'tree': path_to_tree(path)}
+        return {'tree': cls._encode_tree(path_to_tree(path))}
 
     @classmethod
     def GUI_GUID(cls):
@@ -83,9 +83,11 @@ class LineTree(InsertableItem, StateLineItem):
         super().apply_update(metadata)
 
         # tree updates
-        tree = metadata.get('tree', None)
-        if tree is not None and tree != self._tree:
-            self._set_tree(tree)
+        enc_tree = metadata.get('tree', None)
+        if enc_tree is not None:
+            tree = self._decode_tree(enc_tree)
+            if tree != self._tree:
+                self._set_tree(tree)
 
         # collect input value changes
         input_states = metadata.get('state', None)
@@ -102,6 +104,26 @@ class LineTree(InsertableItem, StateLineItem):
             self._connected_outputs = list(
                 (con_id, con_port) for con_id, con_port, _ in outputs)
 
+    @classmethod
+    def _encode_tree(cls, tree):
+        """Encodes tree into a JSON representable data structure."""
+        def _encode_subtree(tree):
+            new_tree = []
+            for point, children in tree.items():
+                new_tree.append([list(point), _encode_subtree(children)])
+            return new_tree
+        return _encode_subtree(tree)
+
+    @classmethod
+    def _decode_tree(cls, enc_tree):
+        """Decodes tree from JSON representable data structure."""
+        def _decode_subtree(enc_tree):
+            new_tree = {}
+            for point, children in enc_tree:
+                new_tree[tuple(point)] = _decode_subtree(children)
+            return new_tree
+        return _decode_subtree(enc_tree)
+
     def _set_tree(self, tree):
         """
         Set new tree and updates internal storage.
@@ -115,7 +137,7 @@ class LineTree(InsertableItem, StateLineItem):
         pass
 
         # notify backend
-        self._notify_backend({'tree': tree})
+        self._notify_backend({'tree': self._encode_tree(tree)})
 
     def _update_tree(self):
         """
@@ -124,6 +146,14 @@ class LineTree(InsertableItem, StateLineItem):
         Call this whenever added or removed from scene or self._tree
         changes or registration status changes.
         """
+        # normalization necessary?
+        if self.is_registered() and self.scene() is not None:
+            if self.pos() != QtCore.QPointF(0, 0):
+                n_tree = self._get_normalize_tree()
+                self.setPos(0, 0)
+                self._set_tree(n_tree)
+                return
+
         # re-root necessary?
         if self.scene() is not None:
             re_tree = self._reroot_to_possible_input(self._tree)
@@ -214,6 +244,16 @@ class LineTree(InsertableItem, StateLineItem):
             # for outputs we need to update our tree (re-rooting)
             # in this process connections will be discovered by its own
             self._update_tree()
+
+    def _get_normalize_tree(self):
+        """Returns tree that is normalized to scene coordinates."""
+        def _normalize_subtree(tree):
+            new_tree = {}
+            for point, children in tree.items():
+                new_point = self.mapToScene(*point).toTuple()
+                new_tree[new_point] = _normalize_subtree(children)
+            return new_tree
+        return _normalize_subtree(self._tree)
 
     def _iter_lines(self, tree, __origin=None):
         """
@@ -486,13 +526,6 @@ class LineTree(InsertableItem, StateLineItem):
             self._connected_input = None
             self._connected_outputs = []
         self._update_tree()
-
-    def itemChange(self, change, value):
-        # update connections on scene change
-        if change is QtGui.QGraphicsItem.ItemSceneHasChanged:
-            self._update_tree()
-
-        return super().itemChange(change, value)
 
     def iter_state_line_segments(self):
         """

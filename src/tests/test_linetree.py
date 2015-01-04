@@ -552,7 +552,7 @@ def get_linetree_with_states(tree, states, curr_clock, grid_spacing=1,
     class dummy:
         pass
 
-    tree = LineTree(None, {'tree': tree})
+    tree = LineTree(None, {'tree': LineTree._encode_tree(tree)})
     tree._delay_per_gridpoint = delay_per_gridpoint
 
     # setup scene

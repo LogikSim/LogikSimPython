@@ -9,6 +9,8 @@
 Defines functionality when selecting items.
 '''
 
+import json
+
 from PySide import QtGui, QtCore
 
 from .modes_base import GridViewMouseModeBase, mouse_mode_filtered
@@ -19,6 +21,7 @@ class SelectItemsMode(GridViewMouseModeBase):
         super().__init__(*args, **kargs)
 
         self._undo_group_scene = None
+        self._drag_start_pos = None
 
     def mouse_enter(self):
         super().mouse_enter()
@@ -59,6 +62,59 @@ class SelectItemsMode(GridViewMouseModeBase):
         if event.button() == QtCore.Qt.LeftButton:
             self._undo_group_scene = self.scene()
             self._undo_group_scene.beginUndoGroup()
+
+            self._drag_start_pos = event.pos()
+
+    @mouse_mode_filtered
+    def mouseMoveEvent(self, event):
+        # TODO: merge code with the one in library_view
+
+        is_draged = False
+
+        if event.buttons() & QtCore.Qt.LeftButton and \
+                (event.pos() - self._drag_start_pos).manhattanLength() >= \
+                QtGui.QApplication.startDragDistance():
+
+            # get selected items & start drag&drop
+            gpos = self.mapToScene(self._drag_start_pos)
+            # TODO: create method instead of accessing _selection_item
+            gpos_items = self.scene().items(gpos)
+            sel_items = self.scene().selectedItems()
+            if len(sel_items) > 0 and \
+                    self.scene()._selection_item in gpos_items:
+
+                drag_pos = self.mapToScene(self._drag_start_pos)
+                data = {'drag_pos': drag_pos.toTuple(),
+                        'items': [item.metadata() for item in sel_items]}
+
+                mimeData = QtCore.QMimeData()
+                mimeData.setData('application/x-components',
+                                 json.dumps(data))
+
+                drag = QtGui.QDrag(self)
+                drag.setMimeData(mimeData)
+
+                # set items temporary
+                for item in sel_items:
+                    item.set_temporary(True)
+
+
+                drop_action = drag.exec_(QtCore.Qt.CopyAction |
+                                         QtCore.Qt.MoveAction)
+
+                if drop_action == QtCore.Qt.MoveAction:
+                    # delete all items
+                    for item in sel_items:
+                        self.scene().removeItem(item)
+
+                is_draged = True
+                # TODO: refactor
+                self._undo_group_scene.endUndoGroup()
+                self._undo_group_scene = None
+                self._drag_start_pos = None
+
+        if not is_draged:
+            super().mouseMoveEvent(event)
 
     @mouse_mode_filtered
     def mouseDoubleClickEvent(self, event):

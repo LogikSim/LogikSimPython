@@ -38,7 +38,8 @@ class InteractiveGridView(grid_view.GridView):
         # self.setOptimizationFlags(QtGui.QGraphicsView.DontSavePainterState)
 
         self.setAcceptDrops(True)
-        self._drop_item = None
+        self._drop_items = None  # list of (items, initial pos)
+        self._drag_pos = None  # as QPointF in scene pos
 
         self.scale(0.12, 0.12)
 
@@ -106,54 +107,72 @@ class InteractiveGridView(grid_view.GridView):
             self._mouse_mid_last_pos = None
             self.unsetCursor()
 
+    def _move_dropped_items_to(self, view_pos):
+        for item, item_drop_pos in self._drop_items:
+            new_pos = self.scene().roundToGrid(
+                item_drop_pos + self.mapToScene(view_pos) - self._drag_pos)
+            item.setPos(new_pos)
+
     def dragEnterEvent(self, event):
         if event.mimeData().hasFormat('application/x-components'):
             self.scene().clearSelection()
 
-            # create item
-            metadata = json.loads(str(event.mimeData().data(
+            # geta data
+            data = json.loads(str(event.mimeData().data(
                 'application/x-components')))
 
+            # calculate translation pos
+            self._drag_pos = QtCore.QPointF(*data['drag_pos'])
+
             # create item
-            item = self.scene().registry().instantiate_frontend_item(
-                backend_guid=metadata['GUID'],
-                additional_metadata=metadata)
-            item.set_temporary(True)
-            item.setPos(self.mapToSceneGrid(event.pos()))
-            self.scene().addItem(item)
-            self._drop_item = item
+            self._drop_items = []
+            for item_metadata in data['items']:
+                item = self.scene().registry().instantiate_frontend_item(
+                    backend_guid=item_metadata['GUID'],
+                    additional_metadata=item_metadata)
+                item.set_temporary(True)
+                item.setSelected(True)
+                self.scene().addItem(item)
+                self._drop_items.append((item, item.pos()))
+
+            # move items
+            self._move_dropped_items_to(event.pos())
 
             event.acceptProposedAction()
 
     def dragMoveEvent(self, event):
-        # move item
-        gpos = self.mapToSceneGrid(event.pos())
-        self._drop_item.setPos(gpos)
+        # move items
+        self._move_dropped_items_to(event.pos())
 
         event.acceptProposedAction()
 
     def dragLeaveEvent(self, event):
         # delete item
-        self.scene().removeItem(self._drop_item)
-        self._drop_item = None
+        for item, _ in self._drop_items:
+            self.scene().removeItem(item)
+        self._drop_items = None
 
     def dropEvent(self, event):
-        scene = self.scene()
-        item = self._drop_item
+#        scene = self.scene()
+#        item = self._drop_item
+
+        # move to final position
+        self._move_dropped_items_to(event.pos())
 
         # mark as persistent
-        self._drop_item.set_temporary(False)
-        self._drop_item = None
+        for item, _ in self._drop_items:
+            item.set_temporary(False)
+        self._drop_items = None
 
-        # create undo action
-        def do():
-            scene.addItem(item)
-
-        def undo():
-            scene.removeItem(item)
-
-        self.scene().actions.executed(
-            do, undo, "Insert {} item".format(item.name())
-        )
+        # TODO: create undo action
+#        def do():
+#            scene.addItem(item)
+#
+#        def undo():
+#            scene.removeItem(item)
+#
+#        self.scene().actions.executed(
+#            do, undo, "Insert {} item".format(item.name())
+#        )
 
         event.acceptProposedAction()

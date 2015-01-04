@@ -326,9 +326,12 @@ class LibraryView(schematics.GridView):
 
         self.scene().select_item(gpos)
 
+        data = {'drag_pos': self.mapToScene(self._drag_start_pos).toTuple(),
+                'items': [item.metadata()]}
+
         mimeData = QtCore.QMimeData()
         mimeData.setData('application/x-components',
-                         json.dumps(item.metadata()))
+                         json.dumps(data))
 
         drag = QtGui.QDrag(self)
         drag.setMimeData(mimeData)

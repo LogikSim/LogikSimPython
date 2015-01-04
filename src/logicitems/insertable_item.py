@@ -260,11 +260,12 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             # only selectable when allowed by scene
             elif change == QtGui.QGraphicsItem.ItemSelectedChange:
                 return value and self.scene().selectionAllowed()
-            # only movable when selected
-            elif change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
-                self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, value)
 
         return super().itemChange(change, value)
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        event.accept()
 
     def hoverMoveEvent(self, event):
         super().hoverMoveEvent(event)
