@@ -71,8 +71,8 @@ class ConnectorItem(StateLineItem):
         if self.scene() is not None:
             found_con = False
             for item in self.scene().items(self.endPoint()):
-                if isinstance(item, LineTree) and item.is_registered():
-                    if self.is_registered():
+                if isinstance(item, LineTree):
+                    if item.is_registered() and self.is_registered():
                         item.connect(self)
                     found_con = True
             if self.is_temporary():

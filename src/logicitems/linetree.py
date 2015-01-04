@@ -147,7 +147,7 @@ class LineTree(InsertableItem, StateLineItem):
         changes or registration status changes.
         """
         # normalization necessary?
-        if self.is_registered() and self.scene() is not None:
+        if self.scene() is not None:
             if self.pos() != QtCore.QPointF(0, 0):
                 n_tree = self._get_normalize_tree()
                 self.setPos(0, 0)
@@ -519,6 +519,11 @@ class LineTree(InsertableItem, StateLineItem):
 
     def shape(self):
         return self._shape
+
+    def set_temporary(self, temp):
+        if not temp:
+            self._update_tree()
+        super().set_temporary(temp)
 
     def on_registration_status_changed(self):
         """Called when registration status changed."""

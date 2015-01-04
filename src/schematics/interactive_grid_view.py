@@ -113,6 +113,9 @@ class InteractiveGridView(grid_view.GridView):
                 item_drop_pos + self.mapToScene(view_pos) - self._drag_pos)
             item.setPos(new_pos)
 
+    def selection_allowed(self):
+        return False
+
     def dragEnterEvent(self, event):
         if event.mimeData().hasFormat('application/x-components'):
             self.scene().clearSelection()
@@ -131,7 +134,9 @@ class InteractiveGridView(grid_view.GridView):
                     backend_guid=item_metadata['GUID'],
                     additional_metadata=item_metadata)
                 item.set_temporary(True)
-                item.setSelected(True)
+                item.setZValue(0.5)
+                if self.selection_allowed():
+                    item.setSelected(True)
                 self.scene().addItem(item)
                 self._drop_items.append((item, item.pos()))
 
@@ -162,6 +167,7 @@ class InteractiveGridView(grid_view.GridView):
         # mark as persistent
         for item, _ in self._drop_items:
             item.set_temporary(False)
+            item.setZValue(0)
         self._drop_items = None
 
         # TODO: create undo action

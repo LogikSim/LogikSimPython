@@ -55,6 +55,11 @@ class SelectItemsMode(GridViewMouseModeBase):
             self.setDragMode(drag_mode)
 
     @mouse_mode_filtered
+    def selection_allowed(self):
+        """Overrides selection_allowed."""
+        return True
+
+    @mouse_mode_filtered
     def mousePressEvent(self, event):
         # call parent with masked drag mode
         self._mask_drag_mode(super().mousePressEvent, event)
@@ -106,12 +111,19 @@ class SelectItemsMode(GridViewMouseModeBase):
                     # delete all items
                     for item in sel_items:
                         self.scene().removeItem(item)
+                    is_draged = True
 
-                is_draged = True
-                # TODO: refactor
-                self._undo_group_scene.endUndoGroup()
-                self._undo_group_scene = None
-                self._drag_start_pos = None
+                if drop_action == QtCore.Qt.CopyAction:
+                    # unset temporary
+                    for item in sel_items:
+                        item.set_temporary(False)
+                    is_draged = True
+
+                if is_draged:
+                    # TODO: refactor
+                    self._undo_group_scene.endUndoGroup()
+                    self._undo_group_scene = None
+                    self._drag_start_pos = None
 
         if not is_draged:
             super().mouseMoveEvent(event)
