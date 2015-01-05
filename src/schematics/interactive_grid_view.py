@@ -114,6 +114,9 @@ class InteractiveGridView(grid_view.GridView):
             item.setPos(new_pos)
 
     def dragEnterEvent(self, event):
+#        if not self.scene().insertItemAllowed():
+#            return
+
         if event.mimeData().hasFormat('application/x-components'):
             self.scene().clearSelection()
 
@@ -148,15 +151,23 @@ class InteractiveGridView(grid_view.GridView):
 
         event.acceptProposedAction()
 
-    def dragLeaveEvent(self, event):
+    def _abort_drop(self):
         # delete item
         for item, _ in self._drop_items:
+            item.setSelected(False)
             self.scene().removeItem(item)
         self._drop_items = None
 
+    def dragLeaveEvent(self, event):
+        self._abort_drop()
+
     def dropEvent(self, event):
-#        scene = self.scene()
-#        item = self._drop_item
+#        if not self.scene().insertItemAllowed():
+#            self._abort_drop()
+#            return
+
+        scene = self.scene()
+        items = self._drop_items
 
         # move to final position
         self._move_dropped_items_to(event.pos())
@@ -168,14 +179,16 @@ class InteractiveGridView(grid_view.GridView):
         self._drop_items = None
 
         # TODO: create undo action
-#        def do():
-#            scene.addItem(item)
-#
-#        def undo():
-#            scene.removeItem(item)
-#
-#        self.scene().actions.executed(
-#            do, undo, "Insert {} item".format(item.name())
-#        )
+        def do():
+            for item, _ in items:
+                scene.addItem(item)
+
+        def undo():
+            for item, _ in items:
+                scene.removeItem(item)
+
+        self.scene().actions.executed(
+            do, undo, "Insert {} item".format(items[0][0].name())
+        )
 
         event.acceptProposedAction()

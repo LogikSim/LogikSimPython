@@ -11,10 +11,10 @@ Logic items are all items a logic behavior based on inputs and outputs.
 
 from PySide import QtGui, QtCore
 
-from .insertable_item import InsertableItem
+from .connectable_item import ConnectableItem
 
 
-class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
+class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
     """
     Defines logic item base class.
 
@@ -30,33 +30,15 @@ class LogicItem(InsertableItem, QtGui.QGraphicsLayoutItem):
         self._inputs = []
         self._outputs = []
 
-        InsertableItem.__init__(self, parent, metadata)
+        ConnectableItem.__init__(self, parent, metadata)
         QtGui.QGraphicsLayoutItem.__init__(self, parent)
 
     def apply_update(self, metadata):
         super().apply_update(metadata)
 
-        # input / output states
-        input_states = metadata.get('input-states', None)
-        if input_states is not None:
-            for input_con, state in zip(self._inputs, input_states):
-                input_con.update_metadata_state(state)
-
-        output_states = metadata.get('output-states', None)
-        if output_states is not None:
-            for output_con, state in zip(self._outputs, output_states):
-                output_con.update_metadata_state(state)
-
-        # connection information
-        inputs = metadata.get('inputs', None)
-        if inputs is not None:
-            for input_con, con_data in zip(self._inputs, inputs):
-                input_con.update_metadata_connection(con_data)
-
-        outputs = metadata.get('outputs', None)
-        if outputs is not None:
-            for output_con, con_data in zip(self._outputs, outputs):
-                output_con.update_metadata_connection(con_data)
+        # feed input/output connectors with metadata update
+        for con_item in self._inputs + self._outputs:
+            con_item.apply_update(metadata)
 
     def setGeometry(self, rect):
         scene_offset = self.mapToScene(self.selectionRect().topLeft()) - \

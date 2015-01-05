@@ -95,7 +95,7 @@ class ResizableItem(logicitems.LogicItem):
                 anchor=QtCore.QPointF(-0.5 * scale, scale * i),
                 end=QtCore.QPointF(-scale, scale * i),
                 is_input=True,
-                index=i)
+                port=i)
             self._inputs.append(con)
         # output
         mid_point = int((self._input_count - 1) / 2)
@@ -105,7 +105,7 @@ class ResizableItem(logicitems.LogicItem):
             anchor=QtCore.QPointF(2.5 * scale, scale * mid_point),
             end=QtCore.QPointF(3 * scale, scale * mid_point),
             is_input=False,
-            index=0)
+            port=0)
         self._outputs.append(con)
 
         # setup delay based on #inputs

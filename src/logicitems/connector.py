@@ -15,55 +15,36 @@ from .state_line_item import StateLineItem
 
 
 class ConnectorItem(StateLineItem):
-    def __init__(self, parent, start, anchor, end, is_input, index):
+    def __init__(self, parent, start, anchor, end, is_input, port):
         """
         anchor is the position, at which lines can connect to
         """
         super().__init__(parent)
 
-        self.setFlag(QtGui.QGraphicsItem.ItemSendsScenePositionChanges)
-
         self._start = start
         self._anchor = anchor
         self._end = end
         self._is_input = is_input
-        self._index = index
+        self._port = port
 
-        self._is_connected = False
+        self.setFlag(QtGui.QGraphicsItem.ItemSendsScenePositionChanges)
         self.set_animate_lines(False)
 
         self._bounding_rect_valid = False
         self._bounding_rect = None
 
-        # delay of connector given by backend
-        self._delay = 0
+    def apply_update(self, metadata):
+        """Apply changes from metadata to this item."""
+        # extract state
+        states = metadata.get(
+            'input-states' if self._is_input else 'output-states', None)
+        if states is not None:
+            self.set_logic_state(states[self.port()])
 
-    def update_metadata_state(self, state):
-        """
-        Called by parent item to propagate metadata updates.
-
-        Instead of the full metadata only the logic state of
-        the specific connector is propagated.
-        """
-        self.set_logic_state(state)
-
-    def update_metadata_connection(self, connection_data):
-        """
-        Called by parent item to propagate metadata updates.
-
-        Instead of the full metadata only the connection data
-        of the specific connector is propagated.
-        """
-        if self.is_input():
-            dst_id, _ = connection_data
-            con_delay = self.visual_delay()
-        else:
-            dst_id, _, con_delay = connection_data
-
-        self._is_connected = dst_id is not None
-        self._delay = con_delay
-        self.set_animate_lines(self._is_connected)
-        self.request_paint()
+        # connection change
+        if 'inputs' in metadata or 'outputs' in metadata:
+            self.set_animate_lines(self.is_connected())
+            self.request_paint()
 
     def _update_connection(self):
         from .linetree import LineTree
@@ -84,6 +65,12 @@ class ConnectorItem(StateLineItem):
         # use direct update here for immediate feedback
         QtGui.QGraphicsItem.update(self)
 
+    def delay(self):
+        if self.is_input():
+            return self.visual_delay()
+        else:
+            return self.parentItem().output_delay(self.port()) or 0
+
     def visual_delay(self):
         """Get delay based on visual extend of the connector."""
         if self.scene() is None:
@@ -99,10 +86,10 @@ class ConnectorItem(StateLineItem):
         """Toggle input signal."""
         if not self.is_input():
             raise Exception("Can only toggle inputs.")
-        if not self._is_connected:
+        if not self.is_connected():
             new_state = not self.get_last_logic_state()
             self.scene().interface().schedule_edge(
-                self.id(), self.index(), new_state, 0)
+                self.id(), self.port(), new_state, 0)
 
     def is_input(self):
         """Returns True if connector is an input."""
@@ -112,9 +99,9 @@ class ConnectorItem(StateLineItem):
         """Returns True if connector is an output."""
         return not self._is_input
 
-    def index(self):
-        """Returns index of connector port."""
-        return self._index
+    def port(self):
+        """Returns connector port."""
+        return self._port
 
     def id(self):
         """Returns backend id of connector."""
@@ -139,11 +126,12 @@ class ConnectorItem(StateLineItem):
             item.connect(self)
         else:
             # setup connection in backend
-            self.scene().interface().connect(
-                self.id(), self.index(), item.id(), 0, self.visual_delay())
+            self.parentItem()._notify_backend_connect(
+                self.port(), item.id(), 0, self.visual_delay())
 
     def is_connected(self):
-        return self._is_connected
+        return self.parentItem() is not None and \
+            self.parentItem().is_connected(self.is_input(), self.port())
 
     def anchorPoint(self):
         """Returns where AnchorItems should be drawn at."""
@@ -168,7 +156,7 @@ class ConnectorItem(StateLineItem):
         """
         start = self._start
         drawing_end = (self._end if self.animate_lines() else self._anchor)
-        delay = self._delay
+        delay = self.delay()
 
         yield from self.iter_state_line_segments_helper(
             origin=(drawing_end if self.is_input() else start).toTuple(),

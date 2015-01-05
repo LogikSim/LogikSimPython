@@ -27,12 +27,14 @@ class SelectItemsMode(GridViewMouseModeBase):
         super().mouse_enter()
         self.setDragMode(QtGui.QGraphicsView.RubberBandDrag)
         self.scene().setSelectionAllowed(True)
+        self.scene().set_active(False)
 
     def mouse_leave(self):
         super().mouse_leave()
 
         self.setDragMode(QtGui.QGraphicsView.NoDrag)
         self.scene().setSelectionAllowed(False)
+        self.scene().set_active(True)
 
         if self._undo_group_scene is not None:
             self._undo_group_scene.endUndoRedoGroup()
@@ -73,7 +75,7 @@ class SelectItemsMode(GridViewMouseModeBase):
 
         if event.buttons() & QtCore.Qt.LeftButton and \
                 (event.pos() - self._drag_start_pos).manhattanLength() >= \
-                QtGui.QApplication.startDragDistance():
+                QtGui.QApplication.startDragDistance() and False:
 
             # get selected items & start drag&drop
             gpos = self.mapToScene(self._drag_start_pos)
@@ -107,8 +109,7 @@ class SelectItemsMode(GridViewMouseModeBase):
                     for item in sel_items:
                         self.scene().removeItem(item)
                     is_draged = True
-
-                if drop_action == QtCore.Qt.CopyAction:
+                elif drop_action == QtCore.Qt.CopyAction:
                     # unset temporary
                     for item in sel_items:
                         item.set_temporary(False)

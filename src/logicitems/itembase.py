@@ -27,13 +27,32 @@ class ItemBase(QtGui.QGraphicsItem):
 
     class ItemSingleSelectionHasChanged:
         """
-        QGraphicsItem.itemChange() notification
+        ItemBase.itemChange() notification
 
         The item single selection state changed. It notifies whenever the item
         has become or has stopped being the only selected item in the scene.
         The return value is ignored.
         """
-        pass
+
+    class ItemSceneActivatedChange:
+        """
+        ItemBase.itemChange() notification
+
+        The scene is about to become active, but is not yet active.
+
+        See ItemSceneActivatedHasChanged
+        """
+
+    class ItemSceneActivatedHasChanged:
+        """
+        ItemBase.itemChange() notification
+
+        The scene has become active again. The item is only notified
+        if it has registered for this event by calling
+            self.scene().register_change_during_inactivity(self)
+        during the time the scene was inactive. This has to be
+        repeated in each inactivity.
+        """
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -51,6 +70,14 @@ class ItemBase(QtGui.QGraphicsItem):
         Temporary items are not considered in collision detection.
         """
         return self._is_temp
+
+    def is_inactive(self):
+        """
+        Returns True, if the item is inactive.
+
+        See GridScene.set_active
+        """
+        return self.scene() is not None and self.scene().is_inactive()
 
     def _line_to_col_rect(self, line, radius=None):
         """

@@ -51,7 +51,10 @@ class TriggerEdgeMode(GridViewMouseModeBase):
                         item.toggle()
             self._mouse_press_pos = None
 
+    def mouse_enter(self):
+        self.scene().setInsertItemAllowed(False)
+
     def mouse_leave(self):
-        super().mouse_leave()
         # cleanup
         self._mouse_press_pos = None
+        self.scene().setInsertItemAllowed(True)

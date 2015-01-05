@@ -17,6 +17,7 @@ from .insertable_item import InsertableItem
 from .line_edge_indicator import LineEdgeIndicator
 from .connector import ConnectorItem
 from .state_line_item import StateLineItem
+from .itembase import ItemBase
 
 
 class LineTree(InsertableItem, StateLineItem):
@@ -228,7 +229,7 @@ class LineTree(InsertableItem, StateLineItem):
                 self._delay_per_gridpoint / self.scene().get_grid_spacing()
 
             # disconnect if connected
-            key = (con_item.id(), con_item.index())
+            key = (con_item.id(), con_item.port())
             if key in self._connected_outputs:
                 out_port = self._connected_outputs.index(key)
                 self._connected_outputs[out_port] = con_item.id()
@@ -239,7 +240,7 @@ class LineTree(InsertableItem, StateLineItem):
             # connect
             self.scene().interface().connect(
                 self.id(), out_port,
-                con_item.id(), con_item.index(), delay)
+                con_item.id(), con_item.port(), delay)
         else:
             # for outputs we need to update our tree (re-rooting)
             # in this process connections will be discovered by its own
@@ -525,12 +526,21 @@ class LineTree(InsertableItem, StateLineItem):
             self._update_tree()
         super().set_temporary(temp)
 
+    def on_becoming_active(self):
+        self._update_tree()
+
     def on_registration_status_changed(self):
         """Called when registration status changed."""
         if not self.is_registered():
             self._connected_input = None
             self._connected_outputs = []
         self._update_tree()
+
+    def itemChange(self, change, value):
+        if change == ItemBase.ItemSceneActivatedChange:
+            self.on_becoming_active()
+
+        return super().itemChange(change, value)
 
     def iter_state_line_segments(self):
         """

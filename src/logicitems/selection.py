@@ -19,7 +19,7 @@ class SelectionItem(ItemBase):
         super().__init__()
 
         self.setZValue(1)
-#        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
+        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemSendsGeometryChanges)
         self.setAcceptHoverEvents(True)
         self.setCursor(QtCore.Qt.SizeAllCursor)

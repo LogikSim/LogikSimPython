@@ -37,6 +37,8 @@ class GridScene(QtGui.QGraphicsScene):
         self._is_grid_enabled = True
         # can items be selected in this scene?
         self._allow_item_selection = False
+        # can items be placed in this scene?
+        self._allow_item_insertion = True
 
         # setup undo stack
         self.actions = ActionStackModel(self.tr("New circuit"), parent=self)
@@ -66,6 +68,10 @@ class GridScene(QtGui.QGraphicsScene):
         # setup signal for single selection notification
         self._single_selected_item = None
         self.selectionChanged.connect(self.onSelectionChanged)
+
+        # incativity
+        self._is_active = True
+        self._registered_during_inactivity = set()  # set of BaseItems
 
         # group undo events
         self._is_undo_grouping = False
@@ -233,6 +239,68 @@ class GridScene(QtGui.QGraphicsScene):
         self._allow_item_selection = value
         if not value:
             self.clearSelection()
+
+    def insertItemAllowed(self):
+        return self._allow_item_insertion
+
+    def setInsertItemAllowed(self, value):
+        self._allow_item_insertion = value
+
+    def is_active(self):
+        """
+        Returns True, if the scene is active.
+
+        See set_active
+        """
+        return self._is_active
+
+    def is_inactive(self):
+        """
+        Returns True, if the scene is inactive.
+
+        See set_active
+        """
+        return not self._is_active
+
+    def set_active(self, value):
+        """
+        If value is True, set the scene active.
+
+        The scene is active by default.
+
+        In an inactive scene item changes are not propagated
+        to the backend. All changes made during this time
+        are cached and send when the scene becomes active again.
+
+        Items that change during inactivity may register
+        their changes by calling register_change_during_inactivity.
+        """
+        if value != self._is_active:
+            if value:
+                for item in self._registered_during_inactivity:
+                    item.itemChange(
+                        logicitems.ItemBase.ItemSceneActivatedChange,
+                        True)
+            self._is_active = value
+            if value:
+                for item in self._registered_during_inactivity:
+                    item.itemChange(
+                        logicitems.ItemBase.ItemSceneActivatedHasChanged,
+                        True)
+            self._registered_during_inactivity.clear()
+
+    def register_change_during_inactivity(self, item):
+        """
+        Notify the scene that the item has changed during inactivity.
+
+        This makes sure that the item is notified with
+            item.itemChange(logicitems.ItemBase.ItemSceneActivatedChange)
+        and
+            item.itemChange(logicitems.ItemBase.ItemSceneActivatedHasChanged)
+        once the scene becomes active.
+        """
+        if not self._is_active:
+            self._registered_during_inactivity.add(item)
 
     def mousePressEvent(self, mouseEvent):
         # Hack: prevent clearing the selection, e.g. while dragging or pressing

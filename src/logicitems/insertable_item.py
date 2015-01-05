@@ -72,6 +72,8 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
 
         self._cached_metadata = {}
         self._registered_scene = None
+        # metadata changes during inactivity, not reported to the backend
+        self._inactive_metadata_cache = {}
 
         # contains last valid position
         self._last_position = None
@@ -201,19 +203,23 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
 
     def _notify_backend(self, metadata):
         """Notify backend on metadata change."""
-        # apply locally
-        self._cached_metadata.update(metadata)
-        # notify backend
-        if self.is_registered() and not self._in_metadata_update:
-            self.scene().interface().update_element(
-                self.id(), metadata)
+        if not self._in_metadata_update:
+            if not self.is_registered():
+                self._cached_metadata.update(metadata)
+            elif self.is_inactive():
+                # store locally
+                self._inactive_metadata_cache.update(metadata)
+                print("cached locally", self._inactive_metadata_cache)
+                self.scene().register_change_during_inactivity(self)
+            else:
+                # notify backend
+                self.scene().interface().update_element(
+                    self.id(), metadata)
 
     def setPos(self, pos, y=None):
         if y is not None:
             pos = QtCore.QPointF(pos, y)
         super().setPos(pos)
-
-        self._on_item_position_has_changed(self.pos())
 
     def setX(self, x):
         self.setPos(x, self.y())
@@ -260,6 +266,13 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             # only selectable when allowed by scene
             elif change == QtGui.QGraphicsItem.ItemSelectedChange:
                 return value and self.scene().selectionAllowed()
+            # after becoming active
+            elif change == ItemBase.ItemSceneActivatedHasChanged:
+                self._notify_backend(self._inactive_metadata_cache)
+                self._inactive_metadata_cache = {}
+            # only movable when selected
+            elif change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
+                self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, value)
 
         return super().itemChange(change, value)
 
