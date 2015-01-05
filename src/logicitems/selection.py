@@ -25,6 +25,7 @@ class SelectionItem(ItemBase):
         self.setCursor(QtCore.Qt.SizeAllCursor)
 
         self._rect = QtCore.QRectF(0, 0, 0, 0)
+        self._bounding_rect = QtCore.QRectF(0, 0, 0, 0)
         self._initial_positions = {}
         self._start_position = None
 
@@ -58,6 +59,9 @@ class SelectionItem(ItemBase):
         pos = self._rect.topLeft()
         self._start_position = pos
         self._rect.translate(-pos)
+        # make bounding rect a little bit wider (prevent drawing artefacts)
+        self._bounding_rect = self._to_col_rect(
+            self._rect, radius=self.scene().get_grid_spacing())
         self.setPos(pos)
 
     def _move_to(self, pos):
@@ -66,7 +70,7 @@ class SelectionItem(ItemBase):
         self._invalidate_state()
 
     def boundingRect(self):
-        return self._rect
+        return self._bounding_rect
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
@@ -95,13 +99,14 @@ class SelectionItem(ItemBase):
                                   QtCore.Qt.DashLine))
         # detailed selection
         sel_items = self.scene().selectedItems()
-        if len(sel_items) > 1:
-            for item in sel_items:
-                poly = self.mapFromItem(item, item.selectionRect())
-                painter.drawRect(poly.boundingRect())
+        for item in sel_items:
+            poly = self.mapFromItem(item, item.selectionRect())
+            painter.drawRect(poly.boundingRect())
 
         # combined selection box
-        painter.drawRect(self.boundingRect())
+        if len(sel_items) > 1:
+            painter.setPen(self._selection_color_line)
+            painter.drawRect(self._rect)
 
     @QtCore.Slot()
     def onSelectionChanged(self):

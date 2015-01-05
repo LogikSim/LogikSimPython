@@ -12,6 +12,7 @@ Lines are connected in trees from one output to multiple inputs.
 import copy
 
 from PySide import QtGui, QtCore
+from PySide.QtCore import QPointF, QLineF
 
 from .connectable_item import ConnectableItem
 from .line_edge_indicator import LineEdgeIndicator
@@ -35,7 +36,7 @@ class LineTree(ConnectableItem, StateLineItem):
         have one output driving it and arbitrarily many inputs or free ends.
         Unconnected line trees can be driven by mouse interaction.
 
-        :param path: Initial path given as list of QtCore.QPointF.
+        :param path: Initial path given as list of QPointF.
         """
         metadata.setdefault('tree', {})
 
@@ -44,13 +45,14 @@ class LineTree(ConnectableItem, StateLineItem):
         # one root node, the _tree only contains one key-value pair.
         self._tree = None
 
+        # all in local coordinates
         self._lines = None  # list with all lines as QLinesF
         self._edges = None  # set with all edges as tuples
         self._shape = None  # shape path
         self._rect = None  # bounding rect
         self._edge_indicators = []  # list of LineEdgeIndicators
 
-        # stores last used output port for connections
+        # stores next output port used for connections
         self._next_output_port = 0
 
         super().__init__(parent, metadata)
@@ -62,7 +64,7 @@ class LineTree(ConnectableItem, StateLineItem):
 
         This can then be used to construct a tree.
 
-        :param path: Path being added given as list of QtCore.QPointF
+        :param path: Path being added given as list of QPointF
         """
         def path_to_tree(p):
             root = pivot = {}
@@ -78,7 +80,8 @@ class LineTree(ConnectableItem, StateLineItem):
         return "00352520-7cf0-43b7-9449-6fca5be8d6dc"
 
     def selectionRect(self):
-        return self._rect
+        delta = self.scene().get_grid_spacing() / 3
+        return self._rect.adjusted(-delta, -delta, delta, delta)
 
     def apply_update(self, metadata):
         super().apply_update(metadata)
@@ -90,7 +93,7 @@ class LineTree(ConnectableItem, StateLineItem):
             if tree != self._tree:
                 self._set_tree(tree)
 
-        # collect input value changes
+        # collect input logic value changes
         input_states = metadata.get('state', None)
         if input_states is not None:
             self.set_logic_state(input_states)
@@ -124,9 +127,6 @@ class LineTree(ConnectableItem, StateLineItem):
         self._tree = tree
         self._update_tree()
 
-        # TODO: create undo event
-        pass
-
         # notify backend
         self._notify_backend({'tree': self._encode_tree(tree)})
 
@@ -137,17 +137,6 @@ class LineTree(ConnectableItem, StateLineItem):
         Call this whenever added or removed from scene or self._tree
         changes.
         """
-        # normalization necessary?
-        if self.scene() is not None:
-            if self.pos() != QtCore.QPointF(0, 0):
-                n_tree = self._get_normalize_tree()
-                self._tree = n_tree
-                # TODO: no function should depend on renomalization!
-                # TODO: how to prevent this calling _update_tree
-                self.setPos(0, 0)
-                self._set_tree(n_tree)
-                return
-
         # re-root necessary?
         if self.scene() is not None:
             re_tree = self._reroot_to_possible_input(self._tree)
@@ -183,8 +172,10 @@ class LineTree(ConnectableItem, StateLineItem):
         def iter_edge_indicators(tree, root=True):
             for point, children in tree.items():
                 if len(children) >= (3 if root else 2):
-                    yield LineEdgeIndicator(self, QtCore.QPointF(*point))
+                    yield LineEdgeIndicator(self, QPointF(*point))
                 yield from iter_edge_indicators(children, False)
+
+        # TODO: draw edge indicators for connections
 
         self._edge_indicators = list(iter_edge_indicators(self._tree))
 
@@ -199,8 +190,8 @@ class LineTree(ConnectableItem, StateLineItem):
         poly = QtGui.QPolygonF()
         for line in self._lines:
             l_bounding_rect = self._line_to_col_rect(line)
-            poly = poly.united(QtGui.QPolygonF(l_bounding_rect))
             bounding_rect = bounding_rect.united(l_bounding_rect)
+            poly = poly.united(QtGui.QPolygonF(l_bounding_rect))
 
         shape_path = QtGui.QPainterPath()
         shape_path.addPolygon(poly)
@@ -235,30 +226,19 @@ class LineTree(ConnectableItem, StateLineItem):
             self._update_tree()
             con_item.connect(self)
 
-    def _get_normalize_tree(self):
-        """Returns tree that is normalized to scene coordinates."""
-        def _normalize_subtree(tree):
-            new_tree = {}
-            for point, children in tree.items():
-                new_point = self.mapToScene(*point).toTuple()
-                new_tree[new_point] = _normalize_subtree(children)
-            return new_tree
-        return _normalize_subtree(self._tree)
-
-    def _iter_lines(self, tree, __origin=None):
+    def _iter_lines(self, tree, *, _origin=None):
         """
         Iterator over all lines in the given tree.
 
         :param tree: given tree
         :return: list of QLineF
 
-        Note: __origin is for internal use only!
+        :param __origin: Internal use only!
         """
         for destination, children in tree.items():
-            if __origin is not None:
-                yield QtCore.QLineF(QtCore.QPointF(*__origin),
-                                    QtCore.QPointF(*destination))
-            yield from self._iter_lines(children, destination)
+            if _origin is not None:
+                yield QLineF(QPointF(*_origin), QPointF(*destination))
+            yield from self._iter_lines(children, _origin=destination)
 
     def _iter_edges(self, tree):
         """
@@ -281,8 +261,8 @@ class LineTree(ConnectableItem, StateLineItem):
         """
         Return all colliding connectors.
 
-        This function does not rely on the fact that the tree
-        position is at (0, 0).
+        :param tree: tree to check for connectors
+        :param scene: scene in which to check or None
         """
         if scene is None:
             scene = self.scene()
@@ -290,10 +270,10 @@ class LineTree(ConnectableItem, StateLineItem):
         con_items = set()
         for line in self._iter_lines(tree):
             if scene is None:
-                assert self.pos() == QtCore.QPointF(0, 0)
+                assert self.pos() == QPointF(0, 0), "cannot transform"
             else:
-                line = QtCore.QLineF(self.mapToScene(line.p1()),
-                                     self.mapToScene(line.p2()))
+                line = QLineF(self.mapToScene(line.p1()),
+                              self.mapToScene(line.p2()))
             l_bounding_rect = self._line_to_col_rect(line)
             for item in scene.items(l_bounding_rect):
                 if isinstance(item, ConnectorItem) and \
@@ -327,7 +307,7 @@ class LineTree(ConnectableItem, StateLineItem):
         elif len(inputs) == 1:
             con_item = inputs[0]
             # make sure input is root of the tree
-            new_root = con_item.endPoint().toTuple()
+            new_root = self.mapFromScene(con_item.endPoint()).toTuple()
             if new_root != self._get_root(tree):
                 # re-root tree to new input
                 tree = copy.deepcopy(tree)
@@ -341,13 +321,10 @@ class LineTree(ConnectableItem, StateLineItem):
         """
         Get delay from root to given point of tree.
 
-        This function does not rely on the fact that the tree is
-        located in (0, 0)
-
         :param point: destination scene point as tuple
         """
+        point = self.mapFromScene(QPointF(*scene_point)).toTuple()
         found = False
-        point = self.mapFromScene(QtCore.QPointF(*scene_point)).toTuple()
 
         def iter_lines(tree, origin=None):
             nonlocal found
@@ -376,7 +353,13 @@ class LineTree(ConnectableItem, StateLineItem):
 
     @staticmethod
     def _reroot(tree, new_root):
-        """Reroot the tree with given new root."""
+        """
+        Reroot the tree with given new root.
+
+        :param tree: tree to re-root
+        :param new_root: new root in local parameters, must be
+            an edge of the tree.
+        """
         tree = copy.deepcopy(tree)
         if len(tree) == 0 or new_root == list(tree.keys())[0]:
             return tree
@@ -399,7 +382,14 @@ class LineTree(ConnectableItem, StateLineItem):
         return res[-1]
 
     def _split_line_of_tree(self, tree, point):
-        """Split line in tree into two lines at given point (as tuple)."""
+        """
+        Split line in tree into two lines at given point (as tuple).
+
+        :param tree: tree to split
+        :param point: position to make cut in local coordinates. It
+            must not be an edge of the tree, otherwise lines with
+            zero length will be created.
+        """
         tree = copy.deepcopy(tree)
 
         class ItemFound(Exception):
@@ -408,10 +398,9 @@ class LineTree(ConnectableItem, StateLineItem):
         def helper(tree):
             for node, children in tree.items():
                 for child in children:
-                    line = QtCore.QLineF(QtCore.QPointF(*node),
-                                         QtCore.QPointF(*child))
+                    line = QLineF(QPointF(*node), QPointF(*child))
                     rect = self._line_to_col_rect(line)
-                    if rect.contains(QtCore.QPointF(*point)):
+                    if rect.contains(QPointF(*point)):
                         children[point] = {child: children[child]}
                         del children[child]
                         raise ItemFound()
@@ -427,7 +416,7 @@ class LineTree(ConnectableItem, StateLineItem):
 
     def _merge_root_lines_of_tree(self, tree):
         """
-        Merge lines at the root of given tree.
+        Simplifies the tree at the root, by mergin lines.
 
         Two lines can be merged, if they have the same orientation.
         """
@@ -442,17 +431,40 @@ class LineTree(ConnectableItem, StateLineItem):
         assert len(tree) == 1
         return tree
 
-    def merge_tree(self, merge_line_tree):
+    def _get_localized_tree_data(self, line_tree):
+        """
+        Returns tree data in local coordinates of given LineTree.
+
+        :param line_tree: LineTree instance
+        :return: tree data structure in local coordinates.
+        """
+        # TODO: refactor or delete
+        def _localize_subtree(tree):
+            new_tree = {}
+            for point, children in tree.items():
+                new_point = self.mapFromItem(line_tree, QPointF(*point))
+                new_tree[new_point.toTuple()] = _localize_subtree(children)
+            return new_tree
+        return _localize_subtree(line_tree._tree)
+
+    def merge_tree(self, other):
         """
         Merges two touching trees.
 
         The two trees must intersect in exactly one point.
+        :param other: LineTree to merge
         """
         # find all touching points
-        col_points = set([edge for edge in self._edges
-                          if merge_line_tree.contains(QtCore.QPointF(*edge))] +
-                         [edge for edge in merge_line_tree._edges
-                          if self.contains(QtCore.QPointF(*edge))])
+        col_points = set()
+        for edge in self._edges:
+            if other.contains(self.mapToItem(other, QPointF(*edge))):
+                col_points.add(edge)
+
+        for edge in other._edges:
+            edge_local = self.mapFromItem(other, QPointF(*edge))
+            if self.contains(edge_local):
+                col_points.add(edge_local.toTuple())
+
         if len(col_points) > 1:
             raise Exception("Cannot merge trees")
         col_point = col_points.pop()
@@ -461,10 +473,11 @@ class LineTree(ConnectableItem, StateLineItem):
         self_tree = self._tree
         if col_point not in self._edges:
             self_tree = self._split_line_of_tree(self._tree, col_point)
-        merge_tree = merge_line_tree._tree
-        if col_point not in merge_line_tree._edges:
-            merge_tree = self._split_line_of_tree(merge_line_tree._tree,
-                                                  col_point)
+
+        merge_tree = self._get_localized_tree_data(other)
+        col_point_nonlocal = self.mapToItem(other, QPointF(*col_point))
+        if col_point_nonlocal.toTuple() not in other._edges:
+            merge_tree = self._split_line_of_tree(merge_tree, col_point)
 
         # reroot trees to collision point
         new_tree = self._reroot(self_tree, col_point)
@@ -480,29 +493,35 @@ class LineTree(ConnectableItem, StateLineItem):
 
     def is_edge(self, scene_point):
         """ Is there an edge at scene_point given as QPointF """
-        return scene_point.toTuple() in self._edges
+        return self.mapFromScene(scene_point).toTuple() in self._edges
 
     def _get_nearest_point_of_line(self, scene_point, line):
-        """ Get nearest point on given line to given scene_point. """
-        grid_point = self.scene().roundToGrid(scene_point)
+        """
+        Get nearest point on given line to given scene_point.
+
+        :param scene_point: point in scene coordinates
+        :param line: line in local coordinates
+        :return: nearest point in scene coordintates
+        """
+        grid_point = self.mapFromScene(self.scene().roundToGrid(scene_point))
         vline = line.p2() - line.p1()
 
         def constrain_to_range(x, l1, l2):
             return max(min(x, max(l1, l2)), min(l1, l2))
 
         if vline.x() == 0:  # vertical
-            return QtCore.QPointF(line.p1().x(), constrain_to_range(
+            res = QPointF(line.p1().x(), constrain_to_range(
                 grid_point.y(), line.p1().y(), line.p2().y()))
         elif vline.y() == 0:  # horizontal
-            return QtCore.QPointF(
-                constrain_to_range(grid_point.x(),
-                                   line.p1().x(), line.p2().x()),
-                line.p1().y())
+            res = QPointF(constrain_to_range(grid_point.x(),
+                                             line.p1().x(), line.p2().x()),
+                          line.p1().y())
         else:  # somehow tilted
             raise Exception("Found tilted line")
+        return self.mapToScene(res)
 
     def get_nearest_point(self, scene_point):
-        """ Get nearest point on the line tree to given scene_point. """
+        """Get nearest point on the line tree to given scene_point."""
         p_nearest = None
         for line in self._lines:
             p = self._get_nearest_point_of_line(scene_point, line)
@@ -512,8 +531,14 @@ class LineTree(ConnectableItem, StateLineItem):
                 p_nearest = p
         return p_nearest
 
-    def contains_line(self, line):
-        """ Returns true if QLineF is fully contained by this line tree """
+    def contains_line(self, scene_line):
+        """
+        Returns true if QLineF is fully contained by this line tree.
+
+        :param line: QLineF in scene coordinates
+        """
+        line = QLineF(self.mapFromScene(scene_line.p1()),
+                      self.mapFromScene(scene_line.p2()))
         radius = self.collision_margin / 2
         l_bounding_rect = self._line_to_col_rect(line, radius)
         return self._shape.contains(l_bounding_rect)
@@ -525,7 +550,8 @@ class LineTree(ConnectableItem, StateLineItem):
         return self._shape
 
     def itemChange(self, change, value):
-        # update tree, when becoming active
+        # update tree, when becoming active -->
+        # TODO: why?
         if change == ItemBase.ItemSceneActivatedChange:
             self._update_tree()
 
@@ -535,7 +561,7 @@ class LineTree(ConnectableItem, StateLineItem):
         """
         Returns iterator of line segments with state information.
 
-        :return: iterator with items of (QLineF, state)
+        :return: iterator with items of (QLineF, state) in local coordinates
         """
         clock = self.scene().registry().clock()
 
@@ -563,7 +589,6 @@ class LineTree(ConnectableItem, StateLineItem):
             return longest_delay
         return iter_segment(self._tree)
 
-    # @timeit
     def paint(self, painter, option, widget=None):
         super().paint(painter, option, widget)
 

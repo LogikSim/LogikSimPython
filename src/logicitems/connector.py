@@ -21,6 +21,8 @@ class ConnectorItem(StateLineItem):
         """
         super().__init__(parent)
 
+        self.setFlag(QtGui.QGraphicsItem.ItemStacksBehindParent)
+
         self._start = start
         self._anchor = anchor
         self._end = end

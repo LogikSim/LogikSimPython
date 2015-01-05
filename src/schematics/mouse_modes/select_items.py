@@ -100,7 +100,6 @@ class SelectItemsMode(GridViewMouseModeBase):
                 for item in sel_items:
                     item.set_temporary(True)
 
-
                 drop_action = drag.exec_(QtCore.Qt.CopyAction |
                                          QtCore.Qt.MoveAction)
 

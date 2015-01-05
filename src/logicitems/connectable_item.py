@@ -144,7 +144,7 @@ class ConnectableItem(InsertableItem):
                 return info.delay
 
     def notify_backend_connect(self, source_port, sink_id,
-                                sink_port, delay=0):
+                               sink_port, delay=0):
         if self.is_inactive():
             # store locally
             self._inactive_connection_cache[source_port] = \

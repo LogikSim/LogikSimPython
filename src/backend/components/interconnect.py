@@ -8,13 +8,14 @@
 from backend.element import Element, Edge
 from backend.component_library import ComponentType
 from copy import copy
+from logicitems import LineTree
 
 
 class Interconnect(ComponentType):
     """
     Connection between elements.
     """
-    METADATA = {"GUID": "00352520-7cf0-43b7-9449-6fca5be8d6dc",
+    METADATA = {"GUID": LineTree.GUI_GUID(),
                 "name": "Interconnect",
                 "#inputs": 1,
                 "#outputs": 1,
