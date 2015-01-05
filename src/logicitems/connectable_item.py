@@ -64,9 +64,14 @@ class ConnectableItem(InsertableItem):
         # index: port, value: OutputConnectionInfo or None
         self._output_connections = []
 
-        # connections during inactivity, not reported to the backend
+        # input connections during inactivity
+        # key: port, value: InputConnectionInfo or Disconnect or None
+        self._input_cache = {}
+
+        # output connections during inactivity, not reported to the backend
+        # they are submitted to the backend once the scene becomes active
         # key: port, value: OutputConnectionInfo or Disconnect or None
-        self._inactive_connection_cache = {}
+        self._output_cache = {}
 
         super().__init__(parent, metadata)
 
@@ -90,8 +95,9 @@ class ConnectableItem(InsertableItem):
         """Setup connection with given item."""
         raise NotImplementedError
 
-    def apply_update(self, metadata):
-        super().apply_update(metadata)
+    def apply_update_frontend(self, metadata):
+        # TODO: refactor
+        super().apply_update_frontend(metadata)
 
         # TODO: handle #inputs change -> delete connection of invalid index
 
@@ -130,7 +136,7 @@ class ConnectableItem(InsertableItem):
         """Disconnect all outputs."""
         for port in range(len(self._output_connections)):
             if self._output_connections[port] or \
-                    self._inactive_connection_cache.get(port, None):
+                    self._output_cache.get(port, None):
                 self.notify_backend_disconnect(port)
 
     def is_connected(self, check_input, port):
@@ -149,29 +155,50 @@ class ConnectableItem(InsertableItem):
             if info is not None:
                 return info.delay
 
+    def _notify_input_connect(self, sink_port, source_id, source_port):
+        """Notify item that input connection has been made."""
+        self._input_cache[sink_port] = InputConnectionInfo(source_id,
+                                                           source_port)
+
     def notify_backend_connect(self, source_port, sink_id,
                                sink_port, delay=0):
         if self.is_inactive():
             # store locally
-            self._inactive_connection_cache[source_port] = \
+            self._output_cache[source_port] = \
                 OutputConnectionInfo(sink_id, sink_port, delay)
-            print("connected locally", self._inactive_connection_cache)
+            print("connected locally", self._output_cache)
             self.scene().register_change_during_inactivity(self)
+            # notify connected item to update input cache
+            other = self.scene().registry().get_frontend_item(sink_id)
+            other._notify_input_connect(sink_port, self.id(), source_port)
         else:
             self.scene().interface().connect(
                 self.id(), source_port, sink_id, sink_port, delay)
 
+    def _notify_input_disconnect(self, sink_port):
+        """Notify item that input connection has been disconnected."""
+        self._input_cache[sink_port] = Disconnect()
+
     def notify_backend_disconnect(self, source_port):
         if self.is_inactive():
+            # notify connected item to update input cache
+            if source_port in self._output_cache:
+                info = self._output_cache.get(source_port)
+            else:
+                info = self._output_connections[source_port]
+            if isinstance(info, InputConnectionInfo):
+                other = self.scene().registry().get_frontend_item(
+                    info.source_id)
+                other._notify_input_disconnect(info.source_id)
             # store locally
-            self._inactive_connection_cache[source_port] = Disconnect()
-            print("disconnected locally", self._inactive_connection_cache)
+            self._output_cache[source_port] = Disconnect()
+            print("disconnected locally", self._output_cache)
             self.scene().register_change_during_inactivity(self)
         else:
             self.scene().interface().disconnect(self.id(), source_port)
 
     def _submit_cached_connections(self):
-        for source_port, info in self._inactive_connection_cache.items():
+        for source_port, info in self._output_cache.items():
             if len(self._output_connections) > source_port:
                 curr_con = self._output_connections[source_port]
             else:
@@ -186,7 +213,8 @@ class ConnectableItem(InsertableItem):
             # disconnect
             if isinstance(info, Disconnect) and curr_con is not None:
                 self.notify_backend_disconnect(source_port)
-        self._inactive_connection_cache = {}
+        self._input_cache = {}
+        self._output_cache = {}
 
     def _issue_connection_update(self):
         """
@@ -196,26 +224,42 @@ class ConnectableItem(InsertableItem):
         connected input items, since ConnectableItems only manager
         their output connections.
         """
-        # TODO: track input connections and call update_connection on them
+        # notify all connected inputs to update their connections
+        # since we are only keeping track of outputs
+        input_items = set()
+        for i, info in enumerate(self._input_connections):
+            if i in self._input_cache:
+                info = self._input_cache[i]
+            if isinstance(info, InputConnectionInfo):
+                input_items.add(self.scene().registry().get_frontend_item(
+                    info.source_id))
+        for item in input_items:
+            item.update_connections()
+
+        # update our output connections
         self.update_connections()
 
     def on_registration_status_changed(self):
         """Overrides on_registration_status_changed"""
+        # TODO: refactor
         if not self.is_registered():
             self._input_connections = []
             self._output_connections = []
-            self._inactive_connection_cache = {}
+            self._input_cache = {}
+            self._output_cache = {}
         else:
             self._issue_connection_update()
         super().on_registration_status_changed()
 
     def itemChange(self, change, value):
         if self.scene() is not None:
+            if change == ItemBase.ItemSceneActivatedChange:
+                self._issue_connection_update()
             # submit cache when becoming active
-            if change == ItemBase.ItemSceneActivatedHasChanged:
+            if change == ItemBase.ItemSceneActivatedHasChanged and value:
                 self._submit_cached_connections()
             # update connections when moved in scene
-            if change == QtGui.QGraphicsItem.ItemScenePositionHasChanged:
-                self._issue_connection_update()
+#            if change == QtGui.QGraphicsItem.ItemScenePositionHasChanged:
+#                self._issue_connection_update()
 
         return super().itemChange(change, value)

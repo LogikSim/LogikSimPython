@@ -34,7 +34,7 @@ class ConnectorItem(StateLineItem):
         self._bounding_rect_valid = False
         self._bounding_rect = None
 
-    def apply_update(self, metadata):
+    def apply_update_frontend(self, metadata):
         """Apply changes from metadata to this item."""
         # extract state
         states = metadata.get(

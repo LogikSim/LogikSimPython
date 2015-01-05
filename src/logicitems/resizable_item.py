@@ -14,6 +14,7 @@ from PySide import QtGui, QtCore
 import logicitems
 from actions.resize_action import ResizeAction
 from .insertable_item import disabled_undo
+from .itembase import ItemBase
 
 
 class ResizableItem(logicitems.LogicItem):
@@ -29,16 +30,27 @@ class ResizableItem(logicitems.LogicItem):
         self._show_handles = False
         self._body_rect = QtCore.QRectF(0, 0, 0, 0)
         self._handles = {}
+        self._delay = None
 
         super().__init__(parent=parent, metadata=metadata)
         self.setFlag(QtGui.QGraphicsItem.ItemSendsScenePositionChanges)
 
-    def apply_update(self, metadata):
-        super().apply_update(metadata)
+    def apply_update_frontend(self, metadata):
+        super().apply_update_frontend(metadata)
 
         input_count = metadata.get('#inputs')
         if input_count is not None and input_count != self.get_input_count():
             self.set_input_count_and_pos(input_count)
+
+    def update_backend(self, backend_metadata):
+        super().update_backend(backend_metadata)
+
+        metadata = {}
+        if self._input_count != backend_metadata.get('#inputs', None):
+            metadata['#inputs'] = self._input_count
+        if self._delay != backend_metadata.get('delay', None):
+            metadata['delay'] = self._delay
+        self.notify_backend(metadata)
 
     def get_input_count(self):
         return self._input_count
@@ -62,9 +74,6 @@ class ResizableItem(logicitems.LogicItem):
         if new_pos is not None:
             with disabled_undo(self):
                 self.setPos(new_pos)
-
-        # notify backend
-        self._notify_backend({'#inputs': new_input_count})
 
     def _set_show_handles(self, value):
         if value != self._show_handles:
@@ -109,8 +118,10 @@ class ResizableItem(logicitems.LogicItem):
         self._outputs.append(con)
 
         # setup delay based on #inputs
-        self._notify_backend({'delay': (2 + self._input_count // 2) *
-                              self._delay_per_gridpoint})
+        self._delay = (2 + self._input_count // 2) * self._delay_per_gridpoint
+
+        # notify change
+        self.register_change_during_inactivity()
 
     def _update_resize_tool_handles(self):
         show_handles = self.isSelected() and self._show_handles

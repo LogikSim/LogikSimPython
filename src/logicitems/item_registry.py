@@ -95,7 +95,7 @@ class ItemRegistry(QtCore.QObject):
 
         :param backend_id: Backend id of the requested item.
         """
-        return self._items[id]
+        return self._items[backend_id]
 
     def instantiate_frontend_item(self,
                                   backend_guid,
@@ -199,7 +199,7 @@ class ItemRegistry(QtCore.QObject):
                 self.deleted.emit(item)
             else:
                 # Simple update
-                item.update(update)
+                item.update_frontend(update)
                 self.updated.emit(item, update)
         else:
             # Must be connection related then

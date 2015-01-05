@@ -83,8 +83,8 @@ class LineTree(ConnectableItem, StateLineItem):
         delta = self.scene().get_grid_spacing() / 3
         return self._rect.adjusted(-delta, -delta, delta, delta)
 
-    def apply_update(self, metadata):
-        super().apply_update(metadata)
+    def apply_update_frontend(self, metadata):
+        super().apply_update_frontend(metadata)
 
         # tree updates
         enc_tree = metadata.get('tree', None)
@@ -97,6 +97,13 @@ class LineTree(ConnectableItem, StateLineItem):
         input_states = metadata.get('state', None)
         if input_states is not None:
             self.set_logic_state(input_states)
+
+    def update_backend(self, backend_metadata):
+        super().update_backend(backend_metadata)
+
+        enc_tree = self._encode_tree(self._tree)
+        if enc_tree != backend_metadata.get('tree', None):
+            self.notify_backend({'tree': enc_tree})
 
     @classmethod
     def _encode_tree(cls, tree):
@@ -124,11 +131,14 @@ class LineTree(ConnectableItem, StateLineItem):
 
         Always use this function, rather than assigning to self._tree.
         """
+        if self._tree == tree:
+            return
+
         self._tree = tree
         self._update_tree()
 
-        # notify backend
-        self._notify_backend({'tree': self._encode_tree(tree)})
+        # notify change
+        self.register_change_during_inactivity()
 
     def _update_tree(self):
         """

@@ -58,6 +58,21 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
 
     They also support undo action creation.
     """
+
+    class ItemRegistrationChange:
+        """
+        InsertableItem.itemChange() notification
+
+        The item is being registered / unregistered in the backend
+        """
+
+    class ItemRegistrationHasChanged:
+        """
+        InsertableItem.itemChange() notification
+
+        The item has been registered / unregistered in the backend
+        """
+
     def __init__(self, parent, metadata):
         super().__init__(parent)
         metadata.setdefault('x', 0)
@@ -72,8 +87,6 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
 
         self._cached_metadata = {}
         self._registered_scene = None
-        # metadata changes during inactivity, not reported to the backend
-        self._inactive_metadata_cache = {}
 
         # contains last valid position
         self._last_position = None
@@ -82,7 +95,122 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         # is item creating undo actions
         self._item_creates_undo_actions = True
 
-        self.update(metadata)
+        self.update_frontend(metadata)
+
+    def register_change_during_inactivity(self):
+        """Call this function on all changes during inactivity"""
+        if self.scene() is not None:
+            self.scene().register_change_during_inactivity(self)
+
+    def update_frontend(self, metadata):
+        """
+        Update incoming metadata changes from the backend.
+        
+        Note: Do NOT update states within this function override 
+            apply_update_frontend instead.
+        """
+        self.log.info("Update {} with {}".format(self.id(), metadata))
+        self._cached_metadata.update(metadata)
+
+        self._in_metadata_update = True
+        try:
+            self.apply_update_frontend(metadata)
+        finally:
+            self._in_metadata_update = False
+
+    def apply_update_frontend(self, metadata):
+        """
+        Apply changes from metadata to this item.
+        """
+        # apply position
+        if 'x' in metadata or 'y' in metadata:
+            self.setPos(metadata.get('x', self.x()),
+                        metadata.get('y', self.y()))
+
+    def update_backend(self, backend_metadata):
+        """
+        Notify backend on all changed to the item.
+        
+        Use the given backend metadata to look for changes and report
+        them via 
+        """
+        # update position
+        metadata = {}
+        if self.x() != backend_metadata.get('x', None):
+            metadata['x'] = self.x()
+        if self.y() != backend_metadata.get('y', None):
+            metadata['y'] = self.y()
+        self.notify_backend(metadata)
+
+    def set_temporary(self, temp):
+        """
+        Overrides set_temporary.
+
+        Temporary insertable items have no instance in the backend
+        and do not generate undo actions.
+        """
+        ItemBase.set_temporary(self, temp)
+
+        if temp:
+            self._unregister()
+        else:
+            self._register()
+
+    def set_item_creates_undo_actions(self, value):
+        """Set whether item should generate undo actions."""
+        # TODO: where used?
+        self._item_creates_undo_actions = value
+
+    def item_creates_undo_actions(self):
+        return self._item_creates_undo_actions
+
+    def _register_undo_action(self, action):
+        """
+        Register undo action.
+
+        You can register actions at any times. If the item
+        is not temporary the action will be forwarded to the scene,
+        otherwise it will be discarded.
+        """
+        if self.scene() is not None and \
+                self._item_creates_undo_actions and \
+                not self._in_metadata_update and \
+                not self.is_temporary():
+            self.scene().actions.push(action)
+
+    def _unregister(self):
+        """Delete backend instance."""
+        if self._registered_scene is not None:
+            self.itemChange(InsertableItem.ItemRegistrationChange, False)
+            self._registered_scene.interface().delete_element(self.id())
+            self._registered_scene = None
+            self.itemChange(InsertableItem.ItemRegistrationHasChanged, False)
+
+    def _register(self):
+        """Create new backend instance."""
+        scene = self.scene()
+        if scene is not None and not self.is_temporary():
+            self.itemChange(InsertableItem.ItemRegistrationChange, True)
+            scene.interface().create_element(
+                guid=self.GUID(),
+                parent=None,
+                additional_metadata=self.metadata())
+            self._registered_scene = scene
+            self.itemChange(InsertableItem.ItemRegistrationHasChanged, True)
+
+    def is_registered(self):
+        return self._registered_scene is not None
+
+    def notify_backend(self, metadata):
+        """Notify backend on metadata change."""
+        if not metadata:
+            return
+        if not self.is_registered():
+            self._cached_metadata.update(metadata)
+        else:
+            assert not self.is_inactive(), "notify only allowed while active"
+            # notify backend
+            self.scene().interface().update_element(self.id(), metadata)
 
     def selectionRect(self):
         """Return rect used for selection."""
@@ -113,107 +241,6 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
     def metadata(self):
         """Return the complete metadata."""
         return self._cached_metadata
-
-    def update(self, metadata):
-        """
-        Update incoming metadata changes from the backend.
-
-        To update states of this object override apply_update.
-        """
-        self.log.info("Update {} with {}".format(self.id(), metadata))
-
-        self._cached_metadata.update(metadata)
-
-        self._in_metadata_update = True
-        try:
-            self.apply_update(metadata)
-        finally:
-            self._in_metadata_update = False
-
-    def apply_update(self, metadata):
-        """
-        Apply changes from metadata to this item.
-
-        Throughout these operations the variable
-        self._in_metadata_update is True.
-        """
-        if 'x' in metadata or 'y' in metadata:
-            self.setPos(metadata.get('x', self.x()),
-                        metadata.get('y', self.y()))
-
-    def set_temporary(self, temp):
-        """
-        Overrides set_temporary.
-
-        Temporary insertable items have no instance in the backend
-        and do not generate undo actions.
-        """
-        ItemBase.set_temporary(self, temp)
-
-        if temp:
-            self._unregister()
-        else:
-            self._register()
-
-    def set_item_creates_undo_actions(self, value):
-        """Set whether item should generate undo actions."""
-        self._item_creates_undo_actions = value
-
-    def item_creates_undo_actions(self):
-        return self._item_creates_undo_actions
-
-    def _register_undo_action(self, action):
-        """
-        Register undo action.
-
-        You can register actions at any times. If the item
-        is not temporary the action will be forwarded to the scene,
-        otherwise it will be discarded.
-        """
-        if self.scene() is not None and \
-                self._item_creates_undo_actions and \
-                not self._in_metadata_update and \
-                not self.is_temporary():
-            self.scene().actions.push(action)
-
-    def _unregister(self):
-        """Delete backend instance."""
-        if self._registered_scene is not None:
-            self._registered_scene.interface().delete_element(self.id())
-            self._registered_scene = None
-            self.on_registration_status_changed()
-
-    def _register(self):
-        """Create new backend instance."""
-        scene = self.scene()
-        if scene is not None and not self.is_temporary():
-            scene.interface().create_element(
-                guid=self.GUID(),
-                parent=None,
-                additional_metadata=self.metadata())
-            self._registered_scene = scene
-            self.on_registration_status_changed()
-
-    def on_registration_status_changed(self):
-        """Called when registration status has changed."""
-
-    def is_registered(self):
-        return self._registered_scene is not None
-
-    def _notify_backend(self, metadata):
-        """Notify backend on metadata change."""
-        if not self._in_metadata_update:
-            if not self.is_registered():
-                self._cached_metadata.update(metadata)
-            elif self.is_inactive():
-                # store locally
-                self._inactive_metadata_cache.update(metadata)
-                print("cached locally", self._inactive_metadata_cache)
-                self.scene().register_change_during_inactivity(self)
-            else:
-                # notify backend
-                self.scene().interface().update_element(
-                    self.id(), metadata)
 
     def setPos(self, pos, y=None):
         if y is not None:
@@ -246,10 +273,10 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
                                 self, self._last_position, new_pos)
             self._register_undo_action(action)
 
-        # notify backend
-        self._notify_backend({'x': new_pos.x(), 'y': new_pos.y()})
-
         self._last_position = new_pos
+
+        # notify change
+        self.register_change_during_inactivity()
 
     def itemChange(self, change, value):
         # re-register on scene change
@@ -267,10 +294,12 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             # only selectable when allowed by scene
             elif change == QtGui.QGraphicsItem.ItemSelectedChange:
                 return value and self.scene().selectionAllowed()
-            # after becoming active
-            elif change == ItemBase.ItemSceneActivatedHasChanged:
-                self._notify_backend(self._inactive_metadata_cache)
-                self._inactive_metadata_cache = {}
+            # after becoming active update metadata for backend
+            elif change == ItemBase.ItemSceneActivatedHasChanged and value:
+                self.update_backend(self._cached_metadata)
+            # before becoming registered update metadata for backend
+            elif change == InsertableItem.ItemRegistrationChange and value:
+                self.update_backend(self._cached_metadata)
             # only movable when selected
             elif change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
                 self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, value)

@@ -276,17 +276,13 @@ class GridScene(QtGui.QGraphicsScene):
         their changes by calling register_change_during_inactivity.
         """
         if value != self._is_active:
-            if value:
-                for item in self._registered_during_inactivity.copy():
-                    item.itemChange(
-                        logicitems.ItemBase.ItemSceneActivatedChange,
-                        True)
+            for item in self._registered_during_inactivity.copy():
+                item.itemChange(
+                    logicitems.ItemBase.ItemSceneActivatedChange, value)
             self._is_active = value
-            if value:
-                for item in self._registered_during_inactivity:
-                    item.itemChange(
-                        logicitems.ItemBase.ItemSceneActivatedHasChanged,
-                        True)
+            for item in self._registered_during_inactivity:
+                item.itemChange(
+                    logicitems.ItemBase.ItemSceneActivatedHasChanged, value)
             self._registered_during_inactivity.clear()
 
     def register_change_during_inactivity(self, item):

@@ -33,12 +33,12 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
         ConnectableItem.__init__(self, parent, metadata)
         QtGui.QGraphicsLayoutItem.__init__(self, parent)
 
-    def apply_update(self, metadata):
-        super().apply_update(metadata)
+    def apply_update_frontend(self, metadata):
+        super().apply_update_frontend(metadata)
 
         # feed input/output connectors with metadata update
         for con_item in self._inputs + self._outputs:
-            con_item.apply_update(metadata)
+            con_item.apply_update_frontend(metadata)
 
     def setGeometry(self, rect):
         scene_offset = self.mapToScene(self.selectionRect().topLeft()) - \
