@@ -78,7 +78,13 @@ class ConnectableItem(InsertableItem):
 
         This function is called automatically when the position
         of the item is changing or it is registered.
+
+        The item should
+        - disconnect obsolete outputs with either
+          'notify_backend_disconnect' or 'disconnect_all_outputs' and
+        - discover new inputs and outputs at the current position.
         """
+        raise NotImplementedError
 
     def connect(self, item):
         """Setup connection with given item."""
@@ -182,6 +188,17 @@ class ConnectableItem(InsertableItem):
                 self.notify_backend_disconnect(source_port)
         self._inactive_connection_cache = {}
 
+    def _issue_connection_update(self):
+        """
+        Issue connection update when item is moved or newly registered
+
+        This will call update_connections on itself and all
+        connected input items, since ConnectableItems only manager
+        their output connections.
+        """
+        # TODO: track input connections and call update_connection on them
+        self.update_connections()
+
     def on_registration_status_changed(self):
         """Overrides on_registration_status_changed"""
         if not self.is_registered():
@@ -189,7 +206,7 @@ class ConnectableItem(InsertableItem):
             self._output_connections = []
             self._inactive_connection_cache = {}
         else:
-            self.update_connections()
+            self._issue_connection_update()
         super().on_registration_status_changed()
 
     def itemChange(self, change, value):
@@ -199,6 +216,6 @@ class ConnectableItem(InsertableItem):
                 self._submit_cached_connections()
             # update connections when moved in scene
             if change == QtGui.QGraphicsItem.ItemScenePositionHasChanged:
-                self.update_connections()
+                self._issue_connection_update()
 
         return super().itemChange(change, value)

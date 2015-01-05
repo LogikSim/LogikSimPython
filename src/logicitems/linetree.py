@@ -203,14 +203,16 @@ class LineTree(ConnectableItem, StateLineItem):
         Updates connections to Connectors.
         """
         # Disconnect all outputs
-        # TODO: what about disconnecting connected inputs?
         self.disconnect_all_outputs()
         self._next_output_port = 0
 
         # Connect to all colliding connectors
         for con_item in self._get_all_colliding_connectors(self._tree):
             if con_item.is_registered():
-                con_item.connect(self)
+                if con_item.is_input():
+                    con_item.connect(self)
+                else:
+                    self.connect(con_item)
 
     def connect(self, con_item):
         if con_item.is_input():
@@ -438,7 +440,6 @@ class LineTree(ConnectableItem, StateLineItem):
         :param line_tree: LineTree instance
         :return: tree data structure in local coordinates.
         """
-        # TODO: refactor or delete
         def _localize_subtree(tree):
             new_tree = {}
             for point, children in tree.items():
@@ -548,14 +549,6 @@ class LineTree(ConnectableItem, StateLineItem):
 
     def shape(self):
         return self._shape
-
-    def itemChange(self, change, value):
-        # update tree, when becoming active -->
-        # TODO: why?
-        if change == ItemBase.ItemSceneActivatedChange:
-            self._update_tree()
-
-        return super().itemChange(change, value)
 
     def iter_state_line_segments(self):
         """
