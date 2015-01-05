@@ -40,12 +40,14 @@ class InsertLineMode(ReadyToInsertLineSubMode,
     def mouse_enter(self):
         super().linesub_enter()
         self.setLinesubMode(ReadyToInsertLineSubMode)
+        self.scene().set_active(False)
 
     def mouse_leave(self):
         super().linesub_leave()
         # cleanup InsertLine
         self.update_line_anchor_indicator(None)
         self.setLinesubMode(None)
+        self.scene().set_active(True)
 
     @mouse_mode_filtered
     def keyPressEvent(self, event):

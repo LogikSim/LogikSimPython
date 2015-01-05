@@ -13,14 +13,14 @@ import copy
 
 from PySide import QtGui, QtCore
 
-from .insertable_item import InsertableItem
+from .connectable_item import ConnectableItem
 from .line_edge_indicator import LineEdgeIndicator
 from .connector import ConnectorItem
 from .state_line_item import StateLineItem
 from .itembase import ItemBase
 
 
-class LineTree(InsertableItem, StateLineItem):
+class LineTree(ConnectableItem, StateLineItem):
     """ A tree of connected lines """
 
     _debug_painting = False
@@ -50,8 +50,8 @@ class LineTree(InsertableItem, StateLineItem):
         self._rect = None  # bounding rect
         self._edge_indicators = []  # list of LineEdgeIndicators
 
-        self._connected_input = None  # id of connected input
-        self._connected_outputs = []  # (out_port, id) of connected outputs
+        # stores last used output port for connections
+        self._next_output_port = 0
 
         super().__init__(parent, metadata)
 
@@ -95,16 +95,6 @@ class LineTree(InsertableItem, StateLineItem):
         if input_states is not None:
             self.set_logic_state(input_states)
 
-        # connection updates
-        inputs = metadata.get('inputs', None)
-        if inputs is not None:
-            self._connected_input = inputs[0][0]
-
-        outputs = metadata.get('outputs', None)
-        if outputs is not None:
-            self._connected_outputs = list(
-                (con_id, con_port) for con_id, con_port, _ in outputs)
-
     @classmethod
     def _encode_tree(cls, tree):
         """Encodes tree into a JSON representable data structure."""
@@ -145,12 +135,15 @@ class LineTree(InsertableItem, StateLineItem):
         Updates internal storage.
 
         Call this whenever added or removed from scene or self._tree
-        changes or registration status changes.
+        changes.
         """
         # normalization necessary?
         if self.scene() is not None:
             if self.pos() != QtCore.QPointF(0, 0):
                 n_tree = self._get_normalize_tree()
+                self._tree = n_tree
+                # TODO: no function should depend on renomalization!
+                # TODO: how to prevent this calling _update_tree
                 self.setPos(0, 0)
                 self._set_tree(n_tree)
                 return
@@ -160,14 +153,14 @@ class LineTree(InsertableItem, StateLineItem):
             re_tree = self._reroot_to_possible_input(self._tree)
             if re_tree != self._tree:
                 self._set_tree(re_tree)
+                # we need to update all delays
+                self.update_connections()
                 return
 
         # okay, then update internals
         self._update_data_structures()
         self._update_edge_indicators()
         self._update_shape()
-        if self.is_registered() and self.scene() is not None:
-            self._update_connections()
 
     def _update_data_structures(self):
         """
@@ -214,37 +207,33 @@ class LineTree(InsertableItem, StateLineItem):
         self._shape = shape_path
         self._rect = bounding_rect
 
-    def _update_connections(self):
+    def update_connections(self):
         """
         Updates connections to Connectors.
         """
-        # Connect connectors
+        # Disconnect all outputs
+        # TODO: what about disconnecting connected inputs?
+        self.disconnect_all_outputs()
+        self._next_output_port = 0
+
+        # Connect to all colliding connectors
         for con_item in self._get_all_colliding_connectors(self._tree):
             if con_item.is_registered():
                 con_item.connect(self)
 
     def connect(self, con_item):
         if con_item.is_input():
+            # connect
             delay = self._length_to(con_item.endPoint().toTuple()) * \
                 self._delay_per_gridpoint / self.scene().get_grid_spacing()
-
-            # disconnect if connected
-            key = (con_item.id(), con_item.port())
-            if key in self._connected_outputs:
-                out_port = self._connected_outputs.index(key)
-                self._connected_outputs[out_port] = con_item.id()
-                self.scene().interface().disconnect(self.id(), out_port)
-            else:
-                out_port = len(self._connected_outputs)
-                self._connected_outputs.append(key)
-            # connect
-            self.scene().interface().connect(
-                self.id(), out_port,
-                con_item.id(), con_item.port(), delay)
+            self._next_output_port += 1
+            out_port = self._next_output_port
+            self.notify_backend_connect(out_port, con_item.id(),
+                                        con_item.port(), delay)
         else:
-            # for outputs we need to update our tree (re-rooting)
-            # in this process connections will be discovered by its own
+            # for outputs we need to update our tree (re-rooting to output)
             self._update_tree()
+            con_item.connect(self)
 
     def _get_normalize_tree(self):
         """Returns tree that is normalized to scene coordinates."""
@@ -289,12 +278,22 @@ class LineTree(InsertableItem, StateLineItem):
             return list(self._tree.keys())[0]
 
     def _get_all_colliding_connectors(self, tree, scene=None):
-        """Return all colliding connectors."""
+        """
+        Return all colliding connectors.
+
+        This function does not rely on the fact that the tree
+        position is at (0, 0).
+        """
         if scene is None:
             scene = self.scene()
 
         con_items = set()
         for line in self._iter_lines(tree):
+            if scene is None:
+                assert self.pos() == QtCore.QPointF(0, 0)
+            else:
+                line = QtCore.QLineF(self.mapToScene(line.p1()),
+                                     self.mapToScene(line.p2()))
             l_bounding_rect = self._line_to_col_rect(line)
             for item in scene.items(l_bounding_rect):
                 if isinstance(item, ConnectorItem) and \
@@ -338,13 +337,17 @@ class LineTree(InsertableItem, StateLineItem):
 
         return tree
 
-    def _length_to(self, point):
+    def _length_to(self, scene_point):
         """
         Get delay from root to given point of tree.
 
-        :param point: destination point as tuple
+        This function does not rely on the fact that the tree is
+        located in (0, 0)
+
+        :param point: destination scene point as tuple
         """
         found = False
+        point = self.mapFromScene(QtCore.QPointF(*scene_point)).toTuple()
 
         def iter_lines(tree, origin=None):
             nonlocal found
@@ -521,24 +524,10 @@ class LineTree(InsertableItem, StateLineItem):
     def shape(self):
         return self._shape
 
-    def set_temporary(self, temp):
-        if not temp:
-            self._update_tree()
-        super().set_temporary(temp)
-
-    def on_becoming_active(self):
-        self._update_tree()
-
-    def on_registration_status_changed(self):
-        """Called when registration status changed."""
-        if not self.is_registered():
-            self._connected_input = None
-            self._connected_outputs = []
-        self._update_tree()
-
     def itemChange(self, change, value):
+        # update tree, when becoming active
         if change == ItemBase.ItemSceneActivatedChange:
-            self.on_becoming_active()
+            self._update_tree()
 
         return super().itemChange(change, value)
 

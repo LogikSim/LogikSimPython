@@ -27,7 +27,6 @@ class ConnectorItem(StateLineItem):
         self._is_input = is_input
         self._port = port
 
-        self.setFlag(QtGui.QGraphicsItem.ItemSendsScenePositionChanges)
         self.set_animate_lines(False)
 
         self._bounding_rect_valid = False
@@ -46,7 +45,12 @@ class ConnectorItem(StateLineItem):
             self.set_animate_lines(self.is_connected())
             self.request_paint()
 
-    def _update_connection(self):
+    def discover_connection(self):
+        """
+        Connect to colliding items.
+
+        Called by parentItem.
+        """
         from .linetree import LineTree
 
         if self.scene() is not None:
@@ -126,7 +130,7 @@ class ConnectorItem(StateLineItem):
             item.connect(self)
         else:
             # setup connection in backend
-            self.parentItem()._notify_backend_connect(
+            self.parentItem().notify_backend_connect(
                 self.port(), item.id(), 0, self.visual_delay())
 
     def is_connected(self):
@@ -165,15 +169,3 @@ class ConnectorItem(StateLineItem):
             clock=self.scene().registry().clock(),
             is_vertical=False)
         return delay
-
-    def on_registration_status_changed(self):
-        """Called when registration status of parent is changed."""
-        self._update_connection()
-
-    def itemChange(self, change, value):
-        if change == QtGui.QGraphicsItem.ItemParentHasChanged or \
-                change == QtGui.QGraphicsItem.ItemSceneHasChanged or \
-                change == QtGui.QGraphicsItem.ItemScenePositionHasChanged:
-            self._update_connection()
-
-        return super().itemChange(change, value)

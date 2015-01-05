@@ -72,9 +72,10 @@ class ItemListScene(schematics.GridScene):
     _tile_selection_overlapp = 0.15
 
     def __init__(self, *args, **kargs):
-        super(ItemListScene, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
 
         self.set_grid_enabled(False)
+        self.set_active(False)
 
         # top level widget is needed to layout all other items
         self._top_widget = QtGui.QGraphicsWidget()
@@ -124,9 +125,12 @@ class ItemListScene(schematics.GridScene):
                 if isinstance(item, LogicItem):
                     self._add_item(item, name, description)
 
+        # re-activate scene
+        self.set_active(True)
+        self.set_active(False)
+
     def _add_item(self, item, name, description):
         # add item to scene
-        # item.set_temporary(True)
         self.addItem(item)
         self._items.append(item)
         self._item_names.append(name)

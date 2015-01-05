@@ -114,8 +114,8 @@ class InteractiveGridView(grid_view.GridView):
             item.setPos(new_pos)
 
     def dragEnterEvent(self, event):
-#        if not self.scene().insertItemAllowed():
-#            return
+        if not self.scene().insertItemAllowed():
+            return
 
         if event.mimeData().hasFormat('application/x-components'):
             self.scene().clearSelection()
@@ -162,9 +162,9 @@ class InteractiveGridView(grid_view.GridView):
         self._abort_drop()
 
     def dropEvent(self, event):
-#        if not self.scene().insertItemAllowed():
-#            self._abort_drop()
-#            return
+        if not self.scene().insertItemAllowed():
+            self._abort_drop()
+            return
 
         scene = self.scene()
         items = self._drop_items

@@ -48,6 +48,17 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
     def sizeHint(self, which, constraint):
         return self.mapToScene(self.selectionRect()).boundingRect().size()
 
+    def update_connections(self):
+        """Overrides update_connections"""
+        # update connection for each connector
+        assert self.is_inactive()
+
+        # TODO: what about disconnecting connected inputs?
+        self.disconnect_all_outputs()
+
+        for con_item in self._inputs + self._outputs:
+            con_item.discover_connection()
+
     def _invalidate_bounding_rect(self):
         self.prepareGeometryChange()
         self._bounding_rect_valid = False
@@ -63,12 +74,6 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
         By default returns own combined with child bounding rects.
         """
         return self.boundingRect().united(self.childrenBoundingRect())
-
-    def on_registration_status_changed(self):
-        """Called when registration status changed."""
-        # propagate event to connectors
-        for con_item in self._inputs + self._outputs:
-            con_item.on_registration_status_changed()
 
     def itemChange(self, change, value):
         if change in (QtGui.QGraphicsItem.ItemChildAddedChange,

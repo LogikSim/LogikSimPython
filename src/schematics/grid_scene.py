@@ -277,7 +277,7 @@ class GridScene(QtGui.QGraphicsScene):
         """
         if value != self._is_active:
             if value:
-                for item in self._registered_during_inactivity:
+                for item in self._registered_during_inactivity.copy():
                     item.itemChange(
                         logicitems.ItemBase.ItemSceneActivatedChange,
                         True)

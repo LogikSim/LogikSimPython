@@ -195,8 +195,7 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             self.on_registration_status_changed()
 
     def on_registration_status_changed(self):
-        """Called when registration status changed."""
-        pass
+        """Called when registration status has changed."""
 
     def is_registered(self):
         return self._registered_scene is not None
@@ -220,6 +219,8 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         if y is not None:
             pos = QtCore.QPointF(pos, y)
         super().setPos(pos)
+
+        self._on_item_position_has_changed(self.pos())
 
     def setX(self, x):
         self.setPos(x, self.y())

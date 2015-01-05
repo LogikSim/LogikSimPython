@@ -27,7 +27,14 @@ class InsertItemMode(GridViewMouseModeBase):
         self._inserted_id = None
 
     def mouse_enter(self):
-        super().mouse_enter()
+        self.scene().set_active(False)
+
+    def mouse_leave(self):
+        # cleanup InsertItem
+        if self._inserted_item is not None:
+            self.scene().removeItem(self._inserted_item)
+            self._inserted_item = None
+        self.scene().set_active(True)
 
     @QtCore.Slot(ItemBase)
     def _instantiated(self, instance):
@@ -83,10 +90,3 @@ class InsertItemMode(GridViewMouseModeBase):
             self.scene().actions.executed(
                 do, undo, "insert logic item"
             )
-
-    def mouse_leave(self):
-        super().mouse_leave()
-        # cleanup InsertItem
-        if self._inserted_item is not None:
-            self.scene().removeItem(self._inserted_item)
-            self._inserted_item = None
