@@ -61,6 +61,7 @@ class ConnectorItem(StateLineItem):
                 if isinstance(item, LineTree):
                     if item.is_registered() and self.is_registered():
                         item.connect(self)
+                        self.connect(item)
                     found_con = True
             if self.is_temporary():
                 self.set_anchored(found_con)
@@ -128,9 +129,11 @@ class ConnectorItem(StateLineItem):
         if not self.is_registered():
             raise Exception("Item not registered")
 
-        if self.is_input():
-            item.connect(self)
-        else:
+        # TODO: track input connections
+#        if self.is_input():
+#            item.connect(self)
+#        else:
+        if self.is_output():
             # setup connection in backend
             self.parentItem().notify_backend_connect(
                 self.port(), item.id(), 0, self.visual_delay())

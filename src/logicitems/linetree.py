@@ -209,14 +209,12 @@ class LineTree(ConnectableItem, StateLineItem):
         # Connect to all colliding connectors
         for con_item in self._get_all_colliding_connectors(self._tree):
             if con_item.is_registered():
-                if con_item.is_input():
-                    con_item.connect(self)
-                else:
-                    self.connect(con_item)
+                con_item.connect(self)
+                self.connect(con_item)
 
     def connect(self, con_item):
         if con_item.is_input():
-            # connect
+            # connect output
             delay = self._length_to(con_item.endPoint().toTuple()) * \
                 self._delay_per_gridpoint / self.scene().get_grid_spacing()
             self._next_output_port += 1
@@ -224,9 +222,9 @@ class LineTree(ConnectableItem, StateLineItem):
             self.notify_backend_connect(out_port, con_item.id(),
                                         con_item.port(), delay)
         else:
-            # for outputs we need to update our tree (re-rooting to output)
+            # for inputs we need to update our tree (re-rooting to output)
             self._update_tree()
-            con_item.connect(self)
+            # TODO: track input connections
 
     def _iter_lines(self, tree, *, _origin=None):
         """
