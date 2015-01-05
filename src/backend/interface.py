@@ -78,14 +78,15 @@ class Interface:
         """
         self._channel_out = channel_out
 
-    @classmethod
-    def _gen_request_id(cls):
+    def batch_context(self):
         """
-        Generates a unique request id that will be included in replies
-        from the backend that result from the request.
-        :return: Unique id
+        Returns a context that can be used to queue up multiple
+        commands as a batch. You can retrieve the request id of
+        the context from the context member request_id after the
+        context closes. Replies will be marked with a batch-id
+        equal to the request id of this batch command.
         """
-        return random.getrandbits(128)
+        return self._BatchCommand(self)
 
     def set_simulation_properties(self, properties):
         """
@@ -130,16 +131,22 @@ class Interface:
         :param input: Input pin index
         :param state: State to transition to
         :param delay: Time in simulation units to delay edge
+        :return: Request id
         """
+        request_id = self._gen_request_id()
+
         self._channel_out.put(
             {
                 'type': 'edge',
                 'id': element_id,
                 'input': input,
                 'state': state,
-                'delay': delay
+                'delay': delay,
+                'request-id': request_id
             }
         )
+
+        return request_id
 
     def create_element(self, guid, parent=None, additional_metadata={}):
         """
@@ -150,9 +157,10 @@ class Interface:
         :param guid: Type of element to create
         :param parent: Optional parent element id
         :param additional_metadata: Additional meta-data to create element with
-        :return: ID of the element after its creation
+        :return: Tuple of request id, ID of the element after its creation
         """
 
+        request_id = self._gen_request_id()
         element_id = additional_metadata.get('id')
         if element_id is None:
             element_id = gen_component_id()
@@ -163,11 +171,12 @@ class Interface:
                 'GUID': guid,
                 'id': element_id,
                 'parent': parent,
-                'metadata': additional_metadata
+                'metadata': additional_metadata,
+                'request-id': request_id
             }
         )
 
-        return element_id
+        return request_id, element_id
 
     def serialize(self, ids=None):
         """
@@ -228,31 +237,48 @@ class Interface:
         return request_id
 
     def update_element(self, element_id, changed_metadata={}):
+        request_id = self._gen_request_id()
+
         self._channel_out.put(
             {
                 'type': 'update',
                 'id': element_id,
-                'metadata': changed_metadata
+                'metadata': changed_metadata,
+                'request-id': request_id
             }
         )
 
+        return request_id
+
     def delete_element(self, element_id):
+        request_id = self._gen_request_id()
+
         self._channel_out.put(
             {
                 'type': 'delete',
-                'id': element_id
+                'id': element_id,
+                'request-id': request_id
             }
         )
 
+        return request_id
+
     def request_element_information(self, element_id):
+        request_id = self._gen_request_id()
+
         self._channel_out.put(
             {
                 'type': 'query',
-                'id': element_id
+                'id': element_id,
+                'request-id': request_id
             }
         )
 
+        return request_id
+
     def connect(self, source_id, source_port, sink_id, sink_port, delay=0):
+        request_id = self._gen_request_id()
+
         self._channel_out.put(
             {
                 'type': 'connect',
@@ -261,21 +287,84 @@ class Interface:
                 'sink_id': sink_id,
                 'sink_port': sink_port,
                 'delay': delay,
+                'request-id': request_id
             }
         )
 
+        return request_id
+
     def disconnect(self, source_id, source_port):
+        request_id = self._gen_request_id()
+
         self._channel_out.put(
             {
                 'type': 'disconnect',
                 'source_id': source_id,
-                'source_port': source_port
+                'source_port': source_port,
+                'request-id': request_id
             }
         )
 
+        return request_id
+
     def exit(self):
+        request_id = self._gen_request_id()
+
         self._channel_out.put(
             {
-                'type': 'quit'
+                'type': 'quit',
+                'request-id': request_id
             }
         )
+
+        return request_id
+
+    @classmethod
+    def _gen_request_id(cls):
+        """
+        Generates a unique request id that will be included in replies
+        from the backend that result from the request.
+        :return: Unique id
+        """
+        return random.getrandbits(128)
+
+    def _post_batch(self, commands):
+        """
+        Post a number of separate commands as a batch command.
+        """
+        request_id = self._gen_request_id()
+
+        self._channel_out.put(
+            {
+                'type': 'batch',
+                'commands': commands,
+                'request-id': request_id
+            }
+        )
+
+        return request_id
+
+    class _BatchCommand:
+        """
+        Context class for batching multiple interface commands
+        to have them executes in the backend without the possibility
+        of outside interference. Does _not_ perform a rollback if
+        any of the commands fail. The request ID the command is posted
+        with is saved as the request_id member on this class.
+        """
+        def __init__(self, interface):
+            self._interface = interface
+            self._commands = []
+
+        def __enter__(self):
+            assert len(self._commands) == 0
+
+            class Q:
+                @classmethod
+                def put(cls, command):
+                    self._commands.append(command)
+
+            return Interface(Q)
+
+        def __exit__(self, type, value, traceback):
+            self.request_id = self._interface._post_batch(self._commands)

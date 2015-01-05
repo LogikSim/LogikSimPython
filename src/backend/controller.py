@@ -6,6 +6,8 @@
 # be found in the LICENSE.txt file.
 #
 import multiprocessing
+from contextlib import contextmanager
+import traceback
 from backend.interface import Interface
 from backend.component_library import ComponentRoot, gen_component_id
 from backend.element import Edge
@@ -38,6 +40,9 @@ class Controller(ComponentRoot):
         self._simulation_rate = 1  # Ratio between SUs and wall-clock time
         self._last_process_time = 0  # Remembers last process return time
 
+        self._current_request_id = None  # Currently processed message id
+        self._current_batch_id = None  # Currently processed batch id
+
         # Members that should be exposed as simulation properties must be
         # listed in self._properties as property name, member variable.
         # Use a property to do write-only or complex setters.
@@ -47,6 +52,7 @@ class Controller(ComponentRoot):
         self._message_handlers = {
             'set-simulation-properties': self._on_set_simu_properties,
             'query-simulation-properties': self._on_query_simu_properties,
+            'batch': self._on_batch,
             'create': self._on_create,
             'update': self._on_update,
             'delete': self._on_delete,
@@ -92,8 +98,7 @@ class Controller(ComponentRoot):
     def _on_query_simu_properties(self, command):
         self._post_to_frontend(
             'simulation-properties',
-            {'properties': self.get_simulation_properties()},
-            command.get('request-id')
+            {'properties': self.get_simulation_properties()}
         )
 
     def _on_set_simu_properties(self, command):
@@ -110,6 +115,31 @@ class Controller(ComponentRoot):
                 pass
 
         self._on_query_simu_properties(command)
+
+    @contextmanager
+    def _batch_context(self, batch_command):
+        request_id = batch_command['request-id']
+        self._current_batch_id = request_id
+        self._post_to_frontend('batch-start')
+
+        try:
+            yield
+        finally:
+            self._post_to_frontend('batch-end')
+            self._current_batch_id = None
+
+    def _on_batch(self, command):
+        with self._batch_context(command):
+            for command in command['commands']:
+                with self._command_context(command):
+                    message_type = command.get('type')
+                    assert message_type != 'batch', "Mustn't nest batches"
+                    handler = self._message_handlers.get(message_type)
+                    if not handler:
+                        raise TypeError("Unknown batch message type {0}"
+                                        .format(message_type))
+
+                    handler(command)
 
     def _on_create(self, command):
         parent = self.elements.get(command.get("parent"))
@@ -160,8 +190,7 @@ class Controller(ComponentRoot):
 
         serialization = [_serialize(element) for element in elements]
 
-        self._post_to_frontend('serialization', {'data': serialization},
-                               command.get('request-id'))
+        self._post_to_frontend('serialization', {'data': serialization})
 
         self.log.info("Serialized %s", [e.id() for e in elements])
 
@@ -172,8 +201,7 @@ class Controller(ComponentRoot):
         elements = {}  # new id -> element
         connections = {}  # element -> connections
 
-        self._post_to_frontend('deserialization-start',
-                               in_reply_to=command.get('request-id'))
+        self._post_to_frontend('deserialization-start')
 
         def _deserialize(datasets):
             for data in datasets:
@@ -215,8 +243,7 @@ class Controller(ComponentRoot):
                     element.connect(target, out_port, in_port, delay)
 
         self._post_to_frontend('deserialization-end',
-                               {'ids': list(elements.keys())},
-                               command.get('request-id'))
+                               {'ids': list(elements.keys())})
 
         self.log.info("Deserialized %s", list(elements.keys()))
 
@@ -233,6 +260,7 @@ class Controller(ComponentRoot):
         """
         element = self.elements[command['id']]
         core = self.get_core()
+
         core.schedule(Edge(core.clock + command['delay'],
                            element,
                            command['input'],
@@ -257,7 +285,6 @@ class Controller(ComponentRoot):
             raise Exception("Failed to connect %d port %d to %d port %d" % (
                 command['source_id'], command['source_port'],
                 command['sink_id'], command['sink_port']))
-            return
 
         self.log.info("Connected %d port %d to %d port %d (delay %d)",
                       command['source_id'],
@@ -279,14 +306,31 @@ class Controller(ComponentRoot):
 
     def _on_enumerate_components(self, command):
         self._post_to_frontend('enumerate_components',
-                               {'data': self._library.enumerate_types()},
-                               command.get('request-id'))
+                               {'data': self._library.enumerate_types()})
 
         self.log.info("Enumerated component types")
 
     def _on_quit(self, command):
         self.log.info("Asked to quit")
         self._core.quit()
+
+    @contextmanager
+    def _command_context(self, command):
+        """
+        Establishes and destroys a context for the given command.
+        :param command: Command to setup context for.
+        """
+        old_request_id = self._current_request_id
+        self._current_request_id = command.get('request-id')
+        try:
+            yield
+        except Exception as e:
+            self.log.exception(e)
+            self._post_to_frontend('error',
+                                   {'message': str(e),
+                                    'exception': traceback.format_exc()})
+        finally:
+            self._current_request_id = old_request_id
 
     def process(self, current_clock):
         """
@@ -300,13 +344,14 @@ class Controller(ComponentRoot):
         while not self._channel_in.empty():  # Many chances. Race ok
             command = self._channel_in.get_nowait()  # Single consumer
 
-            message_type = command.get('type')
-            handler = self._message_handlers.get(message_type)
-            if not handler:
-                raise TypeError("Unknown message type {0}"
-                                .format(message_type))
+            with self._command_context(command):
+                message_type = command.get('type')
+                handler = self._message_handlers.get(message_type)
+                if not handler:
+                    raise TypeError("Unknown message type {0}"
+                                    .format(message_type))
 
-            handler(command)
+                handler(command)
 
         self._post_to_frontend('alive')
 
@@ -344,28 +389,30 @@ class Controller(ComponentRoot):
         Propagation follows child-parent-relationships so parent elements
         can employ filtering.
 
+        Note: The batch command may temporarily replace this function
+
         :param data: metadata update message.
         """
         self._post_to_frontend('change', {'data': data})
 
     def _post_to_frontend(self,
                           message_type,
-                          additional_fields={},
-                          in_reply_to=None):
+                          additional_fields={}):
         """
         Places a message to the frontend queue using the default framing.
 
         :param message_type: Type of the message being sent
         :param additional_fields: Message specific data fields
-        :param in_reply_to: If given marks message as in reply to request id
         """
         message = {
             'type': message_type,
-            'clock': self.get_core().clock,  # Only always current clock
+            'clock': self.get_core().clock,  # Get accurate clock
         }
 
-        if in_reply_to is not None:
-            message['in-reply-to'] = in_reply_to
+        if self._current_request_id is not None:
+            message['in-reply-to'] = self._current_request_id
+        if self._current_batch_id is not None:
+            message['batch-id'] = self._current_batch_id
 
         message.update(additional_fields)
 

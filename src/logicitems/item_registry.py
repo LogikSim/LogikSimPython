@@ -59,7 +59,8 @@ class ItemRegistry(QtCore.QObject):
             'enumerate_components': self._on_enumerate_components,
             'serialization': self._on_serialization,
             'deserialization-start': self._on_deserialization_start,
-            'deserialization-end': self._on_deserialization_complete
+            'deserialization-end': self._on_deserialization_complete,
+            'error': self._on_error
         }
 
     def clock(self):
@@ -258,6 +259,12 @@ class ItemRegistry(QtCore.QObject):
         """
         self.simulation_properties_changed.emit(message['properties'])
 
+    def _on_error(self, message):
+        """
+        Emits the error signal.
+        """
+        self.error.emit(message['message'], message['exception'])
+
     # Emitted on item creation triggered from the backend (item)
     instantiated = QtCore.Signal(ItemBase)
     # Emitted on item update triggered from the backend (item, update)
@@ -280,6 +287,8 @@ class ItemRegistry(QtCore.QObject):
     tick = QtCore.Signal(object)
     # Emitted when a simulation property update is received
     simulation_properties_changed = QtCore.Signal(dict)
+    # Emitted if an error occurs in the backend (message, exception)
+    error = QtCore.Signal(str, str)
 
 
 class ItemRegistryHandler(QtCore.QThread, Handler):
