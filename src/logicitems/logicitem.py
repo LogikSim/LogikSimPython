@@ -49,17 +49,17 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
     def sizeHint(self, which, constraint):
         return self.mapToScene(self.selectionRect()).boundingRect().size()
 
-    def items_at_inputs(self):
-        """Overrides items_at_inputs"""
-        input_con_items = set()
-        for con_item in self._inputs:
+    def items_at_connections(self):
+        """Overrides items_at_connections"""
+        con_items = set()
+        for con_item in self._inputs + self._outputs:
             for item in self.scene().items(con_item.endPoint()):
                 if isinstance(item, LineTree):
-                    input_con_items.add(item)
-        return input_con_items
+                    con_items.add(item)
+        return con_items
 
     def connect_all_outputs(self):
-        """Overrides discover_connections."""
+        """Overrides connect_all_outputs."""
         for con_item in self._outputs:
             for item in self.scene().items(con_item.endPoint()):
                 if isinstance(item, LineTree):

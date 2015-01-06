@@ -89,8 +89,8 @@ class ConnectableItem(InsertableItem):
                     info.source_id))
         return items
 
-    def items_at_inputs(self):
-        """Return set of all items in the scene located at the inputs."""
+    def items_at_connections(self):
+        """Return set of all items in the scene located at the connections."""
         raise NotImplementedError
 
     def disconnect_all_outputs(self):
@@ -126,8 +126,6 @@ class ConnectableItem(InsertableItem):
 
     def notify_backend_disconnect(self, source_port):
             self.scene().interface().disconnect(self.id(), source_port)
-
-
 
     def itemChange(self, change, value):
         # delete stored connections on scene change

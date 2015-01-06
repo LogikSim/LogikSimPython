@@ -301,10 +301,15 @@ class GridScene(QtGui.QGraphicsScene):
         changed_items_set = set(changed_items)
         for item in changed_items:
             changed_items_set.update(item.connected_input_items())
-        # Also include all items located at input connections positions.
-        # This is because items only manager their outputs.
+        # Also include all items located at connection positions.
+        # This is mainly because items only manager their outputs.
+        # We also include outputs here, because changes in LineTree
+        # inputs also effects their outputs.
         for item in changed_items_set.copy():
-            changed_items_set.update(item.items_at_inputs())
+            changed_items_set.update(item.items_at_connections())
+        # only keep items in this scene
+        changed_items_set = {item for item in changed_items_set
+                             if item.scene() is self}
         # First disconnect all outputs to prevent trying to make
         # connections to outputs that are not yet disconnected.
         for item in changed_items_set:

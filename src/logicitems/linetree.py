@@ -191,18 +191,12 @@ class LineTree(ConnectableItem, StateLineItem):
         self._shape = shape_path
         self._rect = bounding_rect
 
-    def items_at_inputs(self):
-        """Overrides items_at_inputs"""
-        re_tree = self._reroot_to_possible_input(self._tree)
-        if re_tree != self._tree:
-            self._set_tree(re_tree)
-
-        # Return all colliding inputs
-        input_con_items = set()
+    def items_at_connections(self):
+        """Overrides items_at_connections"""
+        con_items = set()
         for con_item in self._get_all_colliding_connectors(self._tree):
-            if con_item.is_output():  # means input to us
-                input_con_items.add(con_item.parentItem())
-        return input_con_items
+            con_items.add(con_item.parentItem())
+        return con_items
 
     def disconnect_all_outputs(self):
         """Overrides disconnect_all_outputs."""
@@ -211,6 +205,12 @@ class LineTree(ConnectableItem, StateLineItem):
 
     def connect_all_outputs(self):
         """Overrides discover_connections."""
+        # reroot necessary?
+        re_tree = self._reroot_to_possible_input(self._tree)
+        if re_tree != self._tree:
+            self._set_tree(re_tree)
+
+        # connect to all outputs
         for con_item in self._get_all_colliding_connectors(self._tree):
             if con_item.is_input():  # means output to us
                 self.connect(con_item)
@@ -230,7 +230,7 @@ class LineTree(ConnectableItem, StateLineItem):
         Iterator over all lines in the given tree.
 
         :param tree: given tree
-        :return: list of QLineF
+        :return: iterator over QLineF in local coordinates
 
         :param __origin: Internal use only!
         """
@@ -244,6 +244,7 @@ class LineTree(ConnectableItem, StateLineItem):
         Iterator over all edges in the given tree.
 
         :param tree: given tree
+        :return: iterator over edges as QPointF in local coordintes
         """
         for point, children in tree.items():
             yield point
@@ -265,14 +266,12 @@ class LineTree(ConnectableItem, StateLineItem):
         """
         if scene is None:
             scene = self.scene()
+        assert scene is not None, "Need a valid scene"
 
         con_items = set()
         for line in self._iter_lines(tree):
-            if scene is None:
-                assert self.pos() == QPointF(0, 0), "cannot transform"
-            else:
-                line = QLineF(self.mapToScene(line.p1()),
-                              self.mapToScene(line.p2()))
+            line = QLineF(self.mapToScene(line.p1()),
+                          self.mapToScene(line.p2()))
             l_bounding_rect = self._line_to_col_rect(line)
             for item in scene.items(l_bounding_rect):
                 if isinstance(item, ConnectorItem) and \
@@ -297,7 +296,7 @@ class LineTree(ConnectableItem, StateLineItem):
         # Find all inputs
         inputs = []
         for con_item in self._get_all_colliding_connectors(tree):
-            if con_item.is_output():  # means for us output
+            if con_item.is_output():  # means input to us
                 inputs.append(con_item)
         # TODO: fix check for multiple drivers
 
