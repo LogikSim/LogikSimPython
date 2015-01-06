@@ -89,7 +89,7 @@ class ItemRegistry(QtCore.QObject):
         """
         self._registry_handler.start()
 
-    def get_frontend_item(self, backend_id):
+    def frontend_item(self, backend_id):
         """
         Return frontend item with given backend id.
 

@@ -283,7 +283,32 @@ class GridScene(QtGui.QGraphicsScene):
             for item in self._registered_during_inactivity:
                 item.itemChange(
                     logicitems.ItemBase.ItemSceneActivatedHasChanged, value)
-            self._registered_during_inactivity.clear()
+            if value:
+                self._update_connections(self._registered_during_inactivity)
+            self._registered_during_inactivity = set()
+
+    def _update_connections(self, changed_items):
+        """
+        Update input and output connections on changed_items.
+
+        :param changed_items: list of changed items
+        """
+        # Include all objects connected to inputs of any changed item.
+        # This is because items only manager their outputs.
+        changed_items_set = set(changed_items)
+        for item in changed_items:
+            changed_items_set.update(item.connected_input_items())
+        # Also include all items located at input connections positions.
+        # This is because items only manager their outputs.
+        for item in changed_items_set.copy():
+            changed_items_set.update(item.items_at_inputs())
+        # First disconnect all outputs to prevent trying to make
+        # connections to outputs that are not yet disconnected.
+        for item in changed_items_set:
+            item.disconnect_all_outputs()
+        # Finally connect outputs on all items.
+        for item in changed_items_set:
+            item.connect_all_outputs()
 
     def register_change_during_inactivity(self, item):
         """

@@ -47,24 +47,13 @@ class ConnectorItem(StateLineItem):
             self.set_animate_lines(self.is_connected())
             self.request_paint()
 
-    def discover_connection(self):
-        """
-        Connect to colliding items.
-
-        Called by parentItem.
-        """
-        from .linetree import LineTree
-
-        if self.scene() is not None:
-            found_con = False
-            for item in self.scene().items(self.endPoint()):
-                if isinstance(item, LineTree):
-                    if item.is_registered() and self.is_registered():
-                        item.connect(self)
-                        self.connect(item)
-                    found_con = True
-            if self.is_temporary():
-                self.set_anchored(found_con)
+    def connect(self, item):
+        """Connection output to other item."""
+        assert self.is_output(), "Can only connect outputs."
+        assert self.is_registered()
+        # setup connection in backend
+        self.parentItem().notify_backend_connect(
+            self.port(), item.id(), 0, self.visual_delay())
 
     def set_anchored(self, value):
         """If value is True, visualizes the object as being connected."""
@@ -123,20 +112,6 @@ class ConnectorItem(StateLineItem):
         """Return True if connector is temporary."""
         return self.parentItem() is not None and \
             self.parentItem().is_temporary()
-
-    def connect(self, item):
-        """Setup connection with given item."""
-        if not self.is_registered():
-            raise Exception("Item not registered")
-
-        # TODO: track input connections
-#        if self.is_input():
-#            item.connect(self)
-#        else:
-        if self.is_output():
-            # setup connection in backend
-            self.parentItem().notify_backend_connect(
-                self.port(), item.id(), 0, self.visual_delay())
 
     def is_connected(self):
         return self.parentItem() is not None and \

@@ -135,31 +135,14 @@ class LineTree(ConnectableItem, StateLineItem):
             return
 
         self._tree = tree
-        self._update_tree()
 
-        # notify change
-        self.register_change_during_inactivity()
-
-    def _update_tree(self):
-        """
-        Updates internal storage.
-
-        Call this whenever added or removed from scene or self._tree
-        changes.
-        """
-        # re-root necessary?
-        if self.scene() is not None:
-            re_tree = self._reroot_to_possible_input(self._tree)
-            if re_tree != self._tree:
-                self._set_tree(re_tree)
-                # we need to update all delays
-                self.update_connections()
-                return
-
-        # okay, then update internals
+        # update internal data structures
         self._update_data_structures()
         self._update_edge_indicators()
         self._update_shape()
+
+        # notify change
+        self.register_change_during_inactivity()
 
     def _update_data_structures(self):
         """
@@ -208,33 +191,39 @@ class LineTree(ConnectableItem, StateLineItem):
         self._shape = shape_path
         self._rect = bounding_rect
 
-    def update_connections(self):
-        """
-        Updates connections to Connectors.
-        """
-        # Disconnect all outputs
-        self.disconnect_all_outputs()
+    def items_at_inputs(self):
+        """Overrides items_at_inputs"""
+        re_tree = self._reroot_to_possible_input(self._tree)
+        if re_tree != self._tree:
+            self._set_tree(re_tree)
+
+        # Return all colliding inputs
+        input_con_items = set()
+        for con_item in self._get_all_colliding_connectors(self._tree):
+            if con_item.is_output():  # means input to us
+                input_con_items.add(con_item.parentItem())
+        return input_con_items
+
+    def disconnect_all_outputs(self):
+        """Overrides disconnect_all_outputs."""
+        super().disconnect_all_outputs()
         self._next_output_port = 0
 
-        # Connect to all colliding connectors
+    def connect_all_outputs(self):
+        """Overrides discover_connections."""
         for con_item in self._get_all_colliding_connectors(self._tree):
-            if con_item.is_registered():
-                con_item.connect(self)
+            if con_item.is_input():  # means output to us
                 self.connect(con_item)
 
     def connect(self, con_item):
-        if con_item.is_input():
-            # connect output
-            delay = self._length_to(con_item.endPoint().toTuple()) * \
-                self._delay_per_gridpoint / self.scene().get_grid_spacing()
-            self._next_output_port += 1
-            out_port = self._next_output_port
-            self.notify_backend_connect(out_port, con_item.id(),
-                                        con_item.port(), delay)
-        else:
-            # for inputs we need to update our tree (re-rooting to output)
-            self._update_tree()
-            # TODO: track input connections
+        """Connect linetree to input."""
+        assert con_item.is_input()
+        assert self.is_registered()
+        delay = self._length_to(con_item.endPoint().toTuple()) * \
+            self._delay_per_gridpoint / self.scene().get_grid_spacing()
+        self._next_output_port += 1
+        self.notify_backend_connect(self._next_output_port, con_item.id(),
+                                    con_item.port(), delay)
 
     def _iter_lines(self, tree, *, _origin=None):
         """

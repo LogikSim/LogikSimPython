@@ -105,8 +105,8 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
     def update_frontend(self, metadata):
         """
         Update incoming metadata changes from the backend.
-        
-        Note: Do NOT update states within this function override 
+
+        Note: Do NOT update states within this function override
             apply_update_frontend instead.
         """
         self.log.info("Update {} with {}".format(self.id(), metadata))
@@ -130,9 +130,9 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
     def update_backend(self, backend_metadata):
         """
         Notify backend on all changed to the item.
-        
+
         Use the given backend metadata to look for changes and report
-        them via 
+        them via
         """
         # update position
         metadata = {}
@@ -158,7 +158,6 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
 
     def set_item_creates_undo_actions(self, value):
         """Set whether item should generate undo actions."""
-        # TODO: where used?
         self._item_creates_undo_actions = value
 
     def item_creates_undo_actions(self):
