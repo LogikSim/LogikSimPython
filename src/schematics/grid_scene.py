@@ -286,6 +286,7 @@ class GridScene(QtGui.QGraphicsScene):
             if value:
                 self._update_connections(self._registered_during_inactivity)
             self._registered_during_inactivity = set()
+            self.update()
 
     def _update_connections(self, changed_items):
         """

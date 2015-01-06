@@ -15,7 +15,8 @@ from .state_line_item import StateLineItem
 
 
 class ConnectorItem(StateLineItem):
-    def __init__(self, parent, start, anchor, end, is_input, port):
+    def __init__(self, parent, start, unconnected_end, connected_end,
+                 is_input, port):
         """
         anchor is the position, at which lines can connect to
         """
@@ -24,8 +25,9 @@ class ConnectorItem(StateLineItem):
         self.setFlag(QtGui.QGraphicsItem.ItemStacksBehindParent)
 
         self._start = start
-        self._anchor = anchor
-        self._end = end
+        self._unconnected_end = unconnected_end
+        self._anchor = connected_end
+        self._connected_end = connected_end
         self._is_input = is_input
         self._port = port
 
@@ -45,7 +47,8 @@ class ConnectorItem(StateLineItem):
         # connection change
         if 'inputs' in metadata or 'outputs' in metadata:
             self.set_animate_lines(self.is_connected())
-            self.request_paint()
+            # use immediate update
+            self.update()
 
     def connect(self, item):
         """Connection output to other item."""
@@ -71,7 +74,7 @@ class ConnectorItem(StateLineItem):
         """Get delay based on visual extend of the connector."""
         if self.scene() is None:
             return 0
-        return abs((self._end - self._start).manhattanLength() *
+        return abs((self._connected_end - self._start).manhattanLength() *
                    self._delay_per_gridpoint / self.scene().get_grid_spacing())
 
     def _invalidate_bounding_rect(self):
@@ -123,11 +126,11 @@ class ConnectorItem(StateLineItem):
 
     def endPoint(self):
         """Returns position where lines can connect to."""
-        return self.mapToScene(self._end)
+        return self.mapToScene(self._connected_end)
 
     def boundingRect(self):
         if not self._bounding_rect_valid:
-            line = QtCore.QLineF(self._start, self._end)
+            line = QtCore.QLineF(self._start, self._connected_end)
             self._bounding_rect = self._line_to_col_rect(line)
             self._bounding_rect_valid = True
         return self._bounding_rect
@@ -139,7 +142,10 @@ class ConnectorItem(StateLineItem):
         :return: iterator with items of (QLineF, state)
         """
         start = self._start
-        drawing_end = (self._end if self.animate_lines() else self._anchor)
+        if self.animate_lines() or self.is_inactive():
+            drawing_end = self._connected_end
+        else:
+            drawing_end = self._unconnected_end
         delay = self.delay()
 
         yield from self.iter_state_line_segments_helper(

@@ -75,7 +75,6 @@ class ItemListScene(schematics.GridScene):
         super().__init__(*args, **kargs)
 
         self.set_grid_enabled(False)
-        self.set_active(False)
 
         # top level widget is needed to layout all other items
         self._top_widget = QtGui.QGraphicsWidget()
@@ -104,6 +103,7 @@ class ItemListScene(schematics.GridScene):
         self._interface.enumerate_components()
 
     def on_new_components(self, components=[]):
+        self.set_active(False)
         # delete existing items
         for item in self._items:
             self.removeItem(item)
@@ -125,9 +125,8 @@ class ItemListScene(schematics.GridScene):
                 if isinstance(item, LogicItem):
                     self._add_item(item, name, description)
 
-        # re-activate scene
+        # activate scene
         self.set_active(True)
-        self.set_active(False)
 
     def _add_item(self, item, name, description):
         # add item to scene
