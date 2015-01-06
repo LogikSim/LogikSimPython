@@ -13,6 +13,7 @@ from PySide import QtGui, QtCore
 
 from .connectable_item import ConnectableItem
 from .linetree import LineTree
+from .connector import ConnectorItem
 
 
 class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
@@ -56,6 +57,8 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
             for item in self.scene().items(con_item.endPoint()):
                 if isinstance(item, LineTree):
                     con_items.add(item)
+                elif isinstance(item, ConnectorItem):
+                    con_items.add(item.parentItem())
         return con_items
 
     def connect_all_outputs(self):
@@ -63,6 +66,9 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
         for con_item in self._outputs:
             for item in self.scene().items(con_item.endPoint()):
                 if isinstance(item, LineTree):
+                    con_item.connect(item)
+                elif isinstance(item, ConnectorItem) and \
+                        item.is_input():
                     con_item.connect(item)
 
     def _invalidate_bounding_rect(self):
