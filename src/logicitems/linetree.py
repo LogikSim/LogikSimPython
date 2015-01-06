@@ -255,7 +255,7 @@ class LineTree(ConnectableItem, StateLineItem):
         if len(tree) == 0:
             return None
         else:
-            return list(self._tree.keys())[0]
+            return list(tree.keys())[0]
 
     def _get_all_colliding_connectors(self, tree, scene=None):
         """
@@ -298,7 +298,6 @@ class LineTree(ConnectableItem, StateLineItem):
         for con_item in self._get_all_colliding_connectors(tree):
             if con_item.is_output():  # means input to us
                 inputs.append(con_item)
-        # TODO: fix check for multiple drivers
 
         if len(inputs) > 1:
             raise Exception("LineTree cannot be driven by more than "
@@ -313,7 +312,6 @@ class LineTree(ConnectableItem, StateLineItem):
                 if new_root not in self._iter_edges(tree):
                     tree = self._split_line_of_tree(self._tree, new_root)
                 return self._reroot(tree, new_root)
-
         return tree
 
     def _length_to(self, scene_point):

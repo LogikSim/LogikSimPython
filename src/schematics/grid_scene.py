@@ -279,12 +279,12 @@ class GridScene(QtGui.QGraphicsScene):
             for item in self._registered_during_inactivity.copy():
                 item.itemChange(
                     logicitems.ItemBase.ItemSceneActivatedChange, value)
+            if value:
+                self._update_connections(self._registered_during_inactivity)
             self._is_active = value
             for item in self._registered_during_inactivity:
                 item.itemChange(
                     logicitems.ItemBase.ItemSceneActivatedHasChanged, value)
-            if value:
-                self._update_connections(self._registered_during_inactivity)
             self._registered_during_inactivity = set()
             self.update()
 
@@ -292,13 +292,14 @@ class GridScene(QtGui.QGraphicsScene):
         """
         Update input and output connections.
 
-        This function is called automatically when the scene becomes active.
+        This function is called automatically before the scene becomes active.
 
         :param changed_items: list of changed items
         """
         # Include all objects connected to inputs of any changed item.
         # This is because items only manager their outputs.
-        changed_items_set = set(changed_items)
+        changed_items_set = set(item for item in changed_items
+                                if item.scene() is self)
         for item in changed_items:
             changed_items_set.update(item.connected_input_items())
         # Also include all items located at connection positions.
@@ -307,9 +308,6 @@ class GridScene(QtGui.QGraphicsScene):
         # inputs also effects their outputs.
         for item in changed_items_set.copy():
             changed_items_set.update(item.items_at_connections())
-        # only keep items in this scene
-        changed_items_set = {item for item in changed_items_set
-                             if item.scene() is self}
         # First disconnect all outputs to prevent trying to make
         # connections to outputs that are not yet disconnected.
         for item in changed_items_set:
@@ -328,7 +326,8 @@ class GridScene(QtGui.QGraphicsScene):
             item.itemChange(logicitems.ItemBase.ItemSceneActivatedHasChanged)
         once the scene becomes active.
         """
-        if not self._is_active:
+        # TODO: better assert self.is_inactive()
+        if self.is_inactive():
             self._registered_during_inactivity.add(item)
 
     def mousePressEvent(self, mouseEvent):

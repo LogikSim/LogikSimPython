@@ -54,6 +54,7 @@ class ConnectorItem(StateLineItem):
         """Connection output to other item."""
         assert self.is_output(), "Can only connect outputs."
         assert self.is_registered()
+
         # setup connection in backend
         self.parentItem().notify_backend_connect(
             self.port(), item.id(), 0, self.visual_delay())
