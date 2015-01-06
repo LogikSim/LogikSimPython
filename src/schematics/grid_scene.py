@@ -289,7 +289,9 @@ class GridScene(QtGui.QGraphicsScene):
 
     def _update_connections(self, changed_items):
         """
-        Update input and output connections on changed_items.
+        Update input and output connections.
+
+        This function is called automatically when the scene becomes active.
 
         :param changed_items: list of changed items
         """

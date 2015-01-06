@@ -297,8 +297,9 @@ class LineTree(ConnectableItem, StateLineItem):
         # Find all inputs
         inputs = []
         for con_item in self._get_all_colliding_connectors(tree):
-            if not con_item.is_input() and con_item.is_registered():
+            if con_item.is_output():  # means for us output
                 inputs.append(con_item)
+        # TODO: fix check for multiple drivers
 
         if len(inputs) > 1:
             raise Exception("LineTree cannot be driven by more than "
