@@ -131,11 +131,13 @@ def generate_mode_base(base_class, name):
             assert mode is None or issubclass(mode, ModeBase)
             old_mode = getattr(self, mode_attr_name)
             if mode is not old_mode:
-                if old_mode is not None:
-                    getattr(old_mode, mode_leave_name)(self)
-                setattr(self, mode_attr_name, mode)
-                if mode is not None:
-                    getattr(mode, mode_enter_name)(self)
+                try:
+                    if old_mode is not None:
+                        getattr(old_mode, mode_leave_name)(self)
+                finally:
+                    setattr(self, mode_attr_name, mode)
+                    if mode is not None:
+                        getattr(mode, mode_enter_name)(self)
 
         _mode_setter.__name__ = mode_setter_name
         locals()[mode_setter_name] = _mode_setter
