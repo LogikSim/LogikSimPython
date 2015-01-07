@@ -119,6 +119,17 @@ class ItemRegistry(QtCore.QObject):
         return self._instantiate_for(metadata,
                                      announce=False)
 
+    def instantiated_frontend_item(self, item):
+        """
+        Registers an already instantiated frontend element with the registry.
+        This can be used to re-use previously created frontend items that
+        were deleted from the backend but have a re-creation pending.
+
+        :param item: Item to register
+        """
+        assert item.id() not in self._items
+        self._items[item.id()] = item
+
     def _instantiate_for(self, metadata={}, announce=True):
         """
         Instantiates a front-end element from the given meta-data.
