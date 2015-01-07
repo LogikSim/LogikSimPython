@@ -26,8 +26,6 @@ class SelectionItem(ItemBase):
 
         self._rect = QtCore.QRectF(0, 0, 0, 0)
         self._bounding_rect = QtCore.QRectF(0, 0, 0, 0)
-        self._initial_positions = {}
-        self._start_position = None
 
         # use timer to only process most recent update event
         self._update_state_timer = QtCore.QTimer()
@@ -35,6 +33,12 @@ class SelectionItem(ItemBase):
         self._update_state_timer.setSingleShot(True)
 
     def _invalidate_state(self):
+        """
+        Makes sure that we group update events.
+
+        This makes sure that _do_update_state is called only once,
+        if many items are moved.
+        """
         self._update_state_timer.start()
 
     def _do_update_state(self):
@@ -48,26 +52,14 @@ class SelectionItem(ItemBase):
         # get combined bounding rect
         self._rect = QtCore.QRectF(0, 0, 0, 0)
         for item in sel_items:
-            scene_poly = item.mapToScene(item.selectionRect())
+            scene_poly = self.mapFromItem(item, item.selectionRect())
             self._rect = self._rect.united(scene_poly.boundingRect())
         if len(sel_items) > 1:
             offset = self.scene().get_grid_spacing() / 2
             self._rect.adjust(-offset, -offset, offset, offset)
-        # store initial positions
-        self._initial_positions = {item: item.pos() for item in sel_items}
-        # set position
-        pos = self._rect.topLeft()
-        self._start_position = pos
-        self._rect.translate(-pos)
         # make bounding rect a little bit wider (prevent drawing artefacts)
         self._bounding_rect = self._to_col_rect(
             self._rect, radius=self.scene().get_grid_spacing())
-        self.setPos(pos)
-
-    def _move_to(self, pos):
-        for item, init_pos in self._initial_positions.items():
-            item.setPos(init_pos - self._start_position + pos)
-        self._invalidate_state()
 
     def boundingRect(self):
         return self._bounding_rect
@@ -87,7 +79,7 @@ class SelectionItem(ItemBase):
     def itemChange(self, change, value):
         if self.scene() is not None:
             if change == QtGui.QGraphicsItem.ItemPositionHasChanged:
-                self._move_to(value)
+                self._do_update_state()
         return super().itemChange(change, value)
 
     def paint(self, painter, options, widget):
