@@ -54,6 +54,13 @@ class ItemBase(QtGui.QGraphicsItem):
         repeated in each inactivity.
         """
 
+    class ItemTemporaryHasChanged:
+        """
+        ItemBase.itemChange() notification
+        
+        The item temporary state has changed.
+        """
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -61,7 +68,9 @@ class ItemBase(QtGui.QGraphicsItem):
 
     def set_temporary(self, temp):
         """Set item to temporary status."""
-        self._is_temp = temp
+        if temp != self._is_temp:
+            self._is_temp = temp
+            self.itemChange(ItemBase.ItemTemporaryHasChanged, temp)
 
     def is_temporary(self):
         """

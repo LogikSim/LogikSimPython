@@ -12,7 +12,7 @@ Connectors of Logic Items where lines be attached.
 from PySide import QtCore, QtGui
 
 from .state_line_item import StateLineItem
-
+from .itembase import ItemBase
 
 class ConnectorItem(StateLineItem):
     def __init__(self, parent, start, anchor, end,
@@ -30,6 +30,7 @@ class ConnectorItem(StateLineItem):
         self._is_input = is_input
         self._port = port
 
+        self._is_anchored = False
         self.set_animate_lines(False)
 
         self._bounding_rect_valid = False
@@ -56,7 +57,8 @@ class ConnectorItem(StateLineItem):
         con_items = set()
         if self.scene() is not None:
             for item in self.scene().items(self.endPoint()):
-                if item is not self:
+                if item is not self and isinstance(item, ItemBase) and \
+                        not item.is_temporary():
                     if isinstance(item, LineTree):
                         con_items.add(item)
                     elif isinstance(item, ConnectorItem):
@@ -82,9 +84,8 @@ class ConnectorItem(StateLineItem):
 
     def set_anchored(self, value):
         """If value is True, visualizes the object as being connected."""
-        self.set_animate_lines(True if value else self.is_connected())
-        # use direct update here for immediate feedback
-        QtGui.QGraphicsItem.update(self)
+        self._is_anchored = value
+        self.update_anticipation()
 
     def update_anticipation(self):
         """
@@ -95,7 +96,10 @@ class ConnectorItem(StateLineItem):
 
         Called by parent whenever the connectable surrounding changes.
         """
-        self.set_animate_lines(self.is_connected())
+        self.set_animate_lines(True if self._is_anchored
+                               else self.is_connected())
+        # use direct update here for immediate feedback
+        QtGui.QGraphicsItem.update(self)
 
     def delay(self):
         if self.is_input():

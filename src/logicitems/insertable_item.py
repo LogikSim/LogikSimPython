@@ -142,20 +142,6 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             metadata['y'] = self.y()
         self.notify_backend(metadata)
 
-    def set_temporary(self, temp):
-        """
-        Overrides set_temporary.
-
-        Temporary insertable items have no instance in the backend
-        and do not generate undo actions.
-        """
-        ItemBase.set_temporary(self, temp)
-
-        if temp:
-            self._unregister()
-        else:
-            self._register()
-
     def set_item_creates_undo_actions(self, value):
         """Set whether item should generate undo actions."""
         self._item_creates_undo_actions = value
@@ -290,6 +276,13 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             self._unregister()
             self._register()
             if value is not None:
+                self.notify_surrounding()
+        # Register, unregister and notify surrounding on temporary state change
+        elif change is ItemBase.ItemTemporaryHasChanged:
+            if value:
+                self._unregister()
+            else:
+                self._register()
                 self.notify_surrounding()
 
         if self.scene() is not None:

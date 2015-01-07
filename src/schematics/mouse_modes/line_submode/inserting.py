@@ -62,8 +62,8 @@ class InsertingLineSubMode(InsertLineSubModeBase):
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
 
-        end = self.get_line_insertion_point(event.pos())
         start = self._insert_line_start
+        end = self.get_line_insertion_point(event.pos())
 
         self._insert_line_start_end = (start, end)
         self._update_line_timer.start()
