@@ -60,6 +60,7 @@ class ConnectorItem(StateLineItem):
                     if isinstance(item, LineTree):
                         con_items.add(item)
                     elif isinstance(item, ConnectorItem):
+                        assert item.parentItem() is not None
                         con_items.add(item.parentItem())
         return con_items
 

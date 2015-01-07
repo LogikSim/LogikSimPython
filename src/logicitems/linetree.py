@@ -197,7 +197,8 @@ class LineTree(ConnectableItem, StateLineItem):
                             item.endPoint() != scene_line.p1() and \
                             item.endPoint() != scene_line.p2():
                         if item.is_input() or self.is_inactive():
-                            yield LineEdgeIndicator(self, item.endPoint())
+                            yield LineEdgeIndicator(
+                                self, self.mapFromScene(item.endPoint()))
 
         self._edge_indicators = \
             list(iter_edge_indicators_at_edges(self._tree)) + \

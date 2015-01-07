@@ -90,6 +90,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         redo_qaction.setShortcut(QtGui.QKeySequence.Redo)
         self.menu_edit.insertAction(first_menu_edit_qaction, redo_qaction)
 
+        scene.activated.connect(self.action_stack_view.setDisabled)
+
         # Add toggle view actions for dockwidgets
         self.toggle_history_dock_widget_view_qaction = \
             self.history_dock_widget.toggleViewAction()

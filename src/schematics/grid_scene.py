@@ -28,6 +28,7 @@ import logicitems
 class GridScene(QtGui.QGraphicsScene):
     # signals position or shape change of any selected item
     selectedItemPosChanged = QtCore.Signal()
+    activated = QtCore.Signal(bool)
 
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
@@ -287,6 +288,7 @@ class GridScene(QtGui.QGraphicsScene):
                     logicitems.ItemBase.ItemSceneActivatedHasChanged, value)
             self._registered_during_inactivity = set()
             self.update()
+            self.activated.emit(value)
 
     def _update_connections(self, changed_items):
         """

@@ -93,7 +93,7 @@ class ResizableItem(logicitems.LogicItem):
         # update connectors
         for con in self._inputs + self._outputs:
             con.setParentItem(None)
-        self._inpts = []
+        self._inputs = []
         self._outputs = []
         # inputs
         for i in range(self._input_count):
