@@ -56,6 +56,8 @@ class LineTree(ConnectableItem, StateLineItem):
 
         super().__init__(parent, metadata)
 
+        self.setZValue(1)
+
     @classmethod
     def metadata_from_path(cls, path):
         """
@@ -165,7 +167,7 @@ class LineTree(ConnectableItem, StateLineItem):
             indicator.setParentItem(None)
 
         # collect all edge indicators
-        def iter_edge_indicators(tree, root=True):
+        def iter_edge_indicators_at_edges(tree, root=True):
             for point, children in tree.items():
                 if len(children) >= (3 if root else 2):
                     yield LineEdgeIndicator(self, QPointF(*point))
@@ -179,9 +181,27 @@ class LineTree(ConnectableItem, StateLineItem):
                     if len(con_items) != 0 and \
                             len(children) >= (2 if root else 1):
                         yield LineEdgeIndicator(self, QPointF(*point))
-                yield from iter_edge_indicators(children, False)
+                yield from iter_edge_indicators_at_edges(children, False)
 
-        self._edge_indicators = list(iter_edge_indicators(self._tree))
+        # there might be also connectors in the middle of lines.
+        def iter_edge_indicators_in_lines(tree):
+            if self.scene() is None:
+                return
+            for line in self._iter_lines(self._tree):
+                scene_line = QLineF(self.mapToScene(line.p1()),
+                                    self.mapToScene(line.p2()))
+                l_bounding_rect = self._line_to_col_rect(scene_line)
+                for item in self.scene().items(l_bounding_rect):
+                    if isinstance(item, ConnectorItem) and \
+                            l_bounding_rect.contains(item.endPoint()) and \
+                            item.endPoint() != scene_line.p1() and \
+                            item.endPoint() != scene_line.p2():
+                        if item.is_input() or self.is_inactive():
+                            yield LineEdgeIndicator(self, item.endPoint())
+
+        self._edge_indicators = \
+            list(iter_edge_indicators_at_edges(self._tree)) + \
+            list(iter_edge_indicators_in_lines(self._tree))
 
     def _update_shape(self):
         """
