@@ -33,6 +33,13 @@ class SelectionItem(ItemBase):
         self._update_state_timer.timeout.connect(self._do_update_state)
         self._update_state_timer.setSingleShot(True)
 
+        # use timer to only process most recent update event
+        self._update_surrounding = QtCore.QTimer()
+        self._update_surrounding.timeout.connect(self._do_update_surrounding)
+        self._update_surrounding.setSingleShot(True)
+        self._surrounding_items = None  # set with items in surroudning
+        self._old_positions = None  # dict, key: item, value: position
+
     def _invalidate_state(self):
         """
         Makes sure that we group update events.
@@ -62,6 +69,22 @@ class SelectionItem(ItemBase):
         self._bounding_rect = self._to_col_rect(
             self._rect, radius=self.scene().get_grid_spacing())
 
+    def _do_update_surrounding(self):
+        """Generate connectable surrounding changed notification."""
+        # has any position changed?
+        if any(item.pos() != old_pos
+               for item, old_pos in self._old_positions.items()):
+            surrounding_set = self._surrounding_items
+            for item in self.scene().selectedItems():
+                surrounding_set.update(item.items_at_connections())
+            # notify to items that surrounding has changed
+            for item in surrounding_set:
+                item.itemChange(
+                    ConnectableItem.ItemConnectableSurroundingHasChanged, True)
+
+        self._surrounding_items = None
+        self._old_positions = None
+
     def boundingRect(self):
         return self._bounding_rect
 
@@ -76,23 +99,17 @@ class SelectionItem(ItemBase):
     def mouseMoveEvent(self, event):
         """Moves items and creates surrounding changed notification."""
         self.setCursor(QtCore.Qt.SizeAllCursor)
-        # store old positions and surrounding
-        sel_items = self.scene().selectedItems()
-        chanded_items_set = set(sel_items)
-        for item in sel_items:
-            chanded_items_set.update(item.items_at_connections())
-        old_positions = {item: item.pos() for item in sel_items}
+
+        if not self._update_surrounding.isActive():
+            # store old positions and surrounding
+            sel_items = self.scene().selectedItems()
+            self._surrounding_items = set(sel_items)
+            for item in sel_items:
+                self._surrounding_items.update(item.items_at_connections())
+            self._old_positions = {item: item.pos() for item in sel_items}
+            self._update_surrounding.start()
         # this moves all selected items
         super().mouseMoveEvent(event)
-        # has any position changed?
-        if any(item.pos() != old_pos
-               for item, old_pos in old_positions.items()):
-            for item in sel_items:
-                chanded_items_set.update(item.items_at_connections())
-            # notify to items that surrounding has changed
-            for item in chanded_items_set:
-                item.itemChange(
-                    ConnectableItem.ItemConnectableSurroundingHasChanged, True)
 
     def itemChange(self, change, value):
         if self.scene() is not None:
