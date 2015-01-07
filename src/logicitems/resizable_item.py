@@ -45,9 +45,9 @@ class ResizableItem(logicitems.LogicItem):
         super().update_backend(backend_metadata)
 
         metadata = {}
-        if self._input_count != backend_metadata.get('#inputs', None):
+        if self._input_count != backend_metadata.get('#inputs'):
             metadata['#inputs'] = self._input_count
-        if self._delay != backend_metadata.get('delay', None):
+        if self._delay != backend_metadata.get('delay'):
             metadata['delay'] = self._delay
         self.notify_backend(metadata)
 

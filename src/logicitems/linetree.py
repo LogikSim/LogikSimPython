@@ -88,14 +88,14 @@ class LineTree(ConnectableItem, StateLineItem):
         super().apply_update_frontend(metadata)
 
         # tree updates
-        enc_tree = metadata.get('tree', None)
+        enc_tree = metadata.get('tree')
         if enc_tree is not None:
             tree = self._decode_tree(enc_tree)
             if tree != self._tree:
                 self._set_tree(tree)
 
         # collect input logic value changes
-        input_states = metadata.get('state', None)
+        input_states = metadata.get('state')
         if input_states is not None:
             self.set_logic_state(input_states)
 
@@ -107,7 +107,7 @@ class LineTree(ConnectableItem, StateLineItem):
         super().update_backend(backend_metadata)
 
         enc_tree = self._encode_tree(self._tree)
-        if enc_tree != backend_metadata.get('tree', None):
+        if enc_tree != backend_metadata.get('tree'):
             self.notify_backend({'tree': enc_tree})
 
     @classmethod
@@ -298,17 +298,13 @@ class LineTree(ConnectableItem, StateLineItem):
         """
         if scene is None:
             scene = self.scene()
-        assert scene is not None, "Need a valid scene"
 
         con_items = set()
-        # TODO: use shape
-        for line in self._iter_lines(tree):
-            line = QLineF(self.mapToScene(line.p1()),
-                          self.mapToScene(line.p2()))
-            l_bounding_rect = self._line_to_col_rect(line)
-            for item in scene.items(l_bounding_rect):
+        if scene is not None:
+            scene_shape = self.mapToScene(self._shape)
+            for item in scene.items(scene_shape):
                 if isinstance(item, ConnectorItem) and \
-                        l_bounding_rect.contains(item.endPoint()):
+                        scene_shape.contains(item.endPoint()):
                     con_items.add(item)
         return list(con_items)
 

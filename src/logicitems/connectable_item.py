@@ -69,7 +69,7 @@ class ConnectableItem(InsertableItem):
         # TODO: handle #inputs, #output change
         #   -> delete connection of invalid index
 
-        inputs = metadata.get('inputs', None)
+        inputs = metadata.get('inputs')
         if inputs is not None:
             self._input_connections = []
             for source_id, source_port in inputs:
@@ -79,7 +79,7 @@ class ConnectableItem(InsertableItem):
                     info = InputConnectionInfo(source_id, source_port)
                 self._input_connections.append(info)
 
-        outputs = metadata.get('outputs', None)
+        outputs = metadata.get('outputs')
         if outputs is not None:
             self._output_connections = []
             for sink_id, sink_port, delay in outputs:

@@ -138,9 +138,9 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         """
         # update position
         metadata = {}
-        if self.x() != backend_metadata.get('x', None):
+        if self.x() != backend_metadata.get('x'):
             metadata['x'] = self.x()
-        if self.y() != backend_metadata.get('y', None):
+        if self.y() != backend_metadata.get('y'):
             metadata['y'] = self.y()
         self.notify_backend(metadata)
 
@@ -214,7 +214,7 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
 
     def id(self):
         """Return id, used to communicate with backend."""
-        return self._cached_metadata.get('id', None)
+        return self._cached_metadata.get('id')
 
     def name(self):
         """Return name."""

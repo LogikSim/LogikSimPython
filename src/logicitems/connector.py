@@ -12,7 +12,6 @@ Connectors of Logic Items where lines be attached.
 from PySide import QtCore, QtGui
 
 from .state_line_item import StateLineItem
-from .itembase import ItemBase
 
 class ConnectorItem(StateLineItem):
     def __init__(self, parent, start, anchor, end,
@@ -40,7 +39,7 @@ class ConnectorItem(StateLineItem):
         """Apply changes from metadata to this item."""
         # extract state
         states = metadata.get(
-            'input-states' if self._is_input else 'output-states', None)
+            'input-states' if self._is_input else 'output-states')
         if states is not None:
             self.set_logic_state(states[self.port()])
 

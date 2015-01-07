@@ -92,6 +92,9 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
         scene.activated.connect(self.action_stack_view.setDisabled)
 
+        # Add copy/paste QActions to menu_edit
+        # self.menu_edit.insertSeparator()
+
         # Add toggle view actions for dockwidgets
         self.toggle_history_dock_widget_view_qaction = \
             self.history_dock_widget.toggleViewAction()
