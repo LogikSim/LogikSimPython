@@ -209,10 +209,11 @@ class InteractiveGridView(grid_view.GridView):
         The inserted position is the current cursor position.
         """
         clipboard = QtGui.QApplication.clipboard()
+        data = json.loads(clipboard.text())
 
         # TODO: move items?
+        self.scene().clearSelection()
 
-        data = json.loads(clipboard.text())
         paste_items = []
         for item_metadata in data.get('items', []):
             item = self.scene().registry().instantiate_frontend_item(

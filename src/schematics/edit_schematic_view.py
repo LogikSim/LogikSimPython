@@ -24,3 +24,8 @@ class EditSchematicView(mouse_modes.SelectItemsMode,
         super().__init__(*args, **kargs)
         self.setScene(grid_scene.GridScene(self))
         self.setMouseMode(mouse_modes.SelectItemsMode)
+
+    def paste(self):
+        """Overrides paste"""
+        self.setMouseMode(mouse_modes.SelectItemsMode)
+        super().paste()
