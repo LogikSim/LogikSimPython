@@ -346,9 +346,9 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             self, change_function, condition_function, notify_surrounding):
         """
         Applies changes and notifies the surrounding if condition is True.
-        
+
         :param change_function: function called to apply changes
-        :param condition_function: if condition is fulfilled after 
+        :param condition_function: if condition is fulfilled after
             applying the changes the surrounding is notified
         :param notify_surrounding: if this parameter is False,
             no notifications are made.

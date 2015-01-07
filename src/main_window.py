@@ -92,8 +92,35 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
         scene.activated.connect(self.action_stack_view.setDisabled)
 
-        # Add copy/paste QActions to menu_edit
-        # self.menu_edit.insertSeparator()
+        # Add cut/copy/paste QActions to menu_edit
+
+        def addAction(label, enabled_signal, disabled_signal, is_enabled,
+                      trigger_slot, key_sequence):
+            qaction = QtGui.QAction(label, self)
+            if enabled_signal:
+                enabled_signal.connect(qaction.setEnabled)
+            if disabled_signal:
+                disabled_signal.connect(qaction.setDisabled)
+            qaction.setEnabled(is_enabled)
+            qaction.triggered.connect(trigger_slot)
+            qaction.setShortcut(key_sequence)
+            self.menu_edit.addAction(qaction)
+
+        # TODO: get default values from scene
+
+        self.menu_edit.addSeparator()
+        addAction("Cut", scene.copyAvailable, None, False, self._view.cut,
+                  QtGui.QKeySequence.Cut)
+        addAction("Copy", scene.copyAvailable, None, False, self._view.copy,
+                  QtGui.QKeySequence.Copy)
+        addAction("Paste", None, scene.activated, True, self._view.paste,
+                  QtGui.QKeySequence.Paste)
+
+        self.menu_edit.addSeparator()
+        addAction("Delete", scene.copyAvailable, None, False, self._view.delete,
+                  QtGui.QKeySequence.Delete)
+        addAction("Select All", None, scene.activated, True, self._view.selectAll,
+                  QtGui.QKeySequence.SelectAll)
 
         # Add toggle view actions for dockwidgets
         self.toggle_history_dock_widget_view_qaction = \

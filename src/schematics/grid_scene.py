@@ -26,9 +26,15 @@ import logicitems
 
 
 class GridScene(QtGui.QGraphicsScene):
-    # signals position or shape change of any selected item
+    # This signal is emitted when the position or shape of any selected item
+    # has changed.
     selectedItemPosChanged = QtCore.Signal()
+
+    # This signal is emitted when the scene has become active or inactive.
     activated = QtCore.Signal(bool)
+
+    # This signal is emitted when items are selected or deselected.
+    copyAvailable = QtCore.Signal(bool)
 
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
@@ -373,6 +379,8 @@ class GridScene(QtGui.QGraphicsScene):
             set_single_selection_state(self._single_selected_item, True)
         else:
             self._single_selected_item = None
+        # notify copyAvailable
+        self.copyAvailable.emit(len(sel_items) > 0)
 
     @QtCore.Slot()
     def onAboutToUndoRedo(self):

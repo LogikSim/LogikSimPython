@@ -51,6 +51,7 @@ class InteractiveGridView(grid_view.GridView):
 
     def wheelEvent(self, event):
         super().wheelEvent(event)
+        # TODO: zoom with STRG and add modifier to scroll horizontally
 
         if event.orientation() is QtCore.Qt.Horizontal or \
                 event.modifiers() != QtCore.Qt.NoModifier:
@@ -74,6 +75,8 @@ class InteractiveGridView(grid_view.GridView):
                                        event.buttons(),
                                        event.modifiers())
         self.mouseMoveEvent(move_event)
+
+    # TODO: Move selection with arrow keys
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
@@ -192,3 +195,86 @@ class InteractiveGridView(grid_view.GridView):
         )
 
         event.acceptProposedAction()
+
+    @QtCore.Slot()
+    def cut(self):
+        """Copies the selected items to the clipboard and deletes them."""
+        self.copy()
+        self.delete()
+
+    @QtCore.Slot()
+    def paste(self):
+        """
+        Pastes items from the clipboard into the scene.
+
+        The inserted position is the current cursor position.
+        """
+        clipboard = QtGui.QApplication.clipboard()
+
+        # TODO: move items?
+
+        data = json.loads(clipboard.text())
+        paste_items = []
+        for item_metadata in data.get('items', []):
+            item = self.scene().registry().instantiate_frontend_item(
+                backend_guid=item_metadata['GUID'],
+                additional_metadata=item_metadata)
+            if self.scene().selectionAllowed():
+                item.setSelected(True)
+            self.scene().addItem(item)
+            paste_items.append(item)
+
+        # undo creation
+        scene = self.scene()
+
+        def do():
+            for item in paste_items:
+                scene.addItem(item)
+
+        def undo():
+            for item in paste_items:
+                item.setSelected(False)
+                scene.removeItem(item)
+
+        self.scene().actions.executed(
+            do, undo, "pasted logic item"
+        )
+
+    @QtCore.Slot()
+    def copy(self):
+        """Copies any selected items to the clipboard."""
+        clipboard = QtGui.QApplication.clipboard()
+
+        sel_items = self.scene().selectedItems()
+        data = {'items': [item.metadata() for item in sel_items]}
+        # TODO: use mime type 'application/x-components'
+        # TODO: store mime type in variable
+        clipboard.setText(json.dumps(data))
+
+    @QtCore.Slot()
+    def delete(self):
+        """Delete all selected items."""
+        sel_items = list(self.scene().selectedItems())
+        scene = self.scene()
+
+        # selection should not be restored
+        for item in sel_items:
+            item.setSelected(False)
+
+        def do():
+            for item in sel_items:
+                scene.removeItem(item)
+
+        def undo():
+            for item in sel_items:
+                scene.addItem(item)
+
+        self.scene().actions.execute(
+            do, undo, "remove logic item"
+        )
+
+    @QtCore.Slot()
+    def selectAll(self):
+        """Select all items in the scene."""
+        for item in self.scene().items():
+            item.setSelected(True)
