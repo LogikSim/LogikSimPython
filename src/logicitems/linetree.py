@@ -97,6 +97,10 @@ class LineTree(ConnectableItem, StateLineItem):
         if input_states is not None:
             self.set_logic_state(input_states)
 
+        # connectivity change
+        if 'inputs' in metadata or 'outputs' in metadata:
+            self._update_edge_indicators()
+
     def update_backend(self, backend_metadata):
         super().update_backend(backend_metadata)
 
@@ -165,9 +169,17 @@ class LineTree(ConnectableItem, StateLineItem):
             for point, children in tree.items():
                 if len(children) >= (3 if root else 2):
                     yield LineEdgeIndicator(self, QPointF(*point))
+                elif self.scene() is not None:
+                    # collect connections at point
+                    scene_point = self.mapToScene(*point)
+                    con_items = [item for item in
+                                 self.scene().items(scene_point)
+                                 if isinstance(item, ConnectorItem) and
+                                 item.endPoint() == scene_point]
+                    if len(con_items) != 0 and \
+                            len(children) >= (2 if root else 1):
+                        yield LineEdgeIndicator(self, QPointF(*point))
                 yield from iter_edge_indicators(children, False)
-
-        # TODO: draw edge indicators for connections
 
         self._edge_indicators = list(iter_edge_indicators(self._tree))
 
@@ -590,3 +602,9 @@ class LineTree(ConnectableItem, StateLineItem):
                 painter.drawRect(rect)
             for indicator in self._edge_indicators:
                 painter.drawEllipse(indicator.pos(), 50, 50)
+
+    def itemChange(self, change, value):
+        # update edge indicators when connectable surrounding changed
+        if change == ConnectableItem.ItemConnectableSurroundingHasChanged:
+            self._update_edge_indicators()
+        return super().itemChange(change, value)
