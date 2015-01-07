@@ -39,7 +39,7 @@ class StateLineItem(ItemBase):
         It is enabled by default.
         """
         self._animate_lines = on
-        self.request_paint()
+        QtGui.QGraphicsItem.update(self)
 
     def animate_lines(self):
         """

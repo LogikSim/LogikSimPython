@@ -74,8 +74,9 @@ class SelectionItem(ItemBase):
         self.setCursor(QtCore.Qt.SizeAllCursor)
 
     def mouseMoveEvent(self, event):
+        """Moves items and creates surrounding changed notification."""
         self.setCursor(QtCore.Qt.SizeAllCursor)
-        # store old positions
+        # store old positions and surrounding
         sel_items = self.scene().selectedItems()
         chanded_items_set = set(sel_items)
         for item in sel_items:

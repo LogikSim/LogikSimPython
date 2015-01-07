@@ -111,7 +111,7 @@ class InteractiveGridView(grid_view.GridView):
         for item, item_drop_pos in self._drop_items:
             new_pos = self.scene().roundToGrid(
                 item_drop_pos + self.mapToScene(view_pos) - self._drag_pos)
-            item.setPos(new_pos)
+            item.setPos(new_pos, notify_surrounding=True)
 
     def dragEnterEvent(self, event):
         if not self.scene().insertItemAllowed():

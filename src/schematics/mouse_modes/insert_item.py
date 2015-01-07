@@ -65,7 +65,7 @@ class InsertItemMode(GridViewMouseModeBase):
             gpos = self.mapToSceneGrid(event.pos())
             # move new item
             if self._inserted_item is not None:
-                self._inserted_item.setPos(gpos)
+                self._inserted_item.setPos(gpos, notify_surrounding=True)
 
     @mouse_mode_filtered
     def mouseReleaseEvent(self, event):

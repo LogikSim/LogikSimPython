@@ -241,10 +241,17 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         """Return the complete metadata."""
         return self._cached_metadata
 
-    def setPos(self, pos, y=None):
+    def setPos(self, pos, y=None, notify_surrounding=False):
+        """
+        :param notify_surrounding: If True, surrounding is notified that the
+            connectable surrounding has been changed.
+        """
         if y is not None:
             pos = QtCore.QPointF(pos, y)
-        super().setPos(pos)
+
+        # change position and notify surrounding
+        setPos = super().setPos
+        self._pos_change_helper(lambda: setPos(pos), notify_surrounding)
 
         self._on_item_position_has_changed(self.pos())
 
@@ -278,10 +285,12 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         self.register_change_during_inactivity()
 
     def itemChange(self, change, value):
-        # re-register on scene change
+        # re-register on scene change and notify surrounding
         if change is QtGui.QGraphicsItem.ItemSceneHasChanged:
             self._unregister()
             self._register()
+            if value is not None:
+                self.notify_surrounding()
 
         if self.scene() is not None:
             # round position to grid point
@@ -315,9 +324,52 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
                        QtCore.Qt.ArrowCursor)
 
     def mouseMoveEvent(self, event):
-        super().mouseMoveEvent(event)
+        """Moves the item and creates surrounding changed notifications"""
         self.setCursor(QtCore.Qt.SizeAllCursor if self.isSelected() else
                        QtCore.Qt.ArrowCursor)
+
+        # move item and notify surrounding
+        mouseMoveEvent = super().mouseMoveEvent
+        self._pos_change_helper(lambda: mouseMoveEvent(event), True)
+
+    def _pos_change_helper(self, function, notify_surrounding):
+        """
+        Changes position with given function and notifies surrounding.
+
+        :param function: function to do position change
+        :param notify_surrounding: If True, surrounding is notified.
+        """
+        if notify_surrounding:
+            # store old position and surrounding
+            assert self.scene() is None or \
+                len(self.scene().selectedItems()) <= 1
+            chanded_items_set = self.items_at_connections()
+            old_pos = self.pos()
+        # change position
+        function()
+        if notify_surrounding:
+            # notify items that surrounding has changed
+            if self.pos() != old_pos:
+                self.notify_surrounding(chanded_items_set)
+
+    def notify_surrounding(self, addition_items=None):
+        """
+        Notify items that connectable surrounding has changed.
+
+        By default only items in the connectable surrounding are notified.
+
+        :param addition_items: further items to notify
+        """
+        from .connectable_item import ConnectableItem
+
+        chanded_items_set = set()
+        if addition_items is not None:
+            chanded_items_set.update(addition_items)
+        chanded_items_set.update(self.items_at_connections())
+        chanded_items_set.add(self)
+        for item in chanded_items_set:
+            item.itemChange(
+                ConnectableItem.ItemConnectableSurroundingHasChanged, True)
 
     def mouseReleaseEvent(self, event):
         """
