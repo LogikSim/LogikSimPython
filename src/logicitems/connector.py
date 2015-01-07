@@ -69,8 +69,15 @@ class ConnectorItem(StateLineItem):
         assert self.is_registered()
 
         # setup connection in backend
+        from .linetree import LineTree
+        if isinstance(item, LineTree):
+            port = 0
+        elif isinstance(item, ConnectorItem):
+            port = item.port()
+        else:
+            raise Exception("Unknown item")
         self.parentItem().notify_backend_connect(
-            self.port(), item.id(), 0, self.visual_delay())
+            self.port(), item.id(), port, self.visual_delay())
 
     def set_anchored(self, value):
         """If value is True, visualizes the object as being connected."""
