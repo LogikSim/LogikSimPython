@@ -52,23 +52,17 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
 
     def items_at_connections(self):
         """Overrides items_at_connections"""
-        con_items = set()
+        items_set = set()
         for con_item in self._inputs + self._outputs:
-            for item in self.scene().items(con_item.endPoint()):
-                if isinstance(item, LineTree):
-                    con_items.add(item)
-                elif isinstance(item, ConnectorItem):
-                    con_items.add(item.parentItem())
-        return con_items
+            items_set.update(con_item.items_at_connection())
+        return items_set
 
     def connect_all_outputs(self):
         """Overrides connect_all_outputs."""
         for con_item in self._outputs:
             for item in self.scene().items(con_item.endPoint()):
-                if isinstance(item, LineTree):
-                    con_item.connect(item)
-                elif isinstance(item, ConnectorItem) and \
-                        item.is_input():
+                if isinstance(item, LineTree) or \
+                        (isinstance(item, ConnectorItem) and item.is_input()):
                     con_item.connect(item)
 
     def _invalidate_bounding_rect(self):
@@ -88,9 +82,14 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
         return self.boundingRect().united(self.childrenBoundingRect())
 
     def itemChange(self, change, value):
+        # invalidate bounding rect when child added or removed
         if change in (QtGui.QGraphicsItem.ItemChildAddedChange,
                       QtGui.QGraphicsItem.ItemChildRemovedChange):
             self._invalidate_bounding_rect()
+        # update line connectors when connectable surrounding changed
+        elif change == ConnectableItem.ItemConnectableSurroundingHasChanged:
+            for con_item in self._inputs + self._outputs:
+                con_item.update_anticipation()
         return super().itemChange(change, value)
 
     def boundingRect(self):

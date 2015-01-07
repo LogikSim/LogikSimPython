@@ -330,4 +330,4 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             # event->scenePos() == event->buttonDownScenePos(Qt::LeftButton)
             event.setButtonDownScenePos(
                 QtCore.Qt.LeftButton, event.scenePos() + QtCore.QPointF(1, 1))
-        return QtGui.QGraphicsItem.mouseReleaseEvent(self, event)
+        QtGui.QGraphicsItem.mouseReleaseEvent(self, event)

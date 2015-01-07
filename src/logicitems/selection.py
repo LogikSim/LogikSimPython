@@ -12,6 +12,7 @@ Selection Items are boxes and anchors drawn for item selections.
 from PySide import QtGui, QtCore
 
 from .itembase import ItemBase
+from .connectable_item import ConnectableItem
 
 
 class SelectionItem(ItemBase):
@@ -73,8 +74,24 @@ class SelectionItem(ItemBase):
         self.setCursor(QtCore.Qt.SizeAllCursor)
 
     def mouseMoveEvent(self, event):
-        super().mouseMoveEvent(event)
         self.setCursor(QtCore.Qt.SizeAllCursor)
+        # store old positions
+        sel_items = self.scene().selectedItems()
+        chanded_items_set = set(sel_items)
+        for item in sel_items:
+            chanded_items_set.update(item.items_at_connections())
+        old_positions = {item: item.pos() for item in sel_items}
+        # this moves all selected items
+        super().mouseMoveEvent(event)
+        # has any position changed?
+        if any(item.pos() != old_pos
+               for item, old_pos in old_positions.items()):
+            for item in sel_items:
+                chanded_items_set.update(item.items_at_connections())
+            # notify to items that surrounding has changed
+            for item in chanded_items_set:
+                item.itemChange(
+                    ConnectableItem.ItemConnectableSurroundingHasChanged, True)
 
     def itemChange(self, change, value):
         if self.scene() is not None:

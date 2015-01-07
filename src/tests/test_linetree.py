@@ -576,7 +576,7 @@ def get_linetree_with_states(tree, states, curr_clock, grid_spacing=1,
         def get_clock():
             return clock
         tree.scene().registry().clock = get_clock
-        tree.update({'state': state})
+        tree.update_frontend({'state': state})
 
     # set current clock
     def get_curr_clock():

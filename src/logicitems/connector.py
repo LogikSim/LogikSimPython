@@ -15,7 +15,7 @@ from .state_line_item import StateLineItem
 
 
 class ConnectorItem(StateLineItem):
-    def __init__(self, parent, start, unconnected_end, connected_end,
+    def __init__(self, parent, start, anchor, end,
                  is_input, port):
         """
         anchor is the position, at which lines can connect to
@@ -25,9 +25,8 @@ class ConnectorItem(StateLineItem):
         self.setFlag(QtGui.QGraphicsItem.ItemStacksBehindParent)
 
         self._start = start
-        self._unconnected_end = unconnected_end
-        self._anchor = connected_end
-        self._connected_end = connected_end
+        self._anchor = anchor
+        self._end = end
         self._is_input = is_input
         self._port = port
 
@@ -50,6 +49,20 @@ class ConnectorItem(StateLineItem):
             # use immediate update
             self.update()
 
+    def items_at_connection(self):
+        """Return set of all items in the scene located at the connections."""
+        from .linetree import LineTree
+
+        con_items = set()
+        if self.scene() is not None:
+            for item in self.scene().items(self.endPoint()):
+                if item is not self:
+                    if isinstance(item, LineTree):
+                        con_items.add(item)
+                    elif isinstance(item, ConnectorItem):
+                        con_items.add(item.parentItem())
+        return con_items
+
     def connect(self, item):
         """Connection output to other item."""
         assert self.is_output(), "Can only connect outputs."
@@ -65,6 +78,17 @@ class ConnectorItem(StateLineItem):
         # use direct update here for immediate feedback
         QtGui.QGraphicsItem.update(self)
 
+    def update_anticipation(self):
+        """
+        Update the anticipation of connections.
+
+        Anticipated connections are visualized just as real connections,
+        but reported to the backend.
+
+        Called by parent whenever the connectable surrounding changes.
+        """
+        self.set_animate_lines(self.is_connected())
+
     def delay(self):
         if self.is_input():
             return self.visual_delay()
@@ -75,7 +99,7 @@ class ConnectorItem(StateLineItem):
         """Get delay based on visual extend of the connector."""
         if self.scene() is None:
             return 0
-        return abs((self._connected_end - self._start).manhattanLength() *
+        return abs((self._end - self._start).manhattanLength() *
                    self._delay_per_gridpoint / self.scene().get_grid_spacing())
 
     def _invalidate_bounding_rect(self):
@@ -118,8 +142,11 @@ class ConnectorItem(StateLineItem):
             self.parentItem().is_temporary()
 
     def is_connected(self):
-        return self.parentItem() is not None and \
-            self.parentItem().is_connected(self.is_input(), self.port())
+        if self.is_inactive():
+            return len(self.items_at_connection()) > 0
+        else:
+            return self.parentItem() is not None and \
+                self.parentItem().is_connected(self.is_input(), self.port())
 
     def anchorPoint(self):
         """Returns where AnchorItems should be drawn at."""
@@ -127,11 +154,11 @@ class ConnectorItem(StateLineItem):
 
     def endPoint(self):
         """Returns position where lines can connect to."""
-        return self.mapToScene(self._connected_end)
+        return self.mapToScene(self._end)
 
     def boundingRect(self):
         if not self._bounding_rect_valid:
-            line = QtCore.QLineF(self._start, self._connected_end)
+            line = QtCore.QLineF(self._start, self._end)
             self._bounding_rect = self._line_to_col_rect(line)
             self._bounding_rect_valid = True
         return self._bounding_rect
@@ -143,10 +170,10 @@ class ConnectorItem(StateLineItem):
         :return: iterator with items of (QLineF, state)
         """
         start = self._start
-        if self.animate_lines() or self.is_inactive():
-            drawing_end = self._connected_end
+        if self.animate_lines():
+            drawing_end = self._end
         else:
-            drawing_end = self._unconnected_end
+            drawing_end = self._anchor
         delay = self.delay()
 
         yield from self.iter_state_line_segments_helper(

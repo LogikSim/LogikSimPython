@@ -18,7 +18,6 @@ from .connectable_item import ConnectableItem
 from .line_edge_indicator import LineEdgeIndicator
 from .connector import ConnectorItem
 from .state_line_item import StateLineItem
-from .itembase import ItemBase
 
 
 class LineTree(ConnectableItem, StateLineItem):
@@ -269,6 +268,7 @@ class LineTree(ConnectableItem, StateLineItem):
         assert scene is not None, "Need a valid scene"
 
         con_items = set()
+        # TODO: use shape
         for line in self._iter_lines(tree):
             line = QLineF(self.mapToScene(line.p1()),
                           self.mapToScene(line.p2()))

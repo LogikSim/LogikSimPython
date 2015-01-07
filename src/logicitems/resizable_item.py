@@ -14,7 +14,6 @@ from PySide import QtGui, QtCore
 import logicitems
 from actions.resize_action import ResizeAction
 from .insertable_item import disabled_undo
-from .itembase import ItemBase
 
 
 class ResizableItem(logicitems.LogicItem):
@@ -101,8 +100,8 @@ class ResizableItem(logicitems.LogicItem):
             con = logicitems.ConnectorItem(
                 parent=self,
                 start=QtCore.QPointF(0, scale * i),
-                unconnected_end=QtCore.QPointF(-0.5 * scale, scale * i),
-                connected_end=QtCore.QPointF(-scale, scale * i),
+                anchor=QtCore.QPointF(-0.5 * scale, scale * i),
+                end=QtCore.QPointF(-scale, scale * i),
                 is_input=True,
                 port=i)
             self._inputs.append(con)
@@ -111,8 +110,8 @@ class ResizableItem(logicitems.LogicItem):
         con = logicitems.ConnectorItem(
             parent=self,
             start=QtCore.QPointF(2 * scale, scale * mid_point),
-            unconnected_end=QtCore.QPointF(2.5 * scale, scale * mid_point),
-            connected_end=QtCore.QPointF(3 * scale, scale * mid_point),
+            anchor=QtCore.QPointF(2.5 * scale, scale * mid_point),
+            end=QtCore.QPointF(3 * scale, scale * mid_point),
             is_input=False,
             port=0)
         self._outputs.append(con)

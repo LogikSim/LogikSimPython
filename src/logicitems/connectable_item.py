@@ -39,6 +39,15 @@ class InputConnectionInfo:
 
 
 class ConnectableItem(InsertableItem):
+
+    class ItemConnectableSurroundingHasChanged:
+        """
+        ConnectableItem.itemChange() notification
+
+        Whenever the item gets this notification it might be possible
+        to connect to different items in its surrounding.
+        """
+
     def __init__(self, parent, metadata):
         # list of input connections
         # index: port, value: InputConnectionInfo or None
@@ -120,7 +129,7 @@ class ConnectableItem(InsertableItem):
                 return info.delay
 
     def notify_backend_connect(self, source_port, sink_id,
-                                sink_port, delay=0):
+                               sink_port, delay=0):
             self.scene().interface().connect(
                 self.id(), source_port, sink_id, sink_port, delay)
 
