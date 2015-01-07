@@ -98,6 +98,7 @@ class Nand(ComponentType):
     METADATA = {"GUID": "B50A8E0D-319C-4DB9-87A3-61F6F3EAC4D8",
                 "GUI-GUID": TextItem.GUI_GUID(),  # Override GUI item
                 "name": "Nand",
+                "text": "!&",
                 "description": "Nand logic gate",
                 "#inputs": 2,
                 "#outputs": 1,
@@ -123,6 +124,7 @@ class Nor(ComponentType):
     METADATA = {"GUID": "B634DF23-0994-46E0-AF52-A99D35F3231C",
                 "GUI-GUID": TextItem.GUI_GUID(),  # Override GUI item
                 "name": "Nor",
+                "text": "=0",
                 "description": "Nor logic gate",
                 "#inputs": 2,
                 "#outputs": 1,
