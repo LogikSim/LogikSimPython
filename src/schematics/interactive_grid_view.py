@@ -138,9 +138,8 @@ class InteractiveGridView(grid_view.GridView):
                     additional_metadata=item_metadata)
                 item.set_temporary(True)
                 item.setZValue(0.5)
-                if self.scene().selectionAllowed():
-                    item.setSelected(True)
                 self.scene().addItem(item)
+                item.setSelected(True)
                 self._drop_items.append((item, item.pos()))
 
             # move items
@@ -219,9 +218,8 @@ class InteractiveGridView(grid_view.GridView):
             item = self.scene().registry().instantiate_frontend_item(
                 backend_guid=item_metadata['GUID'],
                 additional_metadata=item_metadata)
-            if self.scene().selectionAllowed():
-                item.setSelected(True)
             self.scene().addItem(item)
+            item.setSelected(True)
             paste_items.append(item)
 
         # undo creation

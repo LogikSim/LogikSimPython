@@ -26,14 +26,13 @@ import logicitems
 
 
 class GridScene(QtGui.QGraphicsScene):
-    # This signal is emitted when the position or shape of any selected item
-    # has changed.
+    # Emitted when the position or shape of any selected item has changed.
     selectedItemPosChanged = QtCore.Signal()
 
-    # This signal is emitted when the scene has become active or inactive.
+    # Emitted when the scene has become active or inactive.
     activated = QtCore.Signal(bool)
 
-    # This signal is emitted when items are selected or deselected.
+    # Emitted when items are selected or deselected.
     copyAvailable = QtCore.Signal(bool)
 
     def __init__(self, *args, **kargs):
@@ -334,7 +333,7 @@ class GridScene(QtGui.QGraphicsScene):
             item.itemChange(logicitems.ItemBase.ItemSceneActivatedHasChanged)
         once the scene becomes active.
         """
-        # TODO: better assert self.is_inactive()
+        # TODO: better assert self.is_inactive() here to prevent sync problems
         if self.is_inactive():
             self._registered_during_inactivity.add(item)
 
