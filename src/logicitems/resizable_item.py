@@ -65,14 +65,20 @@ class ResizableItem(logicitems.LogicItem):
                                   new_input_count, new_pos)
             self._register_undo_action(action)
 
-        # update input count
-        self._input_count = new_input_count
-        self._update_state()
+        def apply_change():
+            # update input count
+            self._input_count = new_input_count
+            self._update_state()
 
-        # update position
-        if new_pos is not None:
-            with disabled_undo(self):
-                self.setPos(new_pos)
+            # update position
+            if new_pos is not None:
+                with disabled_undo(self):
+                    self.setPos(new_pos)
+
+        # notify surrounding
+        self._change_and_notify_surrounding(apply_change,
+                                            condition_function=lambda: True,
+                                            notify_surrounding=True)
 
     def _set_show_handles(self, value):
         if value != self._show_handles:
@@ -160,8 +166,7 @@ class ResizableItem(logicitems.LogicItem):
             # update item
             self.set_input_count_and_pos(new_input_count, new_pos)
             # update handle position
-            self._handles['bottom'].setPos(self._handles['bottom'].pos() +
-                                           eff_pos_delta)
+            self._update_resize_tool_handles()
             # notify scene of change
             self.scene().selectedItemPosChanged.emit()
 

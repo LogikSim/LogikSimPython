@@ -32,7 +32,7 @@ class ResizeHandle(ItemBase):
 
         self.setFlag(QtGui.QGraphicsItem.ItemIgnoresTransformations)
         self.setAcceptHoverEvents(True)
-        self.setZValue(2)
+        self.setZValue(20)
 
         # shape definition
         width = 6

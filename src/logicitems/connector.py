@@ -57,11 +57,11 @@ class ConnectorItem(StateLineItem):
         con_items = set()
         if self.scene() is not None:
             for item in self.scene().items(self.endPoint()):
-                if item is not self and isinstance(item, ItemBase) and \
-                        not item.is_temporary():
+                if item is not self:
                     if isinstance(item, LineTree):
                         con_items.add(item)
-                    elif isinstance(item, ConnectorItem):
+                    elif isinstance(item, ConnectorItem) and \
+                            self.endPoint() == item.endPoint():
                         assert item.parentItem() is not None
                         con_items.add(item.parentItem())
         return con_items

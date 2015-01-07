@@ -94,6 +94,8 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         self._in_metadata_update = False
         # is item creating undo actions
         self._item_creates_undo_actions = True
+        # additional items to notify surrounding change when scene is changing
+        self._additional_notify_items = None
 
         self.update_frontend(metadata)
 
@@ -271,12 +273,14 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         self.register_change_during_inactivity()
 
     def itemChange(self, change, value):
+        if change is QtGui.QGraphicsItem.ItemSceneChange:
+            self._additional_notify_items = self.items_at_connections()
         # re-register on scene change and notify surrounding
-        if change is QtGui.QGraphicsItem.ItemSceneHasChanged:
+        elif change is QtGui.QGraphicsItem.ItemSceneHasChanged:
             self._unregister()
             self._register()
-            if value is not None:
-                self.notify_surrounding()
+            self.notify_surrounding(self._additional_notify_items)
+            self._additional_notify_items = None
         # Register, unregister and notify surrounding on temporary state change
         elif change is ItemBase.ItemTemporaryHasChanged:
             if value:
@@ -325,25 +329,40 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         mouseMoveEvent = super().mouseMoveEvent
         self._pos_change_helper(lambda: mouseMoveEvent(event), True)
 
-    def _pos_change_helper(self, function, notify_surrounding):
+    def _pos_change_helper(self, update_pos_function, notify_surrounding):
         """
         Changes position with given function and notifies surrounding.
 
         :param function: function to do position change
         :param notify_surrounding: If True, surrounding is notified.
         """
+        old_pos = self.pos()
+        self._change_and_notify_surrounding(
+            update_pos_function,
+            lambda: self.pos() != old_pos,
+            notify_surrounding)
+
+    def _change_and_notify_surrounding(
+            self, change_function, condition_function, notify_surrounding):
+        """
+        Applies changes and notifies the surrounding if condition is True.
+        
+        :param change_function: function called to apply changes
+        :param condition_function: if condition is fulfilled after 
+            applying the changes the surrounding is notified
+        :param notify_surrounding: if this parameter is False,
+            no notifications are made.
+        """
         if notify_surrounding:
-            # store old position and surrounding
+            # store old surrounding
             assert self.scene() is None or \
                 len(self.scene().selectedItems()) <= 1
             chanded_items_set = self.items_at_connections()
-            old_pos = self.pos()
         # change position
-        function()
-        if notify_surrounding:
-            # notify items that surrounding has changed
-            if self.pos() != old_pos:
-                self.notify_surrounding(chanded_items_set)
+        change_function()
+        # notify items that surrounding has changed
+        if notify_surrounding and condition_function():
+            self.notify_surrounding(chanded_items_set)
 
     def notify_surrounding(self, addition_items=None):
         """

@@ -26,7 +26,7 @@ class MoveAction(StateAction):
         super().__init__("moved item", group_id, item, old_pos, new_pos)
 
     def redo_item_state(self, item, pos):
-        item.setPos(pos)
+        item.setPos(pos, notify_surrounding=True)
 
     def undo_item_state(self, item, pos):
-        item.setPos(pos)
+        item.setPos(pos, notify_surrounding=True)
