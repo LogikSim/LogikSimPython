@@ -60,10 +60,19 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
     def connect_all_outputs(self):
         """Overrides connect_all_outputs."""
         for con_item in self._outputs:
-            for item in self.scene().items(con_item.endPoint()):
-                if isinstance(item, LineTree) or \
-                        (isinstance(item, ConnectorItem) and item.is_input()):
+            items = self.scene().items(con_item.endPoint())
+            found = False
+            # first try to connect to line-trees
+            for item in items:
+                if isinstance(item, LineTree):
                     con_item.connect(item)
+                    found = True
+                    break
+            # if not found look for inputs
+            if not found:
+                for item in items:
+                    if isinstance(item, ConnectorItem) and item.is_input():
+                        con_item.connect(item)
 
     def _invalidate_bounding_rect(self):
         self.prepareGeometryChange()
