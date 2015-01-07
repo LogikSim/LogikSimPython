@@ -127,6 +127,8 @@ class ItemRegistry(QtCore.QObject):
 
         :param item: Item to register
         """
+        if self._items.get(item.id()) is item:
+            return
         assert item.id() not in self._items
         self._items[item.id()] = item
 

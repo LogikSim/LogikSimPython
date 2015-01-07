@@ -178,6 +178,7 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         scene = self.scene()
         if scene is not None and not self.is_temporary():
             self.itemChange(InsertableItem.ItemRegistrationChange, True)
+            scene.registry().instantiated_frontend_item(self)
             scene.interface().create_element(
                 guid=self.GUID(),
                 parent=None,
