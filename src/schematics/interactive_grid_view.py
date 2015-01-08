@@ -87,8 +87,19 @@ class InteractiveGridView(grid_view.GridView):
             self._mouse_mid_last_pos = self.mapToScene(event.pos())
             self.setCursor(QtCore.Qt.ClosedHandCursor)
 
+    def _reset_cursor(self):
+        # Currently when clicking on an iterm that sets a cursor,
+        # the view sets its originalCursor to OpenHand and restores it
+        # when the cursor is not over any item. This results in
+        # an OpenHand cursor that is unwanted. Our HACK: we unset
+        # the cursor, whenever it is OpenHand.
+        # TODO: find better workaround
+        if self.viewport().cursor().shape() == QtCore.Qt.OpenHandCursor:
+            self.viewport().unsetCursor()
+
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
+        self._reset_cursor()
 
         # mid mouse pressed -> drag grid
         if event.buttons() & QtCore.Qt.MidButton or \
@@ -104,6 +115,7 @@ class InteractiveGridView(grid_view.GridView):
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
+        self._reset_cursor()
 
         if event.button() is QtCore.Qt.MidButton or \
                 event.button() is QtCore.Qt.MiddleButton:
@@ -245,7 +257,14 @@ class InteractiveGridView(grid_view.GridView):
         clipboard = QtGui.QApplication.clipboard()
 
         sel_items = self.scene().selectedItems()
-        data = {'items': [item.metadata() for item in sel_items]}
+        # TODO: Use updated metadata
+        data = {'items': []}
+        for item in sel_items:
+            metadata = item.metadata()
+            metadata['x'] = item.x()  # TODO: hack, use updated metadata
+            metadata['y'] = item.y()  # TODO: hack, use updated metadata
+            data['items'].append(item.metadata())
+
         # TODO: use mime type 'application/x-components'
         # TODO: store mime type in variable
         clipboard.setText(json.dumps(data))
