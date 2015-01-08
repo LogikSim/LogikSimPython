@@ -13,6 +13,7 @@ from PySide import QtGui, QtCore
 
 from .itembase import ItemBase
 from .connectable_item import ConnectableItem
+from .insertable_item import InsertableItem
 
 
 class SelectionItem(ItemBase):
@@ -90,7 +91,12 @@ class SelectionItem(ItemBase):
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
-        event.accept()
+        # allow deselection of InsertableItems
+        if (event.modifiers() & QtCore.Qt.ControlModifier):
+            items = [item for item in self.scene().items(event.scenePos())
+                     if isinstance(item, InsertableItem)]
+            if len(items) > 0:
+                event.ignore()
 
     def hoverMoveEvent(self, event):
         super().hoverMoveEvent(event)
