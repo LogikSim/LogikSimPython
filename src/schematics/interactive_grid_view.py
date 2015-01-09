@@ -54,12 +54,12 @@ class InteractiveGridView(grid_view.GridView):
         # TODO: zoom with STRG and add modifier to scroll horizontally
 
         if event.orientation() is QtCore.Qt.Horizontal or \
-                event.modifiers() != QtCore.Qt.NoModifier:
+                event.modifiers() == QtCore.Qt.NoModifier or \
+                event.modifiers() & QtCore.Qt.ShiftModifier != 0:
             # scroll
             fake_evt = QtGui.QWheelEvent(
                 event.pos(), event.globalPos(), event.delta(), event.buttons(),
-                event.modifiers() & ~(QtCore.Qt.ControlModifier),
-                event.orientation())
+                event.modifiers(), event.orientation())
             QtGui.QAbstractScrollArea.wheelEvent(self, fake_evt)
         else:
             # scale
@@ -91,8 +91,8 @@ class InteractiveGridView(grid_view.GridView):
         # Currently when clicking on an iterm that sets a cursor,
         # the view sets its originalCursor to OpenHand and restores it
         # when the cursor is not over any item. This results in
-        # an OpenHand cursor that is unwanted. Our HACK: we unset
-        # the cursor, whenever it is OpenHand.
+        # an OpenHand cursor that is unwanted.
+        # HACK: we unset the cursor, whenever it is OpenHand.
         # TODO: find better workaround
         if self.viewport().cursor().shape() == QtCore.Qt.OpenHandCursor:
             self.viewport().unsetCursor()
