@@ -47,7 +47,8 @@ class Controller(ComponentRoot):
         # listed in self._properties as property name, member variable.
         # Use a property to do write-only or complex setters.
         self._properties = {'rate': '_simulation_rate',
-                            'clock': '_readonly_prop_clock'}
+                            'clock': '_readonly_prop_clock',
+                            'retired_events': '_readonly_prop_retired_events'}
 
         self._message_handlers = {
             'set-simulation-properties': self._on_set_simu_properties,
@@ -69,6 +70,10 @@ class Controller(ComponentRoot):
     @property
     def _readonly_prop_clock(self):
         return self.get_core().clock
+
+    @property
+    def _readonly_prop_retired_events(self):
+        return self.get_core().retired_events
 
     def get_interface(self):
         return Interface(self._channel_in)
