@@ -100,18 +100,6 @@ class SimpleElement(Element):
     def _in_con_to_data(cls, connections):
         return [((e.id() if e else None), c) for e, c in connections]
 
-    def reset(self, when):
-        """
-        Emulates an input reset resulting in edge events for every output.
-        :return: Edge events for every output.
-        """
-        future_output = self.logic_function(self.input_states)
-
-        return [OutEdge(when + self.delay,
-                        self,
-                        output,
-                        state) for output, state in enumerate(future_output)]
-
     def __str__(self):
         return "{0}({1})={2}".format(self.__class__.__name__,
                                      ','.join([str(i) for i in

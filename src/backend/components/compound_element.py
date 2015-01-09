@@ -52,18 +52,6 @@ class InputOutputBankInstance(Element):
         # FIXME: Implement this
         return True
 
-    def reset(self, when):
-        """
-        Emulates an input reset resulting in edge events for every output.
-        Triggers reset
-        :return: Edge events for every output.
-        """
-        events = []
-        for element in set([e for (e, _) in self.mapping.values()]):
-            events.extend(element.reset())
-
-        return events
-
     def edge(self, input_port, state):
         """
         Handles a rising or falling edge and maps it to the corresponding
@@ -129,15 +117,6 @@ class CompoundElementInstance(Element):
     def __str__(self):
         return "CompoundElement(name={0})"\
             .format(self.get_metadata_field("name"))
-
-    def reset(self, when):
-        """
-        Emulates an input reset resulting in edge events for every output.
-        :return: Edge events for every output.
-        """
-        # FIXME: Do we want this to propagate the signal? Probably should not
-
-        return self.input_bank.reset(when) + self.output_bank.reset(when)
 
     def edge(self, input_port, state):
         """

@@ -80,14 +80,6 @@ class Element(ComponentInstance):
         pass
 
     @abstractmethod
-    def reset(self, when):
-        """
-        Emulates an input reset resulting in edge events for every output.
-        :return: Edge events for every output.
-        """
-        pass
-
-    @abstractmethod
     def connect(self, element, output_port=0, input_port=0, delay=0):
         """
         Connects an element output to another elements input.
