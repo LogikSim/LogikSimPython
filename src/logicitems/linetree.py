@@ -517,8 +517,76 @@ class LineTree(ConnectableItem, StateLineItem):
         self._set_tree(simplified_tree)
 
     def is_edge(self, scene_point):
-        """ Is there an edge at scene_point given as QPointF """
+        """Return True, if there is an edge at given scene QPointF """
         return self.mapFromScene(scene_point).toTuple() in self._edges
+
+    def is_non_mergeable_edge_on_line(self, scene_line):
+        """
+        Returns True, if there is a non-mergeable edge on given line.
+
+        If no edge is on the line, True is returned.
+
+        If the start or end of the line is part of the tree, it
+        checks if it is possible to merge the line with the tree.
+        In that case, if edges are on the line, loops might be introduced.
+        Such edges are non-mergeable edges. While mergeable edges do not
+        introduce loops.
+
+        Examples: (line is from A to B, while t-z are edges of the tree)
+
+        In this case y is a mergeable edge.
+            x---------A------y      B
+
+        Here u is a mergeable edge and y is a non-mergeable edge
+            t---------A---u    y--B--z
+                          |    |
+                          v----x
+
+        Here x and y are non-mergeable edges
+            A     x------y     B
+
+        :param scene_line: QLineF in scene coordinates
+        """
+        line = QLineF(self.mapFromScene(scene_line.p1()),
+                      self.mapFromScene(scene_line.p2()))
+        line_rect = self._line_to_col_rect(line)
+
+        endpoint = None
+        for line_point in line.p1(), line.p2():
+            if self.contains(line_point):
+                endpoint = line_point
+
+        for edge in self._edges:
+            if line_rect.contains(*edge):
+                if endpoint is None:
+                    return True
+                endpoint_line = QLineF(endpoint, QPointF(*edge))
+                if not self.contains_local_line(endpoint_line):
+                    return True
+        return False
+
+    def contains_local_line(self, line):
+        """
+        Returns true if QLineF is fully contained by this line tree.
+
+        :param line: QLineF in scene coordinates
+        """
+        radius = self.collision_margin / 2
+        l_bounding_rect = self._line_to_col_rect(line, radius)
+        return self._shape.contains(l_bounding_rect)
+
+    # TODO: delete and rename contains_local_line
+    def contains_line(self, scene_line):
+        """
+        Returns true if QLineF is fully contained by this line tree.
+
+        :param line: QLineF in scene coordinates
+        """
+        line = QLineF(self.mapFromScene(scene_line.p1()),
+                      self.mapFromScene(scene_line.p2()))
+        radius = self.collision_margin / 2
+        l_bounding_rect = self._line_to_col_rect(line, radius)
+        return self._shape.contains(l_bounding_rect)
 
     def _get_nearest_point_of_line(self, scene_point, line):
         """
@@ -555,18 +623,6 @@ class LineTree(ConnectableItem, StateLineItem):
                      (scene_point - p_nearest).manhattanLength()):
                 p_nearest = p
         return p_nearest
-
-    def contains_line(self, scene_line):
-        """
-        Returns true if QLineF is fully contained by this line tree.
-
-        :param line: QLineF in scene coordinates
-        """
-        line = QLineF(self.mapFromScene(scene_line.p1()),
-                      self.mapFromScene(scene_line.p2()))
-        radius = self.collision_margin / 2
-        l_bounding_rect = self._line_to_col_rect(line, radius)
-        return self._shape.contains(l_bounding_rect)
 
     def boundingRect(self):
         return self._rect

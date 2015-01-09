@@ -57,7 +57,7 @@ class ItemBase(QtGui.QGraphicsItem):
     class ItemTemporaryHasChanged:
         """
         ItemBase.itemChange() notification
-        
+
         The item temporary state has changed.
         """
 
@@ -88,16 +88,20 @@ class ItemBase(QtGui.QGraphicsItem):
         """
         return self.scene() is not None and self.scene().is_inactive()
 
-    def _line_to_col_rect(self, line, radius=None):
+    # TODO: remove underscore of name
+    @classmethod
+    def _line_to_col_rect(cls, line, radius=None):
         """
         Converts QLineF to its collision area.
 
         :param radius: Collision radius of the line, using collision margin
             as default value.
         """
-        return self._to_col_rect(QtCore.QRectF(line.p1(), line.p2()), radius)
+        return cls._to_col_rect(QtCore.QRectF(line.p1(), line.p2()), radius)
 
-    def _to_col_rect(self, rect, radius=None):
+    # TODO: remove underscore of name
+    @classmethod
+    def _to_col_rect(cls, rect, radius=None):
         """
         Converts QRectF to its collision area.
 
@@ -105,7 +109,7 @@ class ItemBase(QtGui.QGraphicsItem):
             as default value.
         """
         if radius is None:
-            radius = self.collision_margin
+            radius = cls.collision_margin
         return rect.normalized().adjusted(-radius, -radius, radius, radius)
 
     def itemChange(self, change, value):

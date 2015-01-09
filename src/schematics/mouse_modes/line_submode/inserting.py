@@ -199,6 +199,34 @@ class LineRouteBetweenPoints:
 
         return endpoint_trees
 
+    def _direct_route(self, get_obj_at_point, vertical_first):
+        """
+        Return direct route between given points.
+
+        :raises RouteNotFoundException: when no route can be found.
+        """
+        res = [self.p_start]
+
+        def add_segment(start, end):
+            if get_obj_at_point.line((start, end)) in \
+                    (None, hightower.PassableLine):
+                if res[-1] != end:
+                    res.append(end)
+                return True
+            else:
+                return False
+
+        if vertical_first:
+            p_mid = (self.p_start[0], self.p_end[1])
+        else:
+            p_mid = (self.p_end[0], self.p_start[1])
+
+        if not add_segment(self.p_start, p_mid):
+            return
+        if not add_segment(p_mid, self.p_end):
+            return
+        return res
+
     def route(self):
         """
         Try to find route between given points.
@@ -210,19 +238,27 @@ class LineRouteBetweenPoints:
         endpoint_trees = self._get_endpoint_trees()
         get_obj_at_point = GetHightowerObjectAtPoint(
             self.scene, self.p_start, self.p_end, endpoint_trees)
-        # We only want to search for a limited amount of time
-        time_limited_get_obj_at_point = time_limited(
-            get_obj_at_point, self.max_line_search_time)
-        search_rect = self._get_search_rect()
 
-        try:
-            res = hightower.hightower_line_search(
-                self.p_start, self.p_end, time_limited_get_obj_at_point,
-                search_rect, do_second_refinement=False)
-        except TimeReached:
-            raise RouteNotFoundException()
+        # first try to find direct route
+        res = self._direct_route(get_obj_at_point, vertical_first=True)
+        if res is None and self.p_start[0] != self.p_end[0] and \
+                self.p_start[1] != self.p_end[1]:
+            res = self._direct_route(get_obj_at_point, vertical_first=False)
+
         if res is None:
-            raise RouteNotFoundException()
+            # We only want to search for a limited amount of time
+            time_limited_get_obj_at_point = time_limited(
+                get_obj_at_point, self.max_line_search_time)
+            search_rect = self._get_search_rect()
+
+            try:
+                res = hightower.hightower_line_search(
+                    self.p_start, self.p_end, time_limited_get_obj_at_point,
+                    search_rect, do_second_refinement=False)
+            except TimeReached:
+                raise RouteNotFoundException()
+            if res is None:
+                raise RouteNotFoundException()
 
         # remove parts of the path that are already part of
         #     adjacent line trees of the end points
@@ -398,7 +434,7 @@ class GetHightowerObjectAtPoint:
         Must not have cycles, so we have to consider existing line-trees.
         Otherwise it can happen that the found path overlapping the edges
         of the endpoint trees. Furthermore we don't want to categorically
-        exclude them for router, since routing over an edge from A to B:
+        exclude them, since routing over an edge from A to B:
         (<------A------>     B)  would not be possible in this simple case.
         That is why we ignore the lines and first edges
 
@@ -418,6 +454,7 @@ class GetHightowerObjectAtPoint:
     def __call__(self, point):
         """
         Returns which kind of hightower object can be found at the given point.
+
         Meant to be used while inserting a line.
 
         :param point: Point to check in grid coordinates as tuple (int, int).
@@ -442,6 +479,48 @@ class GetHightowerObjectAtPoint:
                 if self._is_start_of_linetree(point, item):
                     continue
                 if item.is_edge(scene_point):
+                    found_line_edge = True
+                else:
+                    found_passable_line = True
+                continue
+
+            return hightower.Solid
+
+        if found_line_edge:
+            return hightower.LineEdge
+        elif found_passable_line:
+            return hightower.PassableLine
+
+        return None
+
+    def line(self, line):
+        """
+        Returns which kind of hightower object can be found for the given line.
+
+        Meant to be used while inserting a line.
+
+        :param line: Line to check in grid coordinates as tuple
+            ((int, int), (int, int)).
+        :return: hightower object found.
+        """
+
+        scene_line = QtCore.QLineF(*map(self.scene.to_scene_point, line))
+        scene_line_rect = logicitems.ItemBase._line_to_col_rect(scene_line)
+        items = self.scene.items(scene_line_rect)
+        found_passable_line = False
+        found_line_edge = False
+
+        for item in items:
+            if isinstance(item, logicitems.LineAnchorIndicator):
+                continue
+            if isinstance(item, logicitems.LineEdgeIndicator):
+                continue
+            elif isinstance(item, logicitems.ConnectorItem) and \
+                    self.scene.to_grid(item.endPoint()) in \
+                    (self.p_start, self.p_end):
+                continue
+            elif isinstance(item, logicitems.LineTree):
+                if item.is_non_mergeable_edge_on_line(scene_line):
                     found_line_edge = True
                 else:
                     found_passable_line = True
