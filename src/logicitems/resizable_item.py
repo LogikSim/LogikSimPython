@@ -12,11 +12,12 @@ Resizable logic item with variable number of inputs.
 from PySide import QtGui, QtCore
 
 import logicitems
+from .logicitem import LogicItem
 from actions.resize_action import ResizeAction
 from .insertable_item import disabled_undo
 
 
-class ResizableItem(logicitems.LogicItem):
+class ResizableItem(LogicItem):
     # item overlap above first and below last input connector in
     # in grid gap fraction
     _overlap = 0.37
@@ -191,7 +192,9 @@ class ResizableItem(logicitems.LogicItem):
             rect = rect.united(con.boundingRect())
         return rect
 
-    def paint(self, painter, options, widget):
+    def paint(self, painter, option, widget):
         painter.setBrush(QtGui.QColor(255, 255, 128))
         painter.setPen(QtCore.Qt.black)
         painter.drawRect(self._body_rect)
+
+        super().paint(painter, option, widget)

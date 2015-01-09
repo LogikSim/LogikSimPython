@@ -14,6 +14,7 @@ from PySide import QtGui, QtCore
 from .connectable_item import ConnectableItem
 from .linetree import LineTree
 from .connector import ConnectorItem
+from .insertable_item import InsertableItem
 
 
 class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
@@ -27,6 +28,10 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
         # stores bounding rect
         self._bounding_rect_valid = False
         self._bounding_rect = None
+
+        # store shape
+        self._shape_valid = False
+        self._shape = None
 
         # store inputs and outputs connectors
         self._inputs = []
@@ -82,13 +87,32 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
         """ bounding rect of LogicItem without considering children """
         raise NotImplementedError
 
+    def calculate_is_position_valid(self):
+        """Override calculate_is_position_valid"""
+        if self.scene() is None:
+            return False
+        # check own shape
+        for item in self.scene().items(self.mapToScene(self.shape())):
+            if isinstance(item, InsertableItem) and item is not self and \
+                    item.is_position_valid():
+                return False
+            elif isinstance(item, ConnectorItem) and \
+                    item.parentItem() is not self and \
+                    item.is_position_valid():
+                return False
+        # check connectors
+        for con_item in self._inputs + self._outputs:
+            if not con_item.calculate_is_position_valid():
+                return False
+        return True
+
     def selectionRect(self):
         """
         Implements selectionRect
 
         By default returns own combined with child bounding rects.
         """
-        return self.boundingRect().united(self.childrenBoundingRect())
+        return self.boundingRect()
 
     def itemChange(self, change, value):
         # invalidate bounding rect when child added or removed
@@ -103,6 +127,20 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
 
     def boundingRect(self):
         if not self._bounding_rect_valid:
-            self._bounding_rect = self.ownBoundingRect()
+            self._bounding_rect = self.ownBoundingRect().united(
+                self.childrenBoundingRect())
             self._bounding_rect_valid = True
         return self._bounding_rect
+
+    def shape(self):
+        if not self._shape_valid:
+            self._shape = QtGui.QPainterPath()
+            self._shape.addRect(self.ownBoundingRect())
+            self._shape_valid = True
+        return self._shape
+
+    def paint(self, painter, option, widget):
+        if not self.is_position_valid():
+            painter.setPen(self._position_invalid_color_line)
+            painter.setBrush(self._position_invalid_color_fill)
+            painter.drawRect(self.selectionRect())

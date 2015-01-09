@@ -59,6 +59,11 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
     They also support undo action creation.
     """
 
+    _position_invalid_color_line = QtGui.QColor(255, 0, 0, 0)
+    _position_invalid_color_fill = QtGui.QColor(255, 0, 0, 150)
+    _position_invalid_opacity = 0.6
+    _position_invalid_zvalue_increase = 5
+
     class ItemRegistrationChange:
         """
         InsertableItem.itemChange() notification
@@ -73,6 +78,13 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         The item has been registered / unregistered in the backend
         """
 
+    class ItemPositionValidHasChanged:
+        """
+        InsertableItem.itemChange() notification
+
+        The item position has become valid / invalid.
+        """
+
     def __init__(self, parent, metadata):
         super().__init__(parent)
         metadata.setdefault('x', 0)
@@ -84,6 +96,7 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
         self.setFlag(QtGui.QGraphicsItem.ItemSendsGeometryChanges)
         self.setAcceptHoverEvents(True)
+        self.setZValue(self.default_zvalue())
 
         self._cached_metadata = {}
         self._registered_scene = None
@@ -96,8 +109,33 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         self._item_creates_undo_actions = True
         # additional items to notify surrounding change when scene is changing
         self._additional_notify_items = None
+        # true if position is valid
+        self._is_position_valid = False
 
         self.update_frontend(metadata)
+
+    def default_zvalue(self):
+        """Return default z-value for this component."""
+        return 0
+
+    def calculate_is_position_valid(self):
+        """Calculate if the current position is valid and return result"""
+        raise NotImplementedError
+
+    def _invalidate_position_is_valid(self):
+        """Invalidate and recompute position valid state."""
+        is_valid = self.calculate_is_position_valid()
+        if is_valid != self._is_position_valid:
+            self._is_position_valid = is_valid
+            self.setOpacity(1 if is_valid else self._position_invalid_opacity)
+            self.setZValue(self.default_zvalue() + (0 if is_valid else
+                           self._position_invalid_zvalue_increase))
+            self.itemChange(InsertableItem.ItemPositionValidHasChanged,
+                            is_valid)
+
+    def is_position_valid(self):
+        """Returns True, if position is valid."""
+        return self._is_position_valid
 
     def register_change_during_inactivity(self):
         """Call this function on all changes during inactivity"""
@@ -273,15 +311,22 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         # notify change
         self.register_change_during_inactivity()
 
+        # update position valid
+        self._invalidate_position_is_valid()
+
     def itemChange(self, change, value):
         if change is QtGui.QGraphicsItem.ItemSceneChange:
             self._additional_notify_items = self.items_at_connections()
-        # re-register on scene change and notify surrounding
+        # on scene change
         elif change is QtGui.QGraphicsItem.ItemSceneHasChanged:
+            # re-register
             self._unregister()
             self._register()
+            # notify surrounding
             self.notify_surrounding(self._additional_notify_items)
             self._additional_notify_items = None
+            # update position valid state
+            self._invalidate_position_is_valid()
         # Register, unregister and notify surrounding on temporary state change
         elif change is ItemBase.ItemTemporaryHasChanged:
             if value:
@@ -309,6 +354,9 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             # only movable when selected
             elif change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
                 self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, value)
+            # update surroudning when position valid changed
+            elif change == InsertableItem.ItemPositionValidHasChanged:
+                self.notify_surrounding()
 
         return super().itemChange(change, value)
 

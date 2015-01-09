@@ -5,6 +5,7 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
+from .insertable_item import InsertableItem
 '''
 Connectors of Logic Items where lines be attached.
 '''
@@ -159,6 +160,21 @@ class ConnectorItem(StateLineItem):
             return self.parentItem() is not None and \
                 self.parentItem().is_connected(self.is_input(), self.port())
 
+    def calculate_is_position_valid(self):
+        """Calculate if the current position is valid and return result"""
+        # check shape
+        for item in self.scene().items(self.mapToScene(self.boundingRect())):
+            if isinstance(item, InsertableItem) and \
+                    item is not self.parentItem() and \
+                    item.is_position_valid():
+                return False
+        return True
+
+    def is_position_valid(self):
+        if self.parentItem() is None:
+            return False
+        return self.parentItem().is_position_valid()
+
     def anchorPoint(self):
         """Returns where AnchorItems should be drawn at."""
         return self.mapToScene(self._anchor)
@@ -181,7 +197,8 @@ class ConnectorItem(StateLineItem):
         :return: iterator with items of (QLineF, state)
         """
         start = self._start
-        if self.animate_lines():
+        if self.animate_lines() or \
+                (self.is_inactive() and not self.is_position_valid()):
             drawing_end = self._end
         else:
             drawing_end = self._anchor

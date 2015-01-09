@@ -56,8 +56,6 @@ class LineTree(ConnectableItem, StateLineItem):
 
         super().__init__(parent, metadata)
 
-        self.setZValue(1)
-
     @classmethod
     def metadata_from_path(cls, path):
         """
@@ -83,6 +81,9 @@ class LineTree(ConnectableItem, StateLineItem):
     def selectionRect(self):
         delta = self.scene().get_grid_spacing() / 3
         return self._rect.adjusted(-delta, -delta, delta, delta)
+
+    def default_zvalue(self):
+        return 1
 
     def apply_update_frontend(self, metadata):
         super().apply_update_frontend(metadata)
@@ -626,6 +627,11 @@ class LineTree(ConnectableItem, StateLineItem):
                 p_nearest = p
         return p_nearest
 
+    def calculate_is_position_valid(self):
+        if self.scene() is None:
+            return False
+        return True
+
     def boundingRect(self):
         return self._rect
 
@@ -664,7 +670,7 @@ class LineTree(ConnectableItem, StateLineItem):
             return longest_delay
         return iter_segment(self._tree)
 
-    def paint(self, painter, option, widget=None):
+    def paint(self, painter, option, widget):
         super().paint(painter, option, widget)
 
         # debugging

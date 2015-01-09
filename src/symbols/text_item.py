@@ -27,6 +27,7 @@ class TextItem(ResizableItem):
         font = painter.font()
         font.setPointSizeF(self.scene().get_grid_spacing() * 0.8)
         painter.setFont(font)
+        painter.setPen(QtCore.Qt.black)
         painter.drawText(self.boundingRect(), QtCore.Qt.AlignCenter, label)
 
     @classmethod
