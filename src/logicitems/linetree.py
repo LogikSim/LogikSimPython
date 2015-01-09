@@ -178,8 +178,9 @@ class LineTree(ConnectableItem, StateLineItem):
                                  self.scene().items(scene_point)
                                  if isinstance(item, ConnectorItem) and
                                  item.endPoint() == scene_point]
-                    if len(con_items) != 0 and \
-                            len(children) >= (2 if root else 1):
+                    if len(con_items) >= 1 and \
+                            len(children) >= (2 if root else 1) or \
+                            len(con_items) >= 2:
                         yield LineEdgeIndicator(self, QPointF(*point))
                 yield from iter_edge_indicators_at_edges(children, False)
 
