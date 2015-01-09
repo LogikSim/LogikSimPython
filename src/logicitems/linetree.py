@@ -537,8 +537,9 @@ class LineTree(ConnectableItem, StateLineItem):
         In this case y is a mergeable edge.
             x---------A------y      B
 
-        Here u is a mergeable edge and y is a non-mergeable edge
-            t---------A---u    y--B--z
+        Here u is a mergeable edge, while y and z are non-mergeable edges,
+        as they would introduce a loop.
+            t---------A---u    y-----z  B
                           |    |
                           v----x
 
