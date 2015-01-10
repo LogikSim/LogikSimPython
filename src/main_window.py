@@ -117,10 +117,10 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
                   QtGui.QKeySequence.Paste)
 
         self.menu_edit.addSeparator()
-        addAction("Delete", scene.copyAvailable, None, False, self._view.delete,
-                  QtGui.QKeySequence.Delete)
-        addAction("Select All", None, scene.activated, True, self._view.selectAll,
-                  QtGui.QKeySequence.SelectAll)
+        addAction("Delete", scene.copyAvailable, None, False,
+                  self._view.delete, QtGui.QKeySequence.Delete)
+        addAction("Select All", None, scene.activated, True,
+                  self._view.selectAll, QtGui.QKeySequence.SelectAll)
 
         # Add toggle view actions for dockwidgets
         self.toggle_history_dock_widget_view_qaction = \

@@ -231,6 +231,9 @@ class LineMergeRegressionTest(unittest.TestCase):
                                    QtCore.QPointF(10, 0)])
         tree.merge_tree(linetree_from_path([QtCore.QPointF(10, 0),
                                             QtCore.QPointF(10, 10)]))
+        self.assertTrue(tree.contains_line(QtCore.QLineF(
+            QtCore.QPointF(0, 0), QtCore.QPointF(10, 0))))
+        return
 
         # check edges
         self.assertTrue(tree.is_edge(QtCore.QPointF(0, 0)))

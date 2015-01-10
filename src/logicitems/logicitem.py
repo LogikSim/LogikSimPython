@@ -101,7 +101,7 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
             elif isinstance(item, ConnectorItem) and \
                     item.parentItem() is not self:
                 return False
-        # check connectors
+        # check if all connectors have valid position
         for con_item in self._inputs + self._outputs:
             if not con_item.calculate_is_position_valid():
                 return False

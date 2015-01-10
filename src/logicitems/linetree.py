@@ -25,7 +25,11 @@ class LineTree(ConnectableItem, StateLineItem):
     """ A tree of connected lines """
 
     _debug_painting = False
-    _line_collision_radius_grid = 0.45  # in grid spacing
+
+    # collision radius of the line-tree in grid spacing
+    # (make sure this is fully representable as double, otherwise we get
+    # rounding errors, check with (number).hex() that not all digits are taken)
+    _line_collision_radius_grid = 0.453125
 
     def __init__(self, parent, metadata):
         """
@@ -217,8 +221,8 @@ class LineTree(ConnectableItem, StateLineItem):
         bounding_rect = QtCore.QRectF(0, 0, 0, 0)
         poly = QtGui.QPolygonF()
         for line in self._lines:
-            l_bounding_rect = self._line_to_col_rect(line,
-                self._line_collision_radius())
+            l_bounding_rect = self._line_to_col_rect(
+                line, self._line_collision_radius())
             bounding_rect = bounding_rect.united(l_bounding_rect)
             poly = poly.united(QtGui.QPolygonF(l_bounding_rect))
 
@@ -230,8 +234,10 @@ class LineTree(ConnectableItem, StateLineItem):
     def _line_collision_radius(self):
         """Returns line collision radius in scene coordinates or None."""
         if self.scene() is not None:
-            return self._line_collision_radius_grid * \
-                self.scene().get_grid_spacing()
+            grid = self.scene().get_grid_spacing()
+        else:
+            grid = 1
+        return self._line_collision_radius_grid * grid
 
     def items_at_connections(self):
         """Overrides items_at_connections"""
