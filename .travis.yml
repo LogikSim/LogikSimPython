@@ -5,7 +5,7 @@ python:
 before_install:
     - "sudo apt-get update"
 install:
-    - "sudo apt-get install -y python3-pyside xvfb"
+    - pip install -U PySide
     - pip install coveralls pylama
 script:
     - pylama src/
