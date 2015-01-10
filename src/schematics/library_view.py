@@ -192,6 +192,10 @@ class ItemListScene(schematics.GridScene):
         self.setSceneRect(QtCore.QRectF(self._top_widget.pos(),
                                         self._top_widget.size()))
 
+        # update position valid
+        for item in self._items:
+            item._invalidate_position_is_valid()
+
         self._rebuild_tiles()
 
     def _rebuild_tiles(self):

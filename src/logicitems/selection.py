@@ -39,7 +39,8 @@ class SelectionItem(ItemBase):
         self._update_surrounding = QtCore.QTimer()
         self._update_surrounding.timeout.connect(self._do_update_surrounding)
         self._update_surrounding.setSingleShot(True)
-        self._surrounding_items = None  # set with items in surroudning
+        self._surrounding_con_items = None  # set with items in surrounding
+        self._surrounding_pos_items = None  # set with items in surrounding
         self._old_positions = None  # dict, key: item, value: position
 
     def _invalidate_state(self):
@@ -79,15 +80,25 @@ class SelectionItem(ItemBase):
         # has any position changed?
         if any(item.pos() != old_pos
                for item, old_pos in self._old_positions.items()):
-            surrounding_set = self._surrounding_items
-            for item in self.scene().selectedItems():
-                surrounding_set.update(item.items_at_connections())
-            # notify to items that surrounding has changed
-            for item in surrounding_set:
+            sel_items = self.scene().selectedItems()
+            # notify items that connectivity surrounding has changed
+            con_surrounding_set = self._surrounding_con_items
+            for item in sel_items:
+                con_surrounding_set.update(item.items_at_connections())
+            for item in con_surrounding_set:
                 item.itemChange(
                     ConnectableItem.ItemConnectableSurroundingHasChanged, True)
+            # notify items that position valid surrounding has changed
+            pos_surrounding_set = self._surrounding_pos_items
+            for item in sel_items:
+                pos_surrounding_set.update(item.items_at_position())
+            for item in list(sel_items) + \
+                    list(pos_surrounding_set.difference(sel_items)):
+                item.itemChange(
+                    ConnectableItem.ItemPosValidSurroundingHasChanged, True)
 
-        self._surrounding_items = None
+        self._surrounding_con_items = None
+        self._surrounding_pos_items = None
         self._old_positions = None
 
     def boundingRect(self):
@@ -113,12 +124,18 @@ class SelectionItem(ItemBase):
         """Moves items and creates surrounding changed notification."""
         self.setCursor(QtCore.Qt.SizeAllCursor)
 
+        # store old positions and surrounding
         if not self._update_surrounding.isActive():
-            # store old positions and surrounding
             sel_items = self.scene().selectedItems()
-            self._surrounding_items = set(sel_items)
+            # connectivity surrounding
+            self._surrounding_con_items = set(sel_items)
             for item in sel_items:
-                self._surrounding_items.update(item.items_at_connections())
+                self._surrounding_con_items.update(item.items_at_connections())
+            # position valid surrounding
+            self._surrounding_pos_items = set(sel_items)
+            for item in sel_items:
+                self._surrounding_pos_items.update(item.items_at_position())
+            # store positions
             self._old_positions = {item: item.pos() for item in sel_items}
             self._update_surrounding.start()
         # this moves all selected items

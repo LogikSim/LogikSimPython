@@ -85,6 +85,14 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         The item position has become valid / invalid.
         """
 
+    class ItemPosValidSurroundingHasChanged:
+        """
+        InsertableItem.itemChange() notification
+
+        Whenever the item gets this notification its position valid
+        state might change due to changes in its surrounding.
+        """
+
     def __init__(self, parent, metadata):
         super().__init__(parent)
         metadata.setdefault('x', 0)
@@ -108,7 +116,8 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         # is item creating undo actions
         self._item_creates_undo_actions = True
         # additional items to notify surrounding change when scene is changing
-        self._additional_notify_items = None
+        self._additional_notify_con_items = None
+        self._additional_notify_pos_items = None
         # true if position is valid
         self._is_position_valid = None
 
@@ -311,20 +320,20 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         # notify change
         self.register_change_during_inactivity()
 
-        # update position valid
-        self._invalidate_position_is_valid()
-
     def itemChange(self, change, value):
         if change is QtGui.QGraphicsItem.ItemSceneChange:
-            self._additional_notify_items = self.items_at_connections()
+            self._additional_notify_con_items = self.items_at_connections()
+            self._additional_notify_pos_items = self.items_at_position()
         # on scene change
         elif change is QtGui.QGraphicsItem.ItemSceneHasChanged:
             # re-register
             self._unregister()
             self._register()
             # notify surrounding
-            self.notify_surrounding(self._additional_notify_items)
-            self._additional_notify_items = None
+            self.notify_con_surrounding(self._additional_notify_con_items)
+            self._additional_notify_con_items = None
+            self.notify_valid_surrounding(self._additional_notify_pos_items)
+            self._additional_notify_pos_items = None
             # update position valid state
             self._invalidate_position_is_valid()
         # Register, unregister and notify surrounding on temporary state change
@@ -333,7 +342,8 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
                 self._unregister()
             else:
                 self._register()
-                self.notify_surrounding()
+                self.notify_con_surrounding()
+                self.notify_valid_surrounding()
 
         if self.scene() is not None:
             # round position to grid point
@@ -354,9 +364,11 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             # only movable when selected
             elif change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
                 self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, value)
-            # update surroudning when position valid changed
+            # update surrounding when position valid changed
             elif change == InsertableItem.ItemPositionValidHasChanged:
-                self.notify_surrounding()
+                self.notify_con_surrounding()
+            elif change == InsertableItem.ItemPosValidSurroundingHasChanged:
+                self._invalidate_position_is_valid()
 
         # QGraphicsItem only supports changes defined in Qt
         if isinstance(change, QtGui.QGraphicsItem.GraphicsItemChange):
@@ -379,6 +391,25 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         # move item and notify surrounding
         mouseMoveEvent = super().mouseMoveEvent
         self._pos_change_helper(lambda: mouseMoveEvent(event), True)
+
+    def items_at_position(self):
+        """
+        Return set of all items in the scene at items position.
+
+        This method is used to update position valid surrounding.
+        """
+        from .connector import ConnectorItem
+
+        res = set()
+        if self.scene() is None:
+            return res
+        for item in self.scene().items(self.mapToScene(self.boundingRect())):
+            if isinstance(item, InsertableItem) and item is not self:
+                res.add(item)
+            elif isinstance(item, ConnectorItem) and \
+                    item.parentItem() is not self:
+                res.add(item.parentItem())
+        return res
 
     def _pos_change_helper(self, update_pos_function, notify_surrounding):
         """
@@ -408,14 +439,16 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             # store old surrounding
             assert self.scene() is None or \
                 len(self.scene().selectedItems()) <= 1
-            chanded_items_set = self.items_at_connections()
+            chanded_con_items_set = self.items_at_connections()
+            changed_valid_item_set = self.items_at_position()
         # change position
         change_function()
         # notify items that surrounding has changed
         if notify_surrounding and condition_function():
-            self.notify_surrounding(chanded_items_set)
+            self.notify_con_surrounding(chanded_con_items_set)
+            self.notify_valid_surrounding(changed_valid_item_set)
 
-    def notify_surrounding(self, addition_items=None):
+    def notify_con_surrounding(self, addition_items=None):
         """
         Notify items that connectable surrounding has changed.
 
@@ -432,7 +465,25 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         chanded_items_set.add(self)
         for item in chanded_items_set:
             item.itemChange(
-                ConnectableItem.ItemConnectableSurroundingHasChanged, True)
+                ConnectableItem.ItemConnectableSurroundingHasChanged, None)
+
+    def notify_valid_surrounding(self, addition_items=None):
+        """
+        Notify items that position valid surrounding has changed.
+
+        By default only items at the current position are notified.
+
+        :param addition_items: further items to notify
+        """
+        from .connectable_item import ConnectableItem
+
+        chanded_items_set = set()
+        if addition_items is not None:
+            chanded_items_set.update(addition_items)
+        chanded_items_set.update(self.items_at_position())
+        for item in [self] + list(chanded_items_set.difference([self])):
+            item.itemChange(
+                ConnectableItem.ItemPosValidSurroundingHasChanged, None)
 
     def mouseReleaseEvent(self, event):
         """
