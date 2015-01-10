@@ -16,12 +16,11 @@ from .state_line_item import StateLineItem
 
 
 class ConnectorItem(StateLineItem):
-    def __init__(self, parent, start, anchor, end,
-                 is_input, port):
+    def __init__(self, start, anchor, end, is_input, port):
         """
         anchor is the position, at which lines can connect to
         """
-        super().__init__(parent)
+        super().__init__()
 
         self.setFlag(QtGui.QGraphicsItem.ItemStacksBehindParent)
 

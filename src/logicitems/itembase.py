@@ -112,7 +112,9 @@ class ItemBase(QtGui.QGraphicsItem):
             radius = cls.collision_margin
         return rect.normalized().adjusted(-radius, -radius, radius, radius)
 
-    def itemChange(self, change, value):
-        # QGraphicsItem only supports changes defined in Qt
-        if isinstance(change, QtGui.QGraphicsItem.GraphicsItemChange):
-            return super().itemChange(change, value)
+# TODO: overriding itemChange in PySide 1.2.2 breaks setParentItem, see:
+#           https://bugreports.qt.io/browse/PYSIDE-86
+#    def itemChange(self, change, value):
+#        # QGraphicsItem only supports changes defined in Qt
+#        if isinstance(change, QtGui.QGraphicsItem.GraphicsItemChange):
+#            return super().itemChange(change, value)

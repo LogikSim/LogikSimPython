@@ -358,7 +358,9 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
             elif change == InsertableItem.ItemPositionValidHasChanged:
                 self.notify_surrounding()
 
-        return super().itemChange(change, value)
+        # QGraphicsItem only supports changes defined in Qt
+        if isinstance(change, QtGui.QGraphicsItem.GraphicsItemChange):
+            return super().itemChange(change, value)
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)

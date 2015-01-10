@@ -100,27 +100,28 @@ class ResizableItem(LogicItem):
         # update connectors
         for con in self._inputs + self._outputs:
             con.setParentItem(None)
+            con.scene().removeItem(con)
         self._inputs = []
         self._outputs = []
         # inputs
         for i in range(self._input_count):
             con = logicitems.ConnectorItem(
-                parent=self,
                 start=QtCore.QPointF(0, scale * i),
                 anchor=QtCore.QPointF(-0.5 * scale, scale * i),
                 end=QtCore.QPointF(-scale, scale * i),
                 is_input=True,
                 port=i)
+            con.setParentItem(self)
             self._inputs.append(con)
         # output
         mid_point = int((self._input_count - 1) / 2)
         con = logicitems.ConnectorItem(
-            parent=self,
             start=QtCore.QPointF(2 * scale, scale * mid_point),
             anchor=QtCore.QPointF(2.5 * scale, scale * mid_point),
             end=QtCore.QPointF(3 * scale, scale * mid_point),
             is_input=False,
             port=0)
+        con.setParentItem(self)
         self._outputs.append(con)
 
         # setup delay based on #inputs
