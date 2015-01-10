@@ -225,6 +225,8 @@ class LineRouteBetweenPoints:
             return
         if not add_segment(p_mid, self.p_end):
             return
+        if len(res) == 1:
+            res.append(self.p_end)
         return res
 
     def route(self):
