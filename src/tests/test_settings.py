@@ -5,17 +5,19 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 
-import unittest
 from collections import defaultdict
 
 from PySide import QtCore, QtGui
 
+from tests import helpers
 from tests.mocks import SettingsMock
 import settings
 
 
-class SettingsTest(unittest.TestCase):
+class SettingsTest(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
+
         self.app = QtCore.QCoreApplication.instance()
         if not self.app:
             # FIXME: Want self.app = QtCore.QCoreApplication([]) but tearDown

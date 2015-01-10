@@ -4,14 +4,14 @@
 # Copyright 2011-2015 The LogikSim Authors. All rights reserved.
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
-import unittest
 
 from backend.components.interconnect import Interconnect
 from backend.element import Edge
 from tests.mocks import ElementRootMock
+from tests import helpers
 
 
-class InterconnectTest(unittest.TestCase):
+class InterconnectTest(helpers.CriticalTestCase):
     """
     Unit tests for interconnect
     """

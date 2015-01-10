@@ -6,8 +6,6 @@
 # be found in the LICENSE.txt file.
 #
 
-import unittest
-
 from PySide import QtCore, QtGui
 from PySide.QtTest import QTest
 
@@ -16,10 +14,13 @@ from settings import setup_settings
 from tests.mocks import SettingsMock
 from tests.helpers import delayed_perform_on_modal, try_repeatedly
 import logicitems
+from tests import helpers
 
 
-class MainWindowTest(unittest.TestCase):
+class MainWindowTest(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
+
         self.app = QtGui.QApplication.instance()
         if not self.app:
             self.app = QtGui.QApplication([])
@@ -31,6 +32,24 @@ class MainWindowTest(unittest.TestCase):
         self.mw.show()
 
         QTest.qWaitForWindowShown(self.mw)
+
+    def tearDown(self):
+        self.mw.close()
+
+        self.mw._view.scene()._core.quit()  # FIXME: Stupid workaround
+        self.mw._view.scene()._core_thread.join()
+        self.mw._view.scene()._registry._registry_handler.quit(True)
+
+        self.mw.library_view.scene()._core.quit()
+        self.mw.library_view.scene()._core_thread.join()
+        self.mw.library_view.scene()._registry._registry_handler.quit(True)
+
+        self.mw.deleteLater()
+
+        self.mw = None
+        self.app.processEvents()
+
+        super().tearDown()
 
     def test_hiding_history_widget_from_menu(self):
         """
@@ -218,19 +237,3 @@ class MainWindowTest(unittest.TestCase):
 
         try_repeatedly(is_main_window_active_yet)
         self.assertEqual(self.app.activeWindow(), self.mw)
-
-    def tearDown(self):
-        self.mw.close()
-
-        self.mw._view.scene()._core.quit()  # FIXME: Stupid workaround
-        self.mw._view.scene()._core_thread.join()
-        self.mw._view.scene()._registry._registry_handler.quit(True)
-
-        self.mw.library_view.scene()._core.quit()
-        self.mw.library_view.scene()._core_thread.join()
-        self.mw.library_view.scene()._registry._registry_handler.quit(True)
-
-        self.mw.deleteLater()
-
-        self.mw = None
-        self.app.processEvents()

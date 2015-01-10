@@ -5,7 +5,8 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
-import unittest
+
+from unittest import expectedFailure
 
 from backend.core import Core
 from backend.controller import Controller
@@ -17,6 +18,7 @@ from backend.components.interconnect import Interconnect
 from backend.component_library import ComponentLibrary
 from backend.component_library import get_library
 from tests.helpers import CallTrack
+from tests import helpers
 
 
 class TestingCore(Core):
@@ -102,7 +104,7 @@ class FuEvent(Event):
         return self.fu(last)
 
 
-class BackendCoreTest(unittest.TestCase):
+class BackendCoreTest(helpers.CriticalTestCase):
     """
     Unit tests for backend core including some element integration tests.
     """
@@ -203,7 +205,7 @@ class BackendCoreTest(unittest.TestCase):
         self.assertFalse(s.state)
         self.assertFalse(carry.state)
 
-    @unittest.expectedFailure
+    @expectedFailure
     def test_stabilization(self):
         ctrl = TestingController()
 

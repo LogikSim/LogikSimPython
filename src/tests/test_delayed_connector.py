@@ -9,15 +9,14 @@
 Test delay of input connectors of the simulation model.
 '''
 
-import unittest
-
 from simulation_model import LogicValue
+from tests import helpers
 
 
 LV_0, LV_1, LV_X = map(LogicValue, '01X')
 
 
-class DelayedConnectorSpec(unittest.TestCase):
+class DelayedConnectorSpec(helpers.CriticalTestCase):
     pass
 
 # @unittest.expectedFailure

@@ -9,22 +9,23 @@
 Test the LineTree implementation.
 '''
 
-import unittest
 
 from PySide import QtCore, QtGui
 
 from logicitems.linetree import LineTree
 from schematics import GridScene
 from tests.helpers import wait_until_registry_enumerated
+from tests import helpers
 
 
 def linetree_from_path(path):
     """Create LineTree from path."""
     metadata = LineTree.metadata_from_path(path)
+    metadata['GUID'] = LineTree.GUI_GUID()
     return LineTree(parent=None, metadata=metadata)
 
 
-class LineTreeRerootTest(unittest.TestCase):
+class LineTreeRerootTest(helpers.CriticalTestCase):
     def test_reroot_path_3(self):
         tree = {1: {2: {3: {}}}}
         n_tree = LineTree._reroot(tree, 2)
@@ -80,7 +81,7 @@ class LineTreeRerootTest(unittest.TestCase):
         self.assertEqual(n_tree, tree)
 
 
-class LineTreeGeneralTest(unittest.TestCase):
+class LineTreeGeneralTest(helpers.CriticalTestCase):
     def test_is_edge(self):
         tree = linetree_from_path([QtCore.QPointF(0, 0),
                                    QtCore.QPointF(10, 0)])
@@ -154,8 +155,10 @@ class LineTreeGeneralTest(unittest.TestCase):
             QtCore.QPointF(0, 5), QtCore.QPointF(0, 15))))
 
 
-class LineNearestPointTest(unittest.TestCase):
+class LineNearestPointTest(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
+
         self.app = QtGui.QApplication.instance()
         if not self.app:
             self.app = QtGui.QApplication([])
@@ -170,10 +173,16 @@ class LineNearestPointTest(unittest.TestCase):
         self.scene.deleteLater()
         self.scene._core.quit()
         self.scene._core_thread.join()
-        self.scene._registry._registry_handler.quit(True)
+        self.scene._registry._registry_handler.quit(blocking=True)
+        self.scene._controller._channel_in.close()
+        self.scene._controller._channel_in.join_thread()
+        self.scene._controller._channel_out.close()
+        self.scene._controller._channel_out.join_thread()
         self.scene = None
 
         self.app.processEvents()
+
+        super().tearDown()
 
     def test_nearest_point_horizontal(self):
         def tsp(x, y):
@@ -224,7 +233,7 @@ class LineNearestPointTest(unittest.TestCase):
             hor_tree.get_nearest_point(tsp(10, -10)), tsp(0, 0))
 
 
-class LineMergeRegressionTest(unittest.TestCase):
+class LineMergeRegressionTest(helpers.CriticalTestCase):
     """Merge test not relying on introspecting inner states."""
     def test_simple_corner(self):
         tree = linetree_from_path([QtCore.QPointF(0, 0),
@@ -481,7 +490,7 @@ class LineMergeRegressionTest(unittest.TestCase):
             QtCore.QPointF(0, 0), QtCore.QPointF(40, 0))))
 
 
-class LineLengthToTest(unittest.TestCase):
+class LineLengthToTest(helpers.CriticalTestCase):
     def test_horizontal_line(self):
         tree = linetree_from_path([QtCore.QPointF(0, 0),
                                    QtCore.QPointF(10, 0)])
@@ -588,7 +597,7 @@ def get_linetree_with_states(tree, states, curr_clock, grid_spacing=1,
     return tree
 
 
-class StateLineSegmentationTest(unittest.TestCase):
+class StateLineSegmentationTest(helpers.CriticalTestCase):
     def test_horizontal_line_partial_start(self):
         tree = get_linetree_with_states(
             {(0, 0): {(10, 0): {}}},

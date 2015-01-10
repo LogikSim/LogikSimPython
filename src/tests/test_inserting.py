@@ -11,7 +11,7 @@ Test the scene logic for inserting lines.
 (schematic -> mouse-mode -> line-submode -> inserting)
 '''
 
-import unittest
+from unittest import expectedFailure
 
 from PySide import QtCore, QtGui
 
@@ -22,10 +22,16 @@ from schematics import GridScene
 from algorithms import hightower
 from logicitems import LineTree
 from tests.helpers import wait_until_registry_enumerated
+from tests import helpers
+
+from tests.helpers import install_hook
+install_hook()
 
 
-class TestHightowerObject(unittest.TestCase):
+class TestHightowerObject(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
+
         self.app = QtGui.QApplication.instance()
         if not self.app:
             self.app = QtGui.QApplication([])
@@ -44,6 +50,8 @@ class TestHightowerObject(unittest.TestCase):
         self.scene = None
 
         self.app.processEvents()
+
+        super().tearDown()
 
     def test_empty_scene(self):
         trees = EndpointTrees(None, None)
@@ -85,8 +93,10 @@ class TestHightowerObject(unittest.TestCase):
         self.assertIs(ho((10, 0)), hightower.PassableLine)
 
 
-class TestLineRoute(unittest.TestCase):
+class TestLineRoute(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
+
         self.app = QtGui.QApplication.instance()
         if not self.app:
             self.app = QtGui.QApplication([])
@@ -105,6 +115,8 @@ class TestLineRoute(unittest.TestCase):
         self.scene = None
 
         self.app.processEvents()
+
+        super().tearDown()
 
     def test_horizontal_line(self):
         def tsp(x, y):
@@ -145,8 +157,10 @@ class TestLineRoute(unittest.TestCase):
                                                           tsp(5, 11))))
 
 
-class TestLineRouteGraphical(unittest.TestCase):
+class TestLineRouteGraphical(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
+
         self.app = QtGui.QApplication.instance()
         if not self.app:
             self.app = QtGui.QApplication([])
@@ -165,6 +179,8 @@ class TestLineRouteGraphical(unittest.TestCase):
         self.scene = None
 
         self.app.processEvents()
+
+        super().tearDown()
 
     def fill_scene(self, scene, input_area):
         lines = input_area.split('\n')
@@ -613,7 +629,7 @@ class TestLineRouteGraphical(unittest.TestCase):
         """
         self.visual_test(input_area, position_area, output_area)
 
-    @unittest.expectedFailure
+    @expectedFailure
     def test_verifyer(self):
         # ┴˄˅<┤├>┬-|┘┐┌└|
         input_area = """

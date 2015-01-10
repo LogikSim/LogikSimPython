@@ -9,16 +9,16 @@
 Test logic values of the simulation model.
 '''
 
-import unittest
 import operator
 
 from simulation_model import LogicValue
+from tests import helpers
 
 
 LV_0, LV_1, LV_X = list(map(LogicValue, '01X'))
 
 
-class ParserTest(unittest.TestCase):
+class ParserTest(helpers.CriticalTestCase):
     def test_lv_values(self):
         self.assertListEqual([LV_0, LV_1, LV_X], list(map(LogicValue, '01X')))
 

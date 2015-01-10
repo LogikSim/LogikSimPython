@@ -9,12 +9,11 @@
 Test the modes meta class mechanism.
 '''
 
-import unittest
-
+from tests import helpers
 from modes import generate_mode_base
 
 
-class TestSubclassing(unittest.TestCase):
+class TestSubclassing(helpers.CriticalTestCase):
     def test_mode_name(self):
         class Base(object):
             pass

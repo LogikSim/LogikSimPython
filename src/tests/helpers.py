@@ -10,6 +10,10 @@
 Contains helper functions that are helpful for creating unit-tests.
 '''
 
+import sys
+import unittest
+import threading
+
 from PySide import QtGui, QtCore
 from time import time, sleep
 
@@ -127,3 +131,38 @@ def wait_until_registry_enumerated(scene, app):
     while not complete:
         app.processEvents()
     scene.registry().enumeration_complete.disconnect(set_complete)
+
+
+class CriticalTestCase(unittest.TestCase):
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+
+        self.uncaught_exceptions_count = 0
+        self.orig_threads = []
+
+        sys.excepthook = self.excepthook
+
+    def excepthook(self, *args, **kargs):
+        self.uncaught_exceptions_count += 1
+        return sys.__excepthook__(*args, **kargs)
+
+    def setUp(self):
+        self.orig_threads = threading.enumerate()
+
+    def tearDown(self):
+        self.assertEqual(0, self.uncaught_exceptions_count,
+                         "Uncaught exceptions found.")
+        self.uncaught_exceptions_count = 0
+        self.assertSetEqual(
+            set(self.orig_threads), set(threading.enumerate()),
+            "Found unjoined threads.")
+        self.orig_threads = []
+
+# TODO: incorporate thread_hook into CriticalTestCase
+def install_hook():
+    orig_format_exc = threading._format_exc
+
+    def thread_hook(*args, **kargs):
+        return orig_format_exc(*args, **kargs)
+
+    threading._format_exc

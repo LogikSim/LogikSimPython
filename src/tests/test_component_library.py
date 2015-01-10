@@ -5,7 +5,6 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
-import unittest
 
 from backend.component_library import (get_library,
                                        ComponentLibrary,
@@ -14,9 +13,10 @@ from backend.component_library import (get_library,
 
 from backend.components import And, Xor
 from tests.mocks import ElementRootMock
+from tests import helpers
 
 
-class ComponentLibraryTests(unittest.TestCase):
+class ComponentLibraryTests(helpers.CriticalTestCase):
     """
     Unit tests for component library
     """
@@ -65,8 +65,10 @@ class ComponentLibraryTests(unittest.TestCase):
              {'id': 1, 'GUID': None}], p.history)
 
 
-class ComponentInstanceTests(unittest.TestCase):
+class ComponentInstanceTests(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
+
         class MyComponentType(ComponentType):
             METADATA = {'GUID': '628AAFE2-82B3-4465-83A6-87D0FC46071F',
                         'key': 'value'}

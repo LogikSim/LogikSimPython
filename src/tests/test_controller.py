@@ -5,13 +5,12 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
-import unittest
 from backend.controller import Controller
 from backend.interface import Handler
 from tests.helpers import CallTrack, drain_queue, try_repeatedly
 from backend.component_library import ComponentLibrary
 from backend.components import And, Nand
-
+from tests import helpers
 
 class ElementMock:
     def __init__(self, metadata=None):
@@ -41,7 +40,7 @@ class CoreMock:
         pass
 
 
-class ControllerTest(unittest.TestCase):
+class ControllerTest(helpers.CriticalTestCase):
     """
     Unit and integration tests for backend controller.
     """
@@ -194,8 +193,10 @@ class ControllerTest(unittest.TestCase):
                                'data': {'fiz': 'buz'}}], updates)
 
 
-class ControllerSerializationTest(unittest.TestCase):
+class ControllerSerializationTest(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
+
         cl = ComponentLibrary()
         cl.register(And)
         cl.register(Nand)

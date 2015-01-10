@@ -5,13 +5,12 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 
-import unittest
-
 from PySide import QtCore, QtGui
 
 from actions.action_stack_model import ActionStackModel
 from tests.helpers import CallTrack
 from tests.mocks import ModelIndexMock
+from tests import helpers
 
 
 class DoUndoLog:
@@ -63,12 +62,14 @@ class DoUndoLog:
         return undo
 
 
-class ActionStackModelTest(unittest.TestCase):
+class ActionStackModelTest(helpers.CriticalTestCase):
     """
     Tests actions.action_stack_model.ActionStackModel class with dependencies.
     """
 
     def setUp(self):
+        super().setUp()
+
         self.app = QtCore.QCoreApplication.instance()
         if not self.app:
             # FIXME: Want self.app = QtCore.QCoreApplication([]) but tearDown

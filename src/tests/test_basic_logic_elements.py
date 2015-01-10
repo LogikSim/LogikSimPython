@@ -5,14 +5,14 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
-import unittest
 
 from tests.mocks import ElementRootMock
 from backend.simple_element import OutEdge
 from backend.components.basic_logic_elements import And, Or, Xor
+from tests import helpers
 
 
-class BasicLogicElementTest(unittest.TestCase):
+class BasicLogicElementTest(helpers.CriticalTestCase):
     """
     Unit tests for basic logic elements.
     """

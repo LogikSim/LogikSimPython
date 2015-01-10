@@ -5,15 +5,15 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
-import unittest
 
 from backend.components.compound_element import CompoundElement
 from backend.components.interconnect import Interconnect
 from backend.component_library import get_library
 from tests.mocks import ElementRootMock
+from tests import helpers
 
 
-class CompoundElementTest(unittest.TestCase):
+class CompoundElementTest(helpers.CriticalTestCase):
     """
     Unit tests for compound element.
     """

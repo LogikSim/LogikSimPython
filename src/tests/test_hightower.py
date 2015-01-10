@@ -9,8 +9,9 @@
 Test the hightower algorithm.
 '''
 
-import unittest
+from unittest import expectedFailure
 
+from tests import helpers
 from algorithms.hightower import (do_lines_intersect, is_point_on_line,
                                   hightower_line_search, Solid, PassableLine,
                                   LineEdge)
@@ -20,7 +21,7 @@ def return_none(point):
     return None
 
 
-class DoLinesIntersectSpec(unittest.TestCase):
+class DoLinesIntersectSpec(helpers.CriticalTestCase):
     def test_lines_1(self):
         line_a = ((10, 0), (10, 100))
         line_b = ((0, 5), (100, 5))
@@ -46,7 +47,7 @@ class DoLinesIntersectSpec(unittest.TestCase):
         self.assertFalse(res)
 
 
-class IsPointOnLine(unittest.TestCase):
+class IsPointOnLine(helpers.CriticalTestCase):
     def test_point_line_1(self):
         point = (10, 5)
         line = ((0, 5), (100, 5))
@@ -92,7 +93,7 @@ def area_to_input_data(area):
     return high_input, exp_res
 
 
-class HightowerSpec(unittest.TestCase):
+class HightowerSpec(helpers.CriticalTestCase):
     def test_same_points(self):
         point_a = (10, 5)
         point_b = (10, 5)
@@ -242,7 +243,7 @@ class HightowerSpec(unittest.TestCase):
 
         self.assertListEqual(res, exp_res)
 
-    @unittest.expectedFailure  # Check if escape point 2 helps here
+    @expectedFailure  # Check if escape point 2 helps here
     def test_escape_point_loop_solid(self):
         area = """
 
@@ -263,7 +264,7 @@ class HightowerSpec(unittest.TestCase):
 
         self.assertListEqual(res, exp_res)
 
-    @unittest.expectedFailure  # Probably unsolvable by Hightower
+    @expectedFailure  # Probably unsolvable by Hightower
     def test_escape_zigzag_valley(self):
         area = """
                   # 1 A #

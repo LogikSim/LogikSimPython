@@ -9,13 +9,15 @@
 Test the json data format as used in the simulation model.
 '''
 
-import unittest
 
+from tests import helpers
 from simulation_model import JsonMeta, json_virtual, JsonObject
 
 
-class JsonMetaSpec(unittest.TestCase):
+class JsonMetaSpec(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
+
         JsonMeta._json_classes.clear()
 
     def test_setUp(self):
@@ -48,8 +50,10 @@ class JsonMetaSpec(unittest.TestCase):
         self.assertRaises(Exception, JsonMeta.load_object, {'type': 'Test'})
 
 
-class JsonObjectSpec(unittest.TestCase):
+class JsonObjectSpec(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
+
         JsonMeta._json_classes.clear()
 
     def test_setUp(self):

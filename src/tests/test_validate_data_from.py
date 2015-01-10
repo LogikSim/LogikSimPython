@@ -9,17 +9,18 @@
 Test json data validation system as used in the simulation model.
 '''
 
-import unittest
 import numbers
 
+from tests import helpers
 from simulation_model import JsonMeta, JsonObject
 
 
 validate = JsonMeta.validate_data_from_spec
 
 
-class ValidateJsonData(unittest.TestCase):
+class ValidateJsonData(helpers.CriticalTestCase):
     def setUp(self):
+        super().setUp()
         JsonMeta._json_classes.clear()
 
     def test_setUp(self):
