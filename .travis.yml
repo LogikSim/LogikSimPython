@@ -1,7 +1,7 @@
 language: python
 python:
     - "3.2_with_system_site_packages"
-    - "3.3_with_system_site_packages"
+    - "3.3"
 before_install:
     - "sudo apt-get update"
 install:
