@@ -18,12 +18,14 @@ from .connectable_item import ConnectableItem
 from .line_edge_indicator import LineEdgeIndicator
 from .connector import ConnectorItem
 from .state_line_item import StateLineItem
+from .insertable_item import InsertableItem
 
 
 class LineTree(ConnectableItem, StateLineItem):
     """ A tree of connected lines """
 
     _debug_painting = False
+    _line_collision_radius_grid = 0.45  # in grid spacing
 
     def __init__(self, parent, metadata):
         """
@@ -79,8 +81,7 @@ class LineTree(ConnectableItem, StateLineItem):
         return "00352520-7cf0-43b7-9449-6fca5be8d6dc"
 
     def selectionRect(self):
-        delta = self.scene().get_grid_spacing() / 3
-        return self._rect.adjusted(-delta, -delta, delta, delta)
+        return self._rect
 
     def default_zvalue(self):
         return 1
@@ -216,7 +217,8 @@ class LineTree(ConnectableItem, StateLineItem):
         bounding_rect = QtCore.QRectF(0, 0, 0, 0)
         poly = QtGui.QPolygonF()
         for line in self._lines:
-            l_bounding_rect = self._line_to_col_rect(line)
+            l_bounding_rect = self._line_to_col_rect(line,
+                self._line_collision_radius())
             bounding_rect = bounding_rect.united(l_bounding_rect)
             poly = poly.united(QtGui.QPolygonF(l_bounding_rect))
 
@@ -224,6 +226,12 @@ class LineTree(ConnectableItem, StateLineItem):
         shape_path.addPolygon(poly)
         self._shape = shape_path
         self._rect = bounding_rect
+
+    def _line_collision_radius(self):
+        """Returns line collision radius in scene coordinates or None."""
+        if self.scene() is not None:
+            return self._line_collision_radius_grid * \
+                self.scene().get_grid_spacing()
 
     def items_at_connections(self):
         """Overrides items_at_connections"""
@@ -423,7 +431,7 @@ class LineTree(ConnectableItem, StateLineItem):
         class ItemFound(Exception):
             pass
 
-        def helper(tree):
+        def find_and_split_line_helper(tree):
             for node, children in tree.items():
                 for child in children:
                     line = QLineF(QPointF(*node), QPointF(*child))
@@ -432,10 +440,10 @@ class LineTree(ConnectableItem, StateLineItem):
                         children[point] = {child: children[child]}
                         del children[child]
                         raise ItemFound()
-                helper(children)
+                find_and_split_line_helper(children)
 
         try:
-            helper(tree)
+            find_and_split_line_helper(tree)
         except ItemFound:
             pass
         else:
@@ -522,6 +530,13 @@ class LineTree(ConnectableItem, StateLineItem):
         """Return True, if there is an edge at given scene QPointF """
         return self.mapFromScene(scene_point).toTuple() in self._edges
 
+    def is_edge_on_path(self, scene_path):
+        """Return True, if any edge is on given scene QPainterPath."""
+        for edge in self._edges:
+            if scene_path.contains(QPointF(*edge)):
+                return True
+        return False
+
     def is_non_mergeable_edge_on_line(self, scene_line):
         """
         Returns True, if there is a non-mergeable edge on given line.
@@ -545,7 +560,8 @@ class LineTree(ConnectableItem, StateLineItem):
                           |    |
                           v----x
 
-        Here x and y are non-mergeable edges
+        Here x and y are non-mergeable edges, as the new line would
+        be part of the tree, while it is independent.
             A     x------y     B
 
         :param scene_line: QLineF in scene coordinates
@@ -574,7 +590,7 @@ class LineTree(ConnectableItem, StateLineItem):
 
         :param line: QLineF in scene coordinates
         """
-        radius = self.collision_margin / 2
+        radius = self._line_collision_radius() / 2
         l_bounding_rect = self._line_to_col_rect(line, radius)
         return self._shape.contains(l_bounding_rect)
 
@@ -587,7 +603,7 @@ class LineTree(ConnectableItem, StateLineItem):
         """
         line = QLineF(self.mapFromScene(scene_line.p1()),
                       self.mapFromScene(scene_line.p2()))
-        radius = self.collision_margin / 2
+        radius = self._line_collision_radius() / 2
         l_bounding_rect = self._line_to_col_rect(line, radius)
         return self._shape.contains(l_bounding_rect)
 
@@ -630,6 +646,19 @@ class LineTree(ConnectableItem, StateLineItem):
     def calculate_is_position_valid(self):
         if self.scene() is None:
             return False
+        from .logicitem import LogicItem
+        # check own shape
+        scene_shape = self.mapToScene(self.shape())
+        for item in self.scene().items(scene_shape):
+            if not isinstance(item, (ConnectorItem, InsertableItem)) or \
+                    not item.is_position_valid() or item.is_temporary():
+                continue
+            if isinstance(item, LogicItem):
+                return False
+            if isinstance(item, LineTree) and item is not self and \
+                    item.is_edge_on_path(scene_shape):
+                return False
+        # TODO: detect two output drivers
         return True
 
     def boundingRect(self):
@@ -673,6 +702,12 @@ class LineTree(ConnectableItem, StateLineItem):
     def paint(self, painter, option, widget):
         super().paint(painter, option, widget)
 
+        # invalid hull
+        if not self.is_position_valid():
+            painter.setPen(self._position_invalid_color_line)
+            painter.setBrush(self._position_invalid_color_fill)
+            painter.drawPath(self._shape)
+
         # debugging
         if self._debug_painting:
             painter.setPen(QtCore.Qt.NoPen)
@@ -688,4 +723,6 @@ class LineTree(ConnectableItem, StateLineItem):
         # update edge indicators when connectable surrounding changed
         if change == ConnectableItem.ItemConnectableSurroundingHasChanged:
             self._update_edge_indicators()
+        elif change == QtGui.QGraphicsItem.ItemSceneHasChanged:
+            self._update_shape()
         return super().itemChange(change, value)

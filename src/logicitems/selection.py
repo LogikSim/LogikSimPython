@@ -27,6 +27,7 @@ class SelectionItem(ItemBase):
         self.setCursor(QtCore.Qt.SizeAllCursor)
 
         self._rect = QtCore.QRectF(0, 0, 0, 0)
+        self._shape = QtGui.QPainterPath()
         self._bounding_rect = QtCore.QRectF(0, 0, 0, 0)
 
         # use timer to only process most recent update event
@@ -66,6 +67,9 @@ class SelectionItem(ItemBase):
         if len(sel_items) > 1:
             offset = self.scene().get_grid_spacing() / 2
             self._rect.adjust(-offset, -offset, offset, offset)
+        # store rect as shape
+        self._shape = QtGui.QPainterPath()
+        self._shape.addRect(self._rect)
         # make bounding rect a little bit wider (prevent drawing artefacts)
         self._bounding_rect = self._to_col_rect(
             self._rect, radius=self.scene().get_grid_spacing())
@@ -88,6 +92,9 @@ class SelectionItem(ItemBase):
 
     def boundingRect(self):
         return self._bounding_rect
+
+    def shape(self):
+        return self._shape
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)

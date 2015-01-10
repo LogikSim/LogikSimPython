@@ -110,7 +110,7 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         # additional items to notify surrounding change when scene is changing
         self._additional_notify_items = None
         # true if position is valid
-        self._is_position_valid = False
+        self._is_position_valid = None
 
         self.update_frontend(metadata)
 

@@ -93,12 +93,13 @@ class LogicItem(ConnectableItem, QtGui.QGraphicsLayoutItem):
             return False
         # check own shape
         for item in self.scene().items(self.mapToScene(self.shape())):
-            if isinstance(item, InsertableItem) and item is not self and \
-                    item.is_position_valid():
+            if not isinstance(item, (ConnectorItem, InsertableItem)) or \
+                    not item.is_position_valid() or item.is_temporary():
+                continue
+            if isinstance(item, InsertableItem) and item is not self:
                 return False
             elif isinstance(item, ConnectorItem) and \
-                    item.parentItem() is not self and \
-                    item.is_position_valid():
+                    item.parentItem() is not self:
                 return False
         # check connectors
         for con_item in self._inputs + self._outputs:
