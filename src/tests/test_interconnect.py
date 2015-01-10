@@ -37,8 +37,10 @@ class InterconnectTest(helpers.CriticalTestCase):
         a = Foo()
         b = Foo()
 
-        self.assertTrue(i.connect(a, input_port=0, output_port=0, delay=1))
-        self.assertTrue(i.connect(b, input_port=2, output_port=1, delay=10))
+        self.assertTrue(
+            i.connect(output_port=0, element=a, input_port=0, delay=1))
+        self.assertTrue(
+            i.connect(output_port=1, element=b, input_port=2, delay=10))
 
         i.edge(0, True)
         self.assertListEqual([Edge(1, a, 0, True),

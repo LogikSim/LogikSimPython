@@ -13,7 +13,6 @@ from PySide import QtCore
 
 from .submode_base import InsertLineSubModeBase, line_submode_filtered
 import logicitems
-from helper.timeit_mod import timeit
 from helper.time_limited import time_limited, TimeReached
 import algorithms.hightower as hightower
 
@@ -69,7 +68,6 @@ class InsertingLineSubMode(InsertLineSubModeBase):
         self._update_line_timer.start()
 
     @line_submode_filtered
-    @timeit
     def do_update_line(self):
         start, end = self._insert_line_start_end
 

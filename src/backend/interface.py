@@ -277,6 +277,16 @@ class Interface:
         return request_id
 
     def connect(self, source_id, source_port, sink_id, sink_port, delay=0):
+        """
+        Schedules a connection of the source_port of the to the sink_port.
+
+        :param source_id: Source element id
+        :param source_port: Source port index
+        :param sink_id: Sink element id
+        :param sink_port: Sink port index
+        :param delay: Natural delay of the connection on propagation
+        :return: Request id
+        """
         request_id = self._gen_request_id()
 
         self._channel_out.put(

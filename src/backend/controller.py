@@ -245,7 +245,7 @@ class Controller(ComponentRoot):
                 target = elements.get(id_mappings.get(old_target))
                 if target:
                     # Only reconnect if target was part of serialization
-                    element.connect(target, out_port, in_port, delay)
+                    element.connect(out_port, target, in_port, delay)
 
         self._post_to_frontend('deserialization-end',
                                {'ids': list(elements.keys())})
@@ -282,8 +282,8 @@ class Controller(ComponentRoot):
         source = self.elements[command['source_id']]
         sink = self.elements[command['sink_id']]
 
-        if not source.connect(sink,
-                              command['source_port'],
+        if not source.connect(command['source_port'],
+                              sink,
                               command['sink_port'],
                               command['delay']):
             # TODO: proper exception handling

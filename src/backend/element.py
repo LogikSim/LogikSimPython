@@ -65,7 +65,6 @@ class Element(ComponentInstance):
 
         :param input_port: Index of the input
         :param state: Value of the input (True/False) at time `when`
-        :return: List of none or more future Event s
         """
         pass
 
@@ -80,12 +79,12 @@ class Element(ComponentInstance):
         pass
 
     @abstractmethod
-    def connect(self, element, output_port=0, input_port=0, delay=0):
+    def connect(self, output_port, element, input_port, delay=0):
         """
         Connects an element output to another elements input.
 
-        :param element: Element to connect to output (None disconnects output)
         :param output_port: This elements output to connect to the input
+        :param element: Element to connect to output (None disconnects output)
         :param input_port: Input on given element to connect to
         :param delay: Delay of this connection in simulation units
         :return: True if successfully connected
@@ -93,7 +92,7 @@ class Element(ComponentInstance):
         pass
 
     @abstractmethod
-    def connected(self, element, output_port=0, input_port=0):
+    def connected(self, element, output_port, input_port):
         """
         Notifies an element of another elements output connected to one of its
         inputs.

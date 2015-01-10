@@ -34,7 +34,7 @@ class InputOutputBankInstance(Element):
         super().__init__(parent, metadata, InputOutputBank)
         self.mapping = {}
 
-    def connect(self, element, output_port=0, input_port=0):
+    def connect(self, output_port, element, input_port=0):
         self.mapping[output_port] = (element, input_port)
         # FIXME: Implement rest of this
         return True
@@ -44,7 +44,7 @@ class InputOutputBankInstance(Element):
         # FIXME: Implement rest of this
         return val is not None
 
-    def connected(self, element, output_port=0, input_port=0):
+    def connected(self, element, output_port, input_port):
         # FIXME: Implement this
         return True
 
@@ -138,7 +138,7 @@ class CompoundElementInstance(Element):
         """
         return self.input_bank.clock(when)
 
-    def connect(self, element, output_port=0, input_port=0):
+    def connect(self, output_port, element, input_port=0):
         """
         Connects output posts to external element.
 
@@ -147,12 +147,12 @@ class CompoundElementInstance(Element):
         :param input_port: Input on element to connect to
         :return: True if connected successful
         """
-        return self.output_bank.connect(element, output_port, input_port)
+        return self.output_bank.connect(output_port, element, input_port)
 
     def disconnect(self, output_port):
         return self.output_bank.disconnect(output_port)
 
-    def connected(self, element, output_port=0, input_port=0):
+    def connected(self, element, output_port, input_port):
         return self.output_bank.connected(element, output_port, input_port)
 
     def disconnected(self, input_port):

@@ -59,17 +59,17 @@ def build_halfadder(name, parent):
     xor_gate = Xor.instantiate(1, half_adder)
     and_gate = And.instantiate(2, half_adder)
 
-    a.connect(xor_gate, output_port=0)
-    a.connect(and_gate, output_port=1)
+    a.connect(output_port=0, element=xor_gate, input_port=0)
+    a.connect(output_port=1, element=and_gate, input_port=0)
 
-    b.connect(xor_gate, input_port=1, output_port=0)
-    b.connect(and_gate, input_port=1, output_port=1)
+    b.connect(output_port=0, element=xor_gate, input_port=1)
+    b.connect(output_port=1, element=and_gate, input_port=1)
 
-    half_adder.input_bank.connect(a, 0)
-    half_adder.input_bank.connect(b, 1)
+    half_adder.input_bank.connect(0, a, 0)
+    half_adder.input_bank.connect(1, b, 0)
 
-    xor_gate.connect(half_adder.output_bank, 0, 0)  # Sum on out 0
-    and_gate.connect(half_adder.output_bank, 0, 1)  # Carry on out 1
+    xor_gate.connect(0, half_adder.output_bank, 0)  # Sum on out 0
+    and_gate.connect(0, half_adder.output_bank, 1)  # Carry on out 1
 
     return half_adder
 
@@ -80,17 +80,17 @@ def build_fulladder(name, parent):
     ha1 = build_halfadder(name + "_ha1", full_adder)
     ha2 = build_halfadder(name + "_ha2", full_adder)
 
-    full_adder.input_bank.connect(ha1, 0, 0)  # A input on 0
-    full_adder.input_bank.connect(ha1, 1, 1)  # B input on 1
-    ha1.connect(ha2, 0, 0)
-    full_adder.input_bank.connect(ha2, 2, 1)  # Carry input on 2
+    full_adder.input_bank.connect(0, ha1, 0)  # A input on 0
+    full_adder.input_bank.connect(1, ha1, 1)  # B input on 1
+    ha1.connect(0, ha2, 0)
+    full_adder.input_bank.connect(2, ha2, 1)  # Carry input on 2
 
     or_gate = Or.instantiate(0, full_adder)
-    ha1.connect(or_gate, 1, 0)  # ha1 carry on or
-    ha2.connect(or_gate, 1, 1)  # ha2 carry on or
+    ha1.connect(1, or_gate, 0)  # ha1 carry on or
+    ha2.connect(1, or_gate, 1)  # ha2 carry on or
 
-    ha2.connect(full_adder.output_bank, 0, 0)  # Sum on out 0
-    or_gate.connect(full_adder.output_bank, 0, 1)  # Carry on out 1
+    ha2.connect(0, full_adder.output_bank, 0)  # Sum on out 0
+    or_gate.connect(0, full_adder.output_bank, 1)  # Carry on out 1
 
     return full_adder
 
@@ -147,14 +147,14 @@ class BackendCoreTest(helpers.CriticalTestCase):
         xor_gate = Xor.instantiate(4, ctrl)
         and_gate = And.instantiate(5, ctrl)
 
-        self.assertTrue(a.connect(xor_gate, output_port=0))
-        self.assertTrue(a.connect(and_gate, output_port=1))
+        self.assertTrue(a.connect(0, xor_gate, 0))
+        self.assertTrue(a.connect(1, and_gate, 0))
 
-        self.assertTrue(b.connect(xor_gate, input_port=1, output_port=0))
-        self.assertTrue(b.connect(and_gate, input_port=1, output_port=1))
+        self.assertTrue(b.connect(0, xor_gate, 1))
+        self.assertTrue(b.connect(1, and_gate, 1))
 
-        self.assertTrue(xor_gate.connect(s))
-        self.assertTrue(and_gate.connect(c))
+        self.assertTrue(xor_gate.connect(0, s, 0))
+        self.assertTrue(and_gate.connect(0, c, 0))
 
         core = ctrl.get_core()
         core.schedule(Edge(10, a, 0, True))
@@ -180,8 +180,8 @@ class BackendCoreTest(helpers.CriticalTestCase):
         carry = Interconnect.instantiate(1, ctrl)
 
         ha = build_halfadder("ha1", ctrl)
-        ha.connect(s, 0)
-        ha.connect(carry, 1)
+        ha.connect(0, s, 0)
+        ha.connect(1, carry, 0)
 
         core = ctrl.get_core()
 
@@ -219,14 +219,14 @@ class BackendCoreTest(helpers.CriticalTestCase):
         q = Interconnect.instantiate(4, ctrl)
         nq = Interconnect.instantiate(5, ctrl)
 
-        r.connect(nor_r)
-        s.connect(nor_s)
+        r.connect(0, nor_r, 0)
+        s.connect(0, nor_s, 0)
 
-        q.connect(nor_s, input_port=1)
-        nq.connect(nor_r, input_port=1)
+        q.connect(output_port=1, element=nor_s, input_port=1)
+        nq.connect(output_port=1, element=nor_r, input_port=1)
 
-        nor_r.connect(q)
-        nor_s.connect(nq)
+        nor_r.connect(0, q, 0)
+        nor_s.connect(0, nq, 0)
 
         core = ctrl.get_core()
 
@@ -260,8 +260,8 @@ class BackendCoreTest(helpers.CriticalTestCase):
         carry = Interconnect.instantiate(0, ctrl)
         s = Interconnect.instantiate(1, ctrl)
 
-        self.assertTrue(fa.connect(s, 0))
-        self.assertTrue(fa.connect(carry, 1))
+        self.assertTrue(fa.connect(0, s, 0))
+        self.assertTrue(fa.connect(1, carry, 0))
 
         self.assertFalse(s.state)
         self.assertFalse(carry.state)

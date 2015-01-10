@@ -81,7 +81,7 @@ class InterconnectInstance(Element):
     def _in_con_to_data(cls, connections):
         return [((e.id() if e else None), c) for e, c in connections]
 
-    def connect(self, element, output_port=0, input_port=0, delay=0):
+    def connect(self, output_port, element, input_port, delay=0):
         """
         Connects an element output to another elements input. This element
         has the speciality of automatically growing its amount of output
@@ -154,7 +154,7 @@ class InterconnectInstance(Element):
 
         return True
 
-    def connected(self, element, output_port=0, input_port=0):
+    def connected(self, element, output_port, input_port):
         """
         Remembers connections to a given port.
 

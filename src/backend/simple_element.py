@@ -139,12 +139,12 @@ class SimpleElement(Element):
                         output,
                         fstate) for output, fstate in enumerate(future_output)]
 
-    def connect(self, element, output_port=0, input_port=0, delay=0):
+    def connect(self, output_port, element, input_port, delay=0):
         """
         Attach a given elements input to one of this elements outputs.
 
-        :param element: Element to connect to output
         :param output_port: This elements output to connect to the input
+        :param element: Element to connect to output
         :param input_port: Input on given element to connect to
         :param delay: Delay of this connection in simulation units
         """
@@ -202,14 +202,15 @@ class SimpleElement(Element):
 
         return True
 
-    def connected(self, element, output_port=0, input_port=0):
+    def connected(self, element, output_port, input_port):
         """
         Remembers connections to a given port.
 
-        :param element:
-        :param output_port:
-        :param input_port:
-        :return:
+        :param input_port: Input port on this element being connected to
+        :param element: Element connecting to the port
+        :param output_port: Output port on the connecting element being used
+
+        :return: True if connection allowed.
         """
         assert element is not None, "Must be given element"
 

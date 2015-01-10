@@ -130,8 +130,8 @@ class ConnectableItem(InsertableItem):
 
     def notify_backend_connect(self, source_port, sink_id,
                                sink_port, delay=0):
-            self.scene().interface().connect(
-                self.id(), source_port, sink_id, sink_port, delay)
+        self.scene().interface().connect(
+            self.id(), source_port, sink_id, sink_port, delay)
 
     def notify_backend_disconnect(self, source_port):
             self.scene().interface().disconnect(self.id(), source_port)

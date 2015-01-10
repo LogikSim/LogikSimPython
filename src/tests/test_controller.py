@@ -236,9 +236,9 @@ class ControllerSerializationTest(helpers.CriticalTestCase):
 
     def test_serialization_framing(self):
         # Create some nested elements
-        a1 = self.interface.create_element(And.GUID())
-        a2 = self.interface.create_element(And.GUID(), a1)
-        a3 = self.interface.create_element(And.GUID(), a1)
+        _, a1 = self.interface.create_element(And.GUID())
+        _, a2 = self.interface.create_element(And.GUID(), a1)
+        _, a3 = self.interface.create_element(And.GUID(), a1)
         self.interface.connect(a2, 0, a3, 1)
         self.interface.create_element(And.GUID(), a3)
 

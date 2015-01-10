@@ -22,16 +22,16 @@ class CompoundElementTest(helpers.CriticalTestCase):
         p = ElementRootMock(get_library())
         e = CompoundElement.instantiate(0, p)
 
-        e.input_bank.connect(e.output_bank, 0, 1)
-        e.input_bank.connect(e.output_bank, 2, 3)
-        e.input_bank.connect(e.output_bank, 5, 6)
+        e.input_bank.connect(0, e.output_bank, 1)
+        e.input_bank.connect(2, e.output_bank, 3)
+        e.input_bank.connect(5, e.output_bank, 6)
 
         ins = [Interconnect.instantiate(i, p) for i in range(0, 6)]
         outs = [Interconnect.instantiate(i * 10, p) for i in range(0, 6)]
 
         for i in range(0, 6):
-            ins[i].connect(e, input_port=i)
-            e.connect(outs[i], i, 0)
+            ins[i].connect(output_port=i, element=e, input_port=i)
+            e.connect(i, outs[i], 0)
 
         for i in range(0, 6):
             ins[i].edge(0, True)

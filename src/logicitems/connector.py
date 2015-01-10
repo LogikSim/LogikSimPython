@@ -186,7 +186,7 @@ class ConnectorItem(StateLineItem, ItemBase):
             if isinstance(item, LineTree) and self.is_output():
                 input_count = item.numer_of_driving_inputs()
                 print(input_count, self.is_position_valid())
-                if not (input_count == 0 or input_count == 1 and \
+                if not (input_count == 0 or input_count == 1 and
                         self.is_position_valid() and not self.is_temporary()):
                     return False
         return True
