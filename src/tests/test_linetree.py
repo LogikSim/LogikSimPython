@@ -595,18 +595,22 @@ class StateLineSegmentationTest(unittest.TestCase):
             [(0, False), (1, True), (2, False), (5, True)],
             curr_clock=5)
 
-        self.assertListEqual(list(tree.iter_state_line_segments()),
+        res = tree.IterStateLineSegmentsResult()
+        self.assertListEqual(list(tree.iter_state_line_segments(res)),
                              [(QtCore.QLineF(0, 0, 3, 0), False),
                               (QtCore.QLineF(3, 0, 4, 0), True),
                               (QtCore.QLineF(4, 0, 5, 0), False),
                               (QtCore.QLineF(5, 0, 10, 0), False)])
+        self.assertEqual(res.longest_delay, 10)
 
     def test_horizontal_line_startup(self):
         tree = get_linetree_with_states({(0, 0): {(10, 0): {}}},
                                         [], curr_clock=0)
 
-        self.assertListEqual(list(tree.iter_state_line_segments()),
+        res = tree.IterStateLineSegmentsResult()
+        self.assertListEqual(list(tree.iter_state_line_segments(res)),
                              [(QtCore.QLineF(0, 0, 10, 0), False)])
+        self.assertEqual(res.longest_delay, 10)
 
     def test_horizontal_line_full_simulation(self):
         tree = get_linetree_with_states(
@@ -614,11 +618,13 @@ class StateLineSegmentationTest(unittest.TestCase):
             [(0, False), (3, True), (7, False), (10, True)],
             curr_clock=12)
 
-        self.assertListEqual(list(tree.iter_state_line_segments()),
+        res = tree.IterStateLineSegmentsResult()
+        self.assertListEqual(list(tree.iter_state_line_segments(res)),
                              [(QtCore.QLineF(0, 0, 2, 0), True),
                               (QtCore.QLineF(2, 0, 5, 0), False),
                               (QtCore.QLineF(5, 0, 9, 0), True),
                               (QtCore.QLineF(9, 0, 10, 0), False)])
+        self.assertEqual(res.longest_delay, 10)
 
     def test_path_line_full_simulation(self):
         tree = get_linetree_with_states(
@@ -627,7 +633,8 @@ class StateLineSegmentationTest(unittest.TestCase):
              (14, False), (17, True), (18, False), (21, True)],
             curr_clock=22)
 
-        self.assertListEqual(list(tree.iter_state_line_segments()),
+        res = tree.IterStateLineSegmentsResult()
+        self.assertListEqual(list(tree.iter_state_line_segments(res)),
                              [(QtCore.QLineF(0, 0, 1, 0), True),
                               (QtCore.QLineF(1, 0, 4, 0), False),
                               (QtCore.QLineF(4, 0, 5, 0), True),
@@ -637,6 +644,7 @@ class StateLineSegmentationTest(unittest.TestCase):
                               (QtCore.QLineF(10, 2, 10, 5), False),
                               (QtCore.QLineF(10, 5, 10, 9), True),
                               (QtCore.QLineF(10, 9, 10, 10), False)])
+        self.assertEqual(res.longest_delay, 20)
 
     def test_tree_full_simulation(self):
         tree = get_linetree_with_states(
@@ -650,7 +658,8 @@ class StateLineSegmentationTest(unittest.TestCase):
                 res.add((line.toTuple(), state))
             return res
 
-        self.assertSetEqual(to_set(tree.iter_state_line_segments()),
+        res = tree.IterStateLineSegmentsResult()
+        self.assertSetEqual(to_set(tree.iter_state_line_segments(res)),
                             to_set([(QtCore.QLineF(0, 0, 5, 0), True),
                                     (QtCore.QLineF(0, 0, 0, 5), True),
                                     (QtCore.QLineF(5, 0, 10, 0), False),
@@ -660,3 +669,4 @@ class StateLineSegmentationTest(unittest.TestCase):
                                     (QtCore.QLineF(10, 0, 10, 5), False),
                                     (QtCore.QLineF(15, 0, 20, 0), True),
                                     (QtCore.QLineF(10, 5, 10, 10), True)]))
+        self.assertEqual(res.longest_delay, 20)

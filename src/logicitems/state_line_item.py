@@ -60,9 +60,14 @@ class StateLineItem:
         else:
             return False
 
+    class IterStateLineSegmentsHelperResult:
+        def __init__(self):
+            self.next_index = None
+            self.next_state = None
+
     def iter_state_line_segments_helper(self, origin, destination, delay,
                                         clock, is_vertical, parent_delay=0,
-                                        parent_index=None, parent_state=None):
+                                        parent_result=None, result=None):
         """
         Iterator over line segments with specific state for given line.
 
@@ -76,16 +81,18 @@ class StateLineItem:
         :param clock: clock used for segmentation as float
         :param is_vertical: is the given line vertical as bool
         :param parent_delay: delay of possible parent as float
-        :param parent_index: index of possible parent, see return
-        :param parent_state: state of possible parent, see return
-        :return: (next_index, next_state). These return values can be used
-            to animate child lines (lines attached at this line) by providing
-            these values when segmenting each child.
+        :param parent_result: result of possible parent, see result
+        :param result: This return value can be used to animate child lines
+            (lines attached at this line). To do that pass a
+            IterStateLineSegmentsHelperResult object to this parameter and
+            use it as parent_result when segmenting all childs.
         """
-        current_state = self.get_last_logic_state() if parent_state is None \
-            else parent_state
-        current_index = len(self._logic_states) - 1 if parent_index is None \
-            else parent_index
+        if parent_result is None:
+            current_state = self.get_last_logic_state()
+            current_index = len(self._logic_states) - 1
+        else:
+            current_state = parent_result.next_state
+            current_index = parent_result.next_index
 
         if not self._animate_lines or delay == 0 \
                 or len(self._logic_states) == 0:
@@ -118,16 +125,26 @@ class StateLineItem:
                 current_state = state
                 current_index -= 1
 
-        return current_index, current_state
+        if result is not None:
+            result.next_index = current_index
+            result.next_state = current_state
 
-    def iter_state_line_segments(self):
+    class IterStateLineSegmentsResult():
+        def __init__(self):
+            self.longest_delay = None
+
+    def iter_state_line_segments(self, result):
         """
         Iterator over all line segments with specific state.
 
         Implement this function by using iter_state_line_segments_helper.
-        Based on the returned longest delay old logic states are discarded.
+        Based on the longest delay (result) old logic states are discarded.
 
-        :return: Iterator with line segments. Iterator return: longest delay
+        :param result: With this parameter the longest delay is returned
+            to the caller. The caller provides a IterStateLineSegmentsResult
+            object and expects the generator to fill the longest_delay
+            attribute with the longest delay seen.
+        :yields: annotated lines of (QLineF, state)
         """
         raise NotImplementedError
 
@@ -143,17 +160,13 @@ class StateLineItem:
         QtGui.QGraphicsItem.update(self)
 
     def paint(self, painter, option, widget=None):
-        # extract longest delay from generator
-        def helper():
-            nonlocal longest_delay
-            longest_delay = yield from self.iter_state_line_segments()
-        longest_delay = 0
-
         # draw line segments
-        for line, state in helper():
+        result = self.IterStateLineSegmentsResult()
+        for line, state in self.iter_state_line_segments(result):
             color = QtCore.Qt.red if state else QtCore.Qt.black
             painter.setPen(QtGui.QPen(color))
             painter.drawLine(line)
+        longest_delay = result.longest_delay
 
         # delete old logic states
         clock = self.scene().registry().clock()

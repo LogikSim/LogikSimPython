@@ -188,7 +188,8 @@ class LineTree(StateLineItem, ConnectableItem):
                             len(children) >= (2 if root else 1) or \
                             len(con_items) >= 2:
                         yield LineEdgeIndicator(self, QPointF(*point))
-                yield from iter_edge_indicators_at_edges(children, False)
+                for item in iter_edge_indicators_at_edges(children, False):
+                    yield item
 
         # there might be also connectors in the middle of lines.
         def iter_edge_indicators_in_lines(tree):
@@ -285,7 +286,8 @@ class LineTree(StateLineItem, ConnectableItem):
         for destination, children in tree.items():
             if _origin is not None:
                 yield QLineF(QPointF(*_origin), QPointF(*destination))
-            yield from self._iter_lines(children, _origin=destination)
+            for item in self._iter_lines(children, _origin=destination):
+                yield item
 
     def _iter_edges(self, tree):
         """
@@ -296,7 +298,8 @@ class LineTree(StateLineItem, ConnectableItem):
         """
         for point, children in tree.items():
             yield point
-            yield from self._iter_edges(children)
+            for item in self._iter_edges(children):
+                yield item
 
     def _get_root(self, tree):
         """Returns root of given tree"""
@@ -673,15 +676,11 @@ class LineTree(StateLineItem, ConnectableItem):
     def shape(self):
         return self._shape
 
-    def iter_state_line_segments(self):
-        """
-        Returns iterator of line segments with state information.
-
-        :return: iterator with items of (QLineF, state) in local coordinates
-        """
+    def iter_state_line_segments(self, result):
+        """Overrides iter_state_line_segments."""
         clock = self.scene().registry().clock()
 
-        def iter_segment(tree, parent_index=None, parent_state=None,
+        def iter_segment(tree, result, parent_result=None,
                          origin=None, parent_delay=0):
             longest_delay = parent_delay
             for destination, children in tree.items():
@@ -691,19 +690,24 @@ class LineTree(StateLineItem, ConnectableItem):
                     delay = (abs(length) * self._delay_per_gridpoint /
                              self.scene().get_grid_spacing())
 
-                    next_index, next_state = yield from \
-                        self.iter_state_line_segments_helper(
+                    next_result = self.IterStateLineSegmentsHelperResult()
+                    for item in self.iter_state_line_segments_helper(
                             origin, destination, delay, clock, is_vertical,
-                            parent_delay, parent_index, parent_state)
+                            parent_delay, parent_result, next_result):
+                        yield item
                 else:
                     delay = 0
-                    next_index, next_state = parent_index, parent_state
-                subdelay = yield from iter_segment(
-                    children, next_index, next_state, destination,
-                    delay + parent_delay)
-                longest_delay = max(longest_delay, subdelay)
-            return longest_delay
-        return iter_segment(self._tree)
+                    next_result = parent_result
+
+                sub_result = self.IterStateLineSegmentsResult()
+                for item in iter_segment(
+                        children, sub_result, next_result,
+                        destination, delay + parent_delay):
+                    yield item
+
+                longest_delay = max(longest_delay, sub_result.longest_delay)
+            result.longest_delay = longest_delay
+        return iter_segment(self._tree, result)
 
     def paint(self, painter, option, widget):
         super().paint(painter, option, widget)

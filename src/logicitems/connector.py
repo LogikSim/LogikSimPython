@@ -191,12 +191,8 @@ class ConnectorItem(StateLineItem, ItemBase):
             self._bounding_rect_valid = True
         return self._bounding_rect
 
-    def iter_state_line_segments(self):
-        """
-        Returns iterator of line segments with state information.
-
-        :return: iterator with items of (QLineF, state)
-        """
+    def iter_state_line_segments(self, result):
+        """Overrides iter_state_line_segments."""
         start = self._start
         if self.animate_lines() or \
                 (self.is_inactive() and not self.is_position_valid()):
@@ -205,10 +201,13 @@ class ConnectorItem(StateLineItem, ItemBase):
             drawing_end = self._anchor
         delay = self.delay()
 
-        yield from self.iter_state_line_segments_helper(
-            origin=(drawing_end if self.is_input() else start).toTuple(),
-            destination=(start if self.is_input() else drawing_end).toTuple(),
-            delay=delay,
-            clock=self.scene().registry().clock(),
-            is_vertical=False)
-        return delay
+        for item in self.iter_state_line_segments_helper(
+                origin=(drawing_end if self.is_input() else start).toTuple(),
+                destination=(start if self.is_input() else
+                             drawing_end).toTuple(),
+                delay=delay,
+                clock=self.scene().registry().clock(),
+                is_vertical=False):
+            yield item
+
+        result.longest_delay = delay
