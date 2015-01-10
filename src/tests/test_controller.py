@@ -12,6 +12,7 @@ from backend.component_library import ComponentLibrary
 from backend.components import And, Nand
 from tests import helpers
 
+
 class ElementMock:
     def __init__(self, metadata=None):
         self._metadata = metadata if metadata else {}

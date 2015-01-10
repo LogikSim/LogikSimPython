@@ -24,9 +24,6 @@ from logicitems import LineTree
 from tests.helpers import wait_until_registry_enumerated
 from tests import helpers
 
-from tests.helpers import install_hook
-install_hook()
-
 
 class TestHightowerObject(helpers.CriticalTestCase):
     def setUp(self):
@@ -79,6 +76,7 @@ class TestHightowerObject(helpers.CriticalTestCase):
         def tsp(x, y):
             return self.scene.to_scene_point((x, y))
         tree_meta = LineTree.metadata_from_path([tsp(5, 0), tsp(15, 0)])
+        tree_meta['GUID'] = LineTree.GUI_GUID()
         tree = LineTree(parent=None, metadata=tree_meta)
         self.scene.addItem(tree)
         trees = EndpointTrees(None, None)

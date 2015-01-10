@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created: Sat Jan 10 21:57:02 2015
+# Created: Sat Jan 10 22:50:24 2015
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -118,6 +118,6 @@ class Ui_MainWindow(object):
         self.action_about.setText(QtGui.QApplication.translate("MainWindow", "&About", None, QtGui.QApplication.UnicodeUTF8))
         self.action_about_qt.setText(QtGui.QApplication.translate("MainWindow", "About &Qt", None, QtGui.QApplication.UnicodeUTF8))
 
-from actions.action_stack_view import ActionStackView
 from schematics.library_view import LibraryView
+from actions.action_stack_view import ActionStackView
 import resources_rc
