@@ -11,15 +11,13 @@ Item that provides animated lines of logic states.
 
 from PySide import QtGui, QtCore
 
-from .itembase import ItemBase
 
-
-class StateLineItem(ItemBase):
+class StateLineItem:
     _update_paint = QtCore.QTimer()
     _update_paint.setInterval(40)
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
 
         # contains last logic states with entries (sim_time, value)
         self._logic_states = []

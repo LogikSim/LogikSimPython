@@ -21,7 +21,7 @@ from .state_line_item import StateLineItem
 from .insertable_item import InsertableItem
 
 
-class LineTree(ConnectableItem, StateLineItem):
+class LineTree(StateLineItem, ConnectableItem):
     """ A tree of connected lines """
 
     _debug_painting = False

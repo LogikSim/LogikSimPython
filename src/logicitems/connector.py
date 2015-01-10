@@ -12,10 +12,11 @@ Connectors of Logic Items where lines be attached.
 
 from PySide import QtCore, QtGui
 
+from .itembase import ItemBase
 from .state_line_item import StateLineItem
 
 
-class ConnectorItem(StateLineItem):
+class ConnectorItem(StateLineItem, ItemBase):
     def __init__(self, start, anchor, end, is_input, port):
         """
         anchor is the position, at which lines can connect to
