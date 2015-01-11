@@ -270,9 +270,9 @@ class LineTree(StateLineItem, ConnectableItem):
         assert self.is_registered()
         delay = self._length_to(con_item.endPoint().toTuple()) * \
             self._delay_per_gridpoint / self.scene().get_grid_spacing()
-        self._next_output_port += 1
         self.notify_backend_connect(self._next_output_port, con_item.id(),
                                     con_item.port(), delay)
+        self._next_output_port += 1
 
     def _iter_lines(self, tree, *, _origin=None):
         """
