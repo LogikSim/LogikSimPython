@@ -7,10 +7,11 @@
 #
 from backend.controller import Controller
 from backend.interface import Handler
-from tests.helpers import CallTrack, drain_queue, try_repeatedly
+from tests.helpers import CallTrack, drain_queue
 from backend.component_library import ComponentLibrary
 from backend.components import And, Nand
 from tests import helpers
+import queue
 
 
 class ElementMock:
@@ -38,7 +39,9 @@ class CoreMock:
         self.clock = 0
 
     def set_controller(self, controller):
-        pass
+        # Make sure we crash immediatly instead of continuing execution
+        # if we encounter exceptions in the controller
+        controller._reraise_exceptions = True
 
 
 class ControllerTest(helpers.CriticalTestCase):
@@ -60,14 +63,14 @@ class ControllerTest(helpers.CriticalTestCase):
         library_emu = CallTrack(tracked_member="instantiate",
                                 result_fu=instantiate_mock)
 
-        ctrl = Controller(core=CoreMock(), library=library_emu)
+        ctrl = Controller(core=CoreMock(), library=library_emu,
+                          queue_type=queue.Queue)
+
         i = ctrl.get_interface()
 
         i.create_element("FOO")
         i.create_element("BAR")
 
-        # Work around multiprocessing.Queue insertion delay
-        try_repeatedly(lambda: not ctrl.get_channel_in().empty())
         ctrl.process(0)
 
         self.assertListEqual([("FOO", ids[0], ctrl, {}),
@@ -95,17 +98,17 @@ class ControllerTest(helpers.CriticalTestCase):
         library_emu = CallTrack(tracked_member="instantiate",
                                 result_fu=instantiate_mock)
 
-        ctrl = Controller(core=CoreMock(), library=library_emu)
+        ctrl = Controller(core=CoreMock(), library=library_emu,
+                          queue_type=queue.Queue)
+
         i = ctrl.get_interface()
 
         i.create_element("FOO")
-        try_repeatedly(lambda: not ctrl.get_channel_in().empty())
         ctrl.process(0)
 
         i.update_element(ids[0], {'foo': 'buz',
                                   'bernd': 'bread'})
 
-        try_repeatedly(lambda: not ctrl.get_channel_in().empty())
         ctrl.process(0)
 
         self.assertEqual(1, len(ids))
@@ -121,14 +124,12 @@ class ControllerTest(helpers.CriticalTestCase):
 
         lib = Lib()
 
-        ctrl = Controller(core=CoreMock(), library=lib)
+        ctrl = Controller(core=CoreMock(), library=lib,
+                          queue_type=queue.Queue)
 
         # def propagate_change(self, data)
         ctrl.propagate_change({'id': 1,
                                'foo': 'bar'})
-
-        # Work around multiprocessing.Queue insertion delay
-        try_repeatedly(lambda: not ctrl.get_channel_out().empty())
 
         self.assertListEqual([{'type': 'change',
                                'clock': 0,
@@ -169,21 +170,19 @@ class ControllerTest(helpers.CriticalTestCase):
         library_emu = CallTrack(tracked_member="instantiate",
                                 result_fu=instantiate_mock)
 
-        ctrl = Controller(core=CoreMock(), library=library_emu)
+        ctrl = Controller(core=CoreMock(), library=library_emu,
+                          queue_type=queue.Queue)
+
         ctrl.connect_handler(handler)
 
         i = ctrl.get_interface()
         i.create_element("FOO")
 
-        # Work around multiprocessing.Queue insertion delay
-        try_repeatedly(lambda: not ctrl.get_channel_in().empty())
         ctrl.process(0)
 
         root.propagate_change({'foo': 'bar'})
         root.propagate_change({'fiz': 'buz'})
 
-        # Work around multiprocessing.Queue insertion delay
-        try_repeatedly(lambda: not ctrl.get_channel_out().empty())
         handler.poll()
 
         self.assertListEqual([{'type': 'change',
@@ -202,14 +201,14 @@ class ControllerSerializationTest(helpers.CriticalTestCase):
         cl.register(And)
         cl.register(Nand)
 
-        self.ctrl = Controller(core=CoreMock(), library=cl)
+        self.ctrl = Controller(core=CoreMock(), library=cl,
+                               queue_type=queue.Queue)
+
         self.interface = self.ctrl.get_interface()
 
     def test_empty_serialization(self):
         rid = self.interface.serialize()
-        try_repeatedly(lambda: not self.ctrl.get_channel_in().empty())
         self.ctrl.process(0)
-        try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
         msg = drain_queue(self.ctrl.get_channel_out(),
                           lambda m: m['type'] != 'alive')
         self.assertEqual(1, len(msg))
@@ -220,9 +219,7 @@ class ControllerSerializationTest(helpers.CriticalTestCase):
 
     def test_empty_deserialization(self):
         rid = self.interface.deserialize([])
-        try_repeatedly(lambda: not self.ctrl.get_channel_in().empty())
         self.ctrl.process(0)
-        try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
         msg = drain_queue(self.ctrl.get_channel_out(),
                           lambda m: m['type'] != 'alive')
         self.assertEqual(2, len(msg))
@@ -245,9 +242,7 @@ class ControllerSerializationTest(helpers.CriticalTestCase):
         # Serialize them (ordering guarantees they exist)
         rid = self.interface.serialize()
 
-        try_repeatedly(lambda: not self.ctrl.get_channel_in().empty())
         self.ctrl.process(0)
-        try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
 
         msg = drain_queue(self.ctrl.get_channel_out(),
                           lambda m: m['type'] != 'alive')
@@ -258,9 +253,7 @@ class ControllerSerializationTest(helpers.CriticalTestCase):
 
         rid = self.interface.deserialize(data['data'])
 
-        try_repeatedly(lambda: not self.ctrl.get_channel_in().empty())
         self.ctrl.process(1)
-        try_repeatedly(lambda: not self.ctrl.get_channel_out().empty())
 
         msg = drain_queue(self.ctrl.get_channel_out(),
                           lambda m: m['type'] != 'alive')

@@ -25,14 +25,27 @@ class Controller(ComponentRoot):
     it fast response times independent of simulation speed and event load and
     hence doesn't rely on events for processing.
     """
-    def __init__(self, core, library):
-        self._core = core
-        self._core.set_controller(self)
-        self.log = getLogger("ctrl")
+    def __init__(self,
+                 core,
+                 library,
+                 logger=getLogger("ctrl"),
+                 queue_type=multiprocessing.Queue):
+        """
+        Creates a new controller and registers it with the given core.
+
+        :param core: Core to register with.
+        :param library: ComponentLibrary to use for element creation
+        :param logger: logging Logger instance to use for logging
+        :param queue_type: Type of queue to initialize controller with. The
+            default multiprocessing queue works across process boundaries
+            but isn't well suited to inherently serial execution like you
+            want it in unit-tests.
+        """
+        self.log = logger
 
         self._library = library
-        self._channel_out = multiprocessing.Queue()
-        self._channel_in = multiprocessing.Queue()
+        self._channel_out = queue_type()
+        self._channel_in = queue_type()
 
         self.elements = {}  # ID -> element in simulation
         self._top_level_elements = []
@@ -42,6 +55,8 @@ class Controller(ComponentRoot):
 
         self._current_request_id = None  # Currently processed message id
         self._current_batch_id = None  # Currently processed batch id
+
+        self._reraise_exceptions = False  # Flag to force crash on exception
 
         # Members that should be exposed as simulation properties must be
         # listed in self._properties as property name, member variable.
@@ -66,6 +81,9 @@ class Controller(ComponentRoot):
             'enumerate_components': self._on_enumerate_components,
             'quit': self._on_quit
         }
+
+        self._core = core
+        self._core.set_controller(self)
 
     @property
     def _readonly_prop_clock(self):
@@ -117,7 +135,8 @@ class Controller(ComponentRoot):
                 setattr(self, member, value)
             except AttributeError:
                 # Probably readonly
-                pass
+                if self._reraise_exceptions:
+                    raise
 
         self._on_query_simu_properties(command)
 
@@ -334,6 +353,9 @@ class Controller(ComponentRoot):
             self._post_to_frontend('error',
                                    {'message': str(e),
                                     'exception': traceback.format_exc()})
+
+            if self._reraise_exceptions:
+                raise
         finally:
             self._current_request_id = old_request_id
 

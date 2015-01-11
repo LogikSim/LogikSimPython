@@ -19,6 +19,7 @@ from backend.component_library import ComponentLibrary
 from backend.component_library import get_library
 from tests.helpers import CallTrack
 from tests import helpers
+from queue import Queue
 
 
 class TestingCore(Core):
@@ -47,7 +48,9 @@ class TestingController(Controller):
     def __init__(self, core=None, library=None):
         core = core if core else TestingCore()
         library = library if library else ComponentLibrary()
-        super().__init__(core, library)
+        # Initialize the controller with normal queues to prevent
+        # multiprocess.queue threading issues
+        super().__init__(core, library, queue_type=Queue)
 
 
 def build_halfadder(name, parent):
