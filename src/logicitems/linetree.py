@@ -323,6 +323,8 @@ class LineTree(StateLineItem, ConnectableItem):
             scene_shape = self.mapToScene(self._shape)
             for item in scene.items(scene_shape):
                 if isinstance(item, ConnectorItem) and \
+                        not item.is_temporary() and \
+                        item.is_position_valid() and \
                         scene_shape.contains(item.endPoint()):
                     con_items.add(item)
         return list(con_items)
@@ -542,7 +544,7 @@ class LineTree(StateLineItem, ConnectableItem):
     def is_edge_on_path(self, scene_path):
         """Return True, if any edge is on given scene QPainterPath."""
         for edge in self._edges:
-            if scene_path.contains(QPointF(*edge)):
+            if scene_path.contains(self.mapToScene(QPointF(*edge))):
                 return True
         return False
 
@@ -655,6 +657,8 @@ class LineTree(StateLineItem, ConnectableItem):
     def calculate_is_position_valid(self):
         if self.scene() is None:
             return False
+        if self.is_temporary():
+            return True
         from .logicitem import LogicItem
         # check own shape
         scene_shape = self.mapToScene(self.shape())
@@ -667,7 +671,9 @@ class LineTree(StateLineItem, ConnectableItem):
             if isinstance(item, LineTree) and item is not self and \
                     item.is_edge_on_path(scene_shape):
                 return False
-        # TODO: detect two output drivers
+        # check driving inputs
+        if self.numer_of_driving_inputs() > 1:
+            return False
         return True
 
     def boundingRect(self):

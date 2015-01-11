@@ -14,6 +14,7 @@ from PySide import QtGui, QtCore
 from .itembase import ItemBase
 from .connectable_item import ConnectableItem
 from .insertable_item import InsertableItem
+from .linetree import LineTree
 
 
 class SelectionItem(ItemBase):
@@ -135,6 +136,12 @@ class SelectionItem(ItemBase):
             self._surrounding_pos_items = set(sel_items)
             for item in sel_items:
                 self._surrounding_pos_items.update(item.items_at_position())
+            # for line-trees include all items that might have an input
+            for item in self._surrounding_pos_items.copy():
+                if isinstance(item, LineTree) and item.is_position_valid() \
+                        and not item.is_temporary():
+                    self._surrounding_pos_items.update(
+                        item.items_at_position())
             # store positions
             self._old_positions = {item: item.pos() for item in sel_items}
             self._update_surrounding.start()

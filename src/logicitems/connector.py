@@ -5,7 +5,6 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
-from .insertable_item import InsertableItem
 '''
 Connectors of Logic Items where lines be attached.
 '''
@@ -14,6 +13,7 @@ from PySide import QtCore, QtGui
 
 from .itembase import ItemBase
 from .state_line_item import StateLineItem
+from .insertable_item import InsertableItem
 
 
 class ConnectorItem(StateLineItem, ItemBase):
@@ -163,12 +163,32 @@ class ConnectorItem(StateLineItem, ItemBase):
 
     def calculate_is_position_valid(self):
         """Calculate if the current position is valid and return result"""
-        # check shape
+        from .logicitem import LogicItem, LineTree
+        # check if there are LogicItems in shape
         for item in self.scene().items(self.mapToScene(self.boundingRect())):
-            if isinstance(item, InsertableItem) and \
+            if isinstance(item, LogicItem) and \
                     item is not self.parentItem() and \
-                    item.is_position_valid():
+                    item.is_position_valid() and not item.is_temporary():
                 return False
+        # check items at end-point
+        for item in self.scene().items(self.endPoint()):
+            if not isinstance(item, ItemBase) or item.is_temporary():
+                continue
+            if item is self or isinstance(item, InsertableItem) and \
+                    not item.is_position_valid():
+                continue
+            # two output connectors --> invalid
+            if self.is_output() and isinstance(item, ConnectorItem) and \
+                    item.endPoint() == self.endPoint() and \
+                    item.is_output()and item.is_position_valid():
+                return False
+            # TODO: check two output drivers for LineTree
+            if isinstance(item, LineTree) and self.is_output():
+                input_count = item.numer_of_driving_inputs()
+                print(input_count, self.is_position_valid())
+                if not (input_count == 0 or input_count == 1 and \
+                        self.is_position_valid() and not self.is_temporary()):
+                    return False
         return True
 
     def is_position_valid(self):

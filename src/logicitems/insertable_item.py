@@ -369,6 +369,9 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
                 self.notify_con_surrounding()
             elif change == InsertableItem.ItemPosValidSurroundingHasChanged:
                 self._invalidate_position_is_valid()
+            # recalculate position valid on temporary change
+            elif change == ItemBase.ItemTemporaryHasChanged:
+                self._invalidate_position_is_valid()
 
         # QGraphicsItem only supports changes defined in Qt
         if isinstance(change, QtGui.QGraphicsItem.GraphicsItemChange):
@@ -435,12 +438,19 @@ class InsertableItem(ItemBase, metaclass=InsertableRegistry):
         :param notify_surrounding: if this parameter is False,
             no notifications are made.
         """
+        from .linetree import LineTree
+
         if notify_surrounding:
             # store old surrounding
             assert self.scene() is None or \
                 len(self.scene().selectedItems()) <= 1
             chanded_con_items_set = self.items_at_connections()
             changed_valid_item_set = self.items_at_position()
+            # for line-trees include all items that might have an input
+            for item in changed_valid_item_set.copy():
+                if isinstance(item, LineTree) and item.is_position_valid() \
+                        and not item.is_temporary():
+                    changed_valid_item_set.update(item.items_at_position())
         # change position
         change_function()
         # notify items that surrounding has changed
