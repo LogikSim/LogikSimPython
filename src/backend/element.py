@@ -22,6 +22,7 @@ class Edge(Event):
         :param element: Element `input` is referring to
         :param input: Index of the input the signal edge will occur on
         :param state: Signal value after the edge (True/False) at time `when`
+            If none processing will be triggered but no value set.
         """
         super().__init__(when, id(element))
         self.element = element
@@ -29,8 +30,12 @@ class Edge(Event):
         self.state = state
 
     def __str__(self):
-        return "Edge(when={0},element={1},input={2},state={3}" \
-            .format(self.when, id(self.element), self.input, self.state)
+        return "Edge(when={0},element={1} ({2}),input={3},state={4}" \
+            .format(self.when,
+                    self.element.id(),
+                    id(self.element),
+                    self.input,
+                    self.state)
 
     def __eq__(self, other):
         return self.element == other.element \
@@ -40,7 +45,8 @@ class Edge(Event):
 
     def process(self, last):
         """Edge only knows handler functions so this function implements one"""
-        self.element.edge(self.input, self.state)
+        if self.state is not None:
+            self.element.edge(self.input, self.state)
 
         # Only schedule events when all edges addresses to the element
         # have been processed.
@@ -92,7 +98,7 @@ class Element(ComponentInstance):
         pass
 
     @abstractmethod
-    def connected(self, element, output_port, input_port):
+    def connected(self, element, output_port, input_port, state):
         """
         Notifies an element of another elements output connected to one of its
         inputs.
@@ -100,6 +106,7 @@ class Element(ComponentInstance):
         :param element: Element connected to this one
         :param output_port: Output of the element connected to this one
         :param input_port: Input of this element connected to
+        :param state: State of the new connected ports
         :return: True if connection was accepted
         """
         pass

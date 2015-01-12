@@ -56,6 +56,8 @@ class Controller(ComponentRoot):
         self._current_request_id = None  # Currently processed message id
         self._current_batch_id = None  # Currently processed batch id
 
+        self._scheduling_epsilon = 0.00001  # Delay for 'instant' user action
+
         self._reraise_exceptions = False  # Flag to force crash on exception
 
         # Members that should be exposed as simulation properties must be
@@ -285,7 +287,11 @@ class Controller(ComponentRoot):
         element = self.elements[command['id']]
         core = self.get_core()
 
-        core.schedule(Edge(core.clock + command['delay'],
+        delay = command['delay']
+        if not delay:
+            delay = self._scheduling_epsilon
+
+        core.schedule(Edge(core.clock + delay,
                            element,
                            command['input'],
                            command['state']))
@@ -309,6 +315,12 @@ class Controller(ComponentRoot):
             raise Exception("Failed to connect %d port %d to %d port %d" % (
                 command['source_id'], command['source_port'],
                 command['sink_id'], command['sink_port']))
+
+        core = self.get_core()
+        core.schedule(Edge(core.clock + self._scheduling_epsilon,
+                           sink,
+                           command['sink_port'],
+                           None))
 
         self.log.info("Connected %d port %d to %d port %d (delay %d)",
                       command['source_id'],

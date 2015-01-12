@@ -43,6 +43,9 @@ class CoreMock:
         # if we encounter exceptions in the controller
         controller._reraise_exceptions = True
 
+    def schedule(self, event):
+        pass
+
 
 class ControllerTest(helpers.CriticalTestCase):
     """

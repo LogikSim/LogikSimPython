@@ -106,7 +106,10 @@ class InterconnectInstance(Element):
             # Can't connect twice
             return False
 
-        if not element.connected(self, output_port, input_port):
+        if not element.connected(self,
+                                 output_port,
+                                 input_port,
+                                 self.state):
             # Other element rejected the connection
             return False
 
@@ -154,10 +157,11 @@ class InterconnectInstance(Element):
 
         return True
 
-    def connected(self, element, output_port, input_port):
+    def connected(self, element, output_port, input_port, state):
         """
         Remembers connections to a given port.
 
+        :param state:
         :param element:
         :param output_port:
         :param input_port:
@@ -171,6 +175,7 @@ class InterconnectInstance(Element):
 
         self.inputs[input_port] = (element, output_port)
         self.set_metadata_field('inputs', self._in_con_to_data(self.inputs))
+        self.edge(input_port, state)
 
         return True
 

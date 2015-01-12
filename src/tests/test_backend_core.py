@@ -5,9 +5,6 @@
 # Use of this source code is governed by the GNU GPL license that can
 # be found in the LICENSE.txt file.
 #
-
-from unittest import expectedFailure
-
 from backend.core import Core
 from backend.controller import Controller
 from backend.event import Event
@@ -208,7 +205,6 @@ class BackendCoreTest(helpers.CriticalTestCase):
         self.assertFalse(s.state)
         self.assertFalse(carry.state)
 
-    @expectedFailure
     def test_stabilization(self):
         ctrl = TestingController()
 
@@ -222,20 +218,27 @@ class BackendCoreTest(helpers.CriticalTestCase):
         q = Interconnect.instantiate(4, ctrl)
         nq = Interconnect.instantiate(5, ctrl)
 
-        r.connect(0, nor_r, 0)
-        s.connect(0, nor_s, 0)
+        self.assertTrue(r.connect(0, nor_r, 0, 1))
+        self.assertTrue(s.connect(0, nor_s, 0, 1))
 
-        q.connect(output_port=1, element=nor_s, input_port=1)
-        nq.connect(output_port=1, element=nor_r, input_port=1)
+        self.assertTrue(q.connect(1, nor_s, 1, 1))
+        self.assertTrue(nq.connect(1, nor_r, 1, 1))  # Added delay here
 
-        nor_r.connect(0, q, 0)
-        nor_s.connect(0, nq, 0)
+        self.assertTrue(nor_r.connect(0, q, 0, 1))
+        self.assertTrue(nor_s.connect(0, nq, 0, 1))
 
         core = ctrl.get_core()
 
-        core.schedule(Edge(0, r, 0, False))  # Make sure we don't oscillate
-        core.schedule(Edge(10, s, 0, True))  # Set the FF
-        core.schedule(Edge(11, s, 0, False))
+        core.schedule_many([        # Schedule connect updates usually
+            Edge(0, r, 0, None),    # handled by controller.
+            Edge(0, s, 0, None),
+            Edge(0, nor_r, 0, None),
+            Edge(0, nor_s, 0, None),
+            Edge(0, q, 0, None),
+            Edge(0, nq, 0, None)])
+
+        core.schedule(Edge(10, s, 0, True))  # Set the FF and wait till stable
+        core.schedule(Edge(20, s, 0, False))  # Then remove input and check
 
         self.assertGreater(100, core.loop_until_stable_state_or_time(100))
 

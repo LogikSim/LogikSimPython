@@ -29,8 +29,12 @@ class OutEdge(Event):
         self.state = state
 
     def __str__(self):
-        return "OutEdge(when={0},element={1},output={2},state={3}"\
-            .format(self.when, id(self.element), self.output, self.state)
+        return "OutEdge(when={0},element={1} ({2}),output={3},state={4}" \
+            .format(self.when,
+                    self.element.id(),
+                    id(self.element),
+                    self.output,
+                    self.state)
 
     def __eq__(self, other):
         return self.element == other.element\
@@ -154,7 +158,10 @@ class SimpleElement(Element):
             # Can't connect twice
             return False
 
-        if not element.connected(self, output_port, input_port):
+        if not element.connected(self,
+                                 output_port,
+                                 input_port,
+                                 self.output_states[output_port]):
             # Other element rejected the connection
             return False
 
@@ -202,13 +209,14 @@ class SimpleElement(Element):
 
         return True
 
-    def connected(self, element, output_port, input_port):
+    def connected(self, element, output_port, input_port, state):
         """
         Remembers connections to a given port.
 
         :param input_port: Input port on this element being connected to
         :param element: Element connecting to the port
         :param output_port: Output port on the connecting element being used
+        :param state: State of the new connected ports
 
         :return: True if connection allowed.
         """
@@ -220,6 +228,8 @@ class SimpleElement(Element):
 
         self.inputs[input_port] = (element, output_port)
         self.set_metadata_field('inputs', self._in_con_to_data(self.inputs))
+
+        self.edge(input_port, state)
 
         return True
 
