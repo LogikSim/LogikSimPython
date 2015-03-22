@@ -19,7 +19,6 @@ from PySide import QtGui, QtCore
 from .itembase import ItemBase
 from actions.move_action import MoveAction
 
-
 class InsertableRegistry(type(ItemBase)):
     """Keeps track of all derived types of InsertableItem."""
     _insertable_types = []

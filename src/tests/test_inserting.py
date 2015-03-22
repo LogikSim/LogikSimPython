@@ -298,7 +298,6 @@ class TestLineRouteGraphical(helpers.CriticalTestCase):
         if view_result:
             import schematics.mouse_modes
             import sys
-            from PySide import QtGui
             app = QtGui.QApplication.instance()
             if app is None:
                 app = QtGui.QApplication(sys.argv)
@@ -638,5 +637,22 @@ class TestLineRouteGraphical(helpers.CriticalTestCase):
         """
         output_area = """
                  ->
+        """
+        self.visual_test(input_area, position_area, output_area)
+
+    def test_insert_over_edge(self):
+        # ┴˄˅<┤├>┬-|┘┐┌└|
+        input_area = """
+            <----->
+        """
+        position_area = """
+            <----->    B
+
+                A
+        """
+        output_area = """
+            <----->    ˄
+                       |
+                <------┘
         """
         self.visual_test(input_area, position_area, output_area)
