@@ -1,10 +1,10 @@
 LogikSim
 ========
-[![Build Status](https://travis-ci.org/LogikSim/LogikSim.svg?branch=master)](https://travis-ci.org/LogikSim/LogikSim) [![Build status](https://ci.appveyor.com/api/projects/status/psrhi7mj71kfsec0/branch/master?svg=true)](https://ci.appveyor.com/project/hacst/logiksim/branch/master) [![Coverage Status](https://coveralls.io/repos/LogikSim/LogikSim/badge.png)](https://coveralls.io/r/LogikSim/LogikSim)
+[![Build Status](https://travis-ci.org/LogikSim/LogikSimPython.svg?branch=master)](https://travis-ci.org/LogikSim/LogikSimPython) [![Build status](https://ci.appveyor.com/api/projects/status/psrhi7mj71kfsec0/branch/master?svg=true)](https://ci.appveyor.com/project/hacst/logiksim/branch/master) [![Coverage Status](https://coveralls.io/repos/LogikSim/LogikSimPython/badge.svg?branch=master)](https://coveralls.io/r/LogikSim/LogikSimPython?branch=master)
 
 ### Our Vision ###
 
-![Screenshot of LogikSim](https://raw.githubusercontent.com/LogikSim/LogikSim/master/media/LogikSim.png)
+![Screenshot of LogikSim](https://raw.githubusercontent.com/LogikSim/LogikSimPython/master/media/LogikSim.png)
 
 Our vision is to build the world's best software to understand digital
 circuits; A logic simulator that makes it easy and fun to explore and
@@ -42,5 +42,5 @@ and make you grasp how today processors operate on a fundamental level.
 ---
 
 The project is currently in an early stage of development, see the
-[wiki](https://github.com/LogikSim/LogikSim/wiki/Development)
+[wiki](https://github.com/LogikSim/LogikSimPython/wiki/Development)
 on how you can help us.
